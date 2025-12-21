@@ -79,14 +79,18 @@ jobs:
           fetch-depth: 0
 
       - name: Setup tools
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+          gh release download --repo steveyegge/beads --pattern 'beads-*-linux-x64.tar.gz' --output beads.tar.gz
+          tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
+          mkdir -p "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
           curl -fsSL https://opencode.ai/install | bash
           echo "$HOME/.opencode/bin" >> $GITHUB_PATH
-          bd init
+          "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
 
       - name: Setup git identity
