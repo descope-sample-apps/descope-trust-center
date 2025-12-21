@@ -38,6 +38,11 @@ jobs:
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
+      - name: Fetch Beads database
+        run: |
+          git fetch origin beads-db:beads-db || true
+          git checkout beads-db -- .beads/ 2>/dev/null || bd init
+
       - name: Create branch
         id: branch
         run: |
@@ -77,6 +82,19 @@ jobs:
           " || true
           
           bd update "$TASK_ID" --status done || true
+
+      - name: Commit beads changes to beads-db branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          CURRENT_BRANCH=$(git branch --show-current)
+          cp -r .beads/ /tmp/beads-backup/
+          git checkout beads-db
+          cp -r /tmp/beads-backup/* .beads/
+          git add .beads/ || true
+          git diff --staged --quiet || git commit -m "chore: update task ${{ matrix.task.id }} status"
+          git push origin beads-db || true
+          git checkout "$CURRENT_BRANCH"
 
       - name: Commit changes
         id: commit

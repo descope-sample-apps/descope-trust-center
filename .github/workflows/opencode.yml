@@ -83,11 +83,10 @@ jobs:
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
-      - name: Initialize Beads
+      - name: Fetch Beads database
         run: |
-          if [ ! -d ".beads" ]; then
-            bd init
-          fi
+          git fetch origin beads-db:beads-db || true
+          git checkout beads-db -- .beads/ 2>/dev/null || bd init
 
       - name: Post planning started comment
         uses: actions/github-script@v7
@@ -184,13 +183,17 @@ jobs:
         env:
           TASKS: ${{ steps.run-plan.outputs.tasks }}
 
-      - name: Commit beads changes
+      - name: Commit beads changes to beads-db branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git stash push -m "beads-changes" -- .beads/ || true
+          git checkout beads-db
+          git stash pop || true
           git add .beads/ || true
           git diff --staged --quiet || git commit -m "chore: add beads tasks for issue #${{ github.event.issue.number }}"
-          git push || true
+          git push origin beads-db || true
+          git checkout main
 
       - name: Dispatch workers
         if: steps.run-plan.outputs.task_count > 0
@@ -247,11 +250,10 @@ jobs:
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
-      - name: Initialize Beads
+      - name: Fetch Beads database
         run: |
-          if [ ! -d ".beads" ]; then
-            bd init
-          fi
+          git fetch origin beads-db:beads-db || true
+          git checkout beads-db -- .beads/ 2>/dev/null || bd init
 
       - name: Post work started comment
         uses: actions/github-script@v7
