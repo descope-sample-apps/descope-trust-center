@@ -45,11 +45,11 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number
             });
-            
+
             const cycleMarkers = comments.filter(c => 
               c.body && c.body.includes('<!-- review-cycle:')
             );
-            
+
             const count = cycleMarkers.length;
             core.setOutput('count', count);
             console.log(`Current review cycle: ${count}`);
@@ -66,18 +66,18 @@ jobs:
         run: |
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-          
+
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-          
+
           PR_TITLE="${{ github.event.pull_request.title }}"
           PR_BODY="${{ github.event.pull_request.body }}"
-          
+
           DIFF=$(git diff origin/main...HEAD)
-          
+
           # Get commit count to understand scope
           COMMIT_COUNT=$(git rev-list --count origin/main...HEAD)
-          
+
           REVIEW_OUTPUT=$(opencode --agent oracle --yes --print --prompt "
           Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
 
@@ -106,9 +106,9 @@ jobs:
           - APPROVE: if changes look good
           - REQUEST_CHANGES: if fixes are needed (list specific issues)
           " 2>&1) || true
-          
+
           echo "$REVIEW_OUTPUT"
-          
+
           if echo "$REVIEW_OUTPUT" | grep -qi "APPROVE"; then
             echo "decision=approve" >> $GITHUB_OUTPUT
           else
@@ -123,9 +123,9 @@ jobs:
             const decision = '${{ steps.review.outputs.decision }}';
             const cycleCount = parseInt('${{ steps.get-cycle.outputs.count }}') + 1;
             const maxCycles = parseInt(process.env.MAX_REVIEW_CYCLES);
-            
+
             let body = '';
-            
+
             if (decision === 'approve') {
               body = `## ✅ Review Passed
 
@@ -149,7 +149,7 @@ jobs:
             A rework cycle will be triggered automatically.`;
               }
             }
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -159,7 +159,7 @@ jobs:
 
   rework:
     needs: review
-    if: needs.review.outputs.decision == 'request_changes' && needs.review.outputs.cycle_count < env.MAX_REVIEW_CYCLES
+    if: needs.review.outputs.decision == 'request_changes' && needs.review.outputs.cycle_count < 3
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
@@ -192,11 +192,11 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number
             });
-            
+
             const reviewComments = comments
               .filter(c => c.body && c.body.includes('review-cycle:'))
               .slice(-1);
-            
+
             const feedback = reviewComments.length > 0 ? reviewComments[0].body : '';
             core.setOutput('feedback', feedback);
 
@@ -207,10 +207,10 @@ jobs:
         run: |
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-          
+
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-          
+
           opencode --yes --print --prompt "
           Fix the issues identified in the review.
 
@@ -237,7 +237,7 @@ jobs:
 
   request-human-review:
     needs: review
-    if: needs.review.outputs.decision == 'approve' || needs.review.outputs.cycle_count >= env.MAX_REVIEW_CYCLES
+    if: needs.review.outputs.decision == 'approve' || needs.review.outputs.cycle_count >= 3
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
