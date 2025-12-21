@@ -39,7 +39,10 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
           bd init
+          sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
 
       - name: Setup git identity
         run: |
@@ -61,27 +64,23 @@ jobs:
           bd update "${{ matrix.task.id }}" --status in-progress || true
 
       - name: Run OpenCode Sisyphus Agent
-        uses: sst/opencode/github@dev
         env:
-          TASK_ID: ${{ matrix.task.id }}
-          TASK_TITLE: ${{ matrix.task.title }}
-          TASK_SUMMARY: ${{ matrix.task.summary }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        with:
-          use_github_token: true
-          model: opencode/big-pickle
-          prompt: |
-            Implement task: ${{ matrix.task.title || matrix.task.summary }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          bun run .github/scripts/opencode-run.ts \
+            --model "anthropic/claude-sonnet-4-20250514" \
+            --prompt "Implement task: ${{ matrix.task.title || matrix.task.summary }}
 
-            Task ID: ${{ matrix.task.id }}
+          Task ID: ${{ matrix.task.id }}
 
-            ## Instructions
-            1. Implement only this specific task
-            2. Follow existing code patterns
-            3. Run 'bun run build' to verify no errors
-            4. Make focused, atomic changes
+          ## Instructions
+          1. Implement only this specific task
+          2. Follow existing code patterns
+          3. Run 'bun run build' to verify no errors
+          4. Make focused, atomic changes
 
-            When complete, summarize what was implemented.
+          When complete, summarize what was implemented."
 
       - name: Update task status to done
         run: |

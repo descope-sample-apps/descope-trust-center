@@ -84,9 +84,9 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          # Initialize beads with correct sync branch
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
           bd init
-          # Ensure config uses beads-sync branch for sync
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
 
       - name: Setup git identity
@@ -116,36 +116,35 @@ jobs:
 
       - name: Run Planner-Sisyphus
         id: run-plan
-        uses: sst/opencode/github@dev
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        with:
-          model: opencode/big-pickle
-          use_github_token: true
-          agent: Planner-Sisyphus
-          prompt: |
-            Analyze this GitHub Issue and break it into atomic, parallelizable tasks.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          bun run .github/scripts/opencode-run.ts \
+            --model "anthropic/claude-sonnet-4-20250514" \
+            --agent "Planner-Sisyphus" \
+            --prompt "Analyze this GitHub Issue and break it into atomic, parallelizable tasks.
 
-            ## Instructions
-            1. Create a beads epic for this issue:
-               bd create "Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}" -p 1
+          ## Instructions
+          1. Create a beads epic for this issue:
+             bd create \"Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}\" -p 1
 
-            2. Create child tasks under the epic using bd create with appropriate priorities (1-4)
+          2. Create child tasks under the epic using bd create with appropriate priorities (1-4)
 
-            3. Add dependencies between tasks using 'bd dep add <task-id> <depends-on-id>'
-               - Tasks that can run in parallel should have NO dependencies between them
-               - Tasks that must wait for others should declare dependencies
+          3. Add dependencies between tasks using 'bd dep add <task-id> <depends-on-id>'
+             - Tasks that can run in parallel should have NO dependencies between them
+             - Tasks that must wait for others should declare dependencies
 
-            4. After creating all tasks, output the task list
+          4. After creating all tasks, output the task list
 
-            Example dependency structure:
-            - bd-abc.1 'Setup types' (no deps - can start immediately)
-            - bd-abc.2 'Create component' (no deps - can start immediately)  
-            - bd-abc.3 'Add styling' depends on bd-abc.2
-            - bd-abc.4 'Write tests' depends on bd-abc.1, bd-abc.2
-            - bd-abc.5 'Integration' depends on bd-abc.3, bd-abc.4
+          Example dependency structure:
+          - bd-abc.1 'Setup types' (no deps - can start immediately)
+          - bd-abc.2 'Create component' (no deps - can start immediately)  
+          - bd-abc.3 'Add styling' depends on bd-abc.2
+          - bd-abc.4 'Write tests' depends on bd-abc.1, bd-abc.2
+          - bd-abc.5 'Integration' depends on bd-abc.3, bd-abc.4
 
-            Run 'bd list --json' when done.
+          Run 'bd list --json' when done."
 
       - name: Get tasks from beads
         id: get-tasks
@@ -297,6 +296,13 @@ jobs:
         run: |
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+
+      - name: Setup git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Create feature branch
         id: branch
@@ -318,21 +324,20 @@ jobs:
             });
 
       - name: Run Sisyphus
-        uses: sst/opencode/github@dev
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        with:
-          model: opencode/big-pickle
-          use_github_token: true
-          prompt: |
-            Implement the changes requested in this GitHub Issue.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          bun run .github/scripts/opencode-run.ts \
+            --model "anthropic/claude-sonnet-4-20250514" \
+            --prompt "Implement the changes requested in this GitHub Issue.
 
-            ## Instructions
-            1. Implement the requested changes
-            2. Follow existing code patterns
-            3. Run 'bun run build' to verify no errors
+          ## Instructions
+          1. Implement the requested changes
+          2. Follow existing code patterns
+          3. Run 'bun run build' to verify no errors
 
-            When complete, summarize what was implemented.
+          When complete, summarize what was implemented."
 
       - name: Commit and push
         id: commit

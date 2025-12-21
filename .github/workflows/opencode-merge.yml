@@ -176,6 +176,8 @@ jobs:
         run: |
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
 
       - name: Setup git
         run: |
@@ -213,11 +215,11 @@ jobs:
               if ! git merge "origin/$SUB_BRANCH" --no-edit -m "Merge task $TASK_ID" 2>/dev/null; then
                 echo "Resolving conflicts for $TASK_ID..."
                 
-                # Get list of conflicted files
                 CONFLICTED=$(git diff --name-only --diff-filter=U)
                 
-                # Use opencode github run with conflict resolution prompt
-                export PROMPT="Resolve merge conflicts in the following files:
+                bun run .github/scripts/opencode-run.ts \
+                  --model "anthropic/claude-sonnet-4-20250514" \
+                  --prompt "Resolve merge conflicts in the following files:
 
           $CONFLICTED
 
@@ -228,11 +230,8 @@ jobs:
           4. Remove all conflict markers
           5. The code must compile and work correctly
 
-          After resolving, stage the files with 'git add'."
-
-                opencode github run || true
+          After resolving, stage the files with 'git add'." || true
                 
-                # If still unresolved, take the incoming changes
                 git checkout --theirs . 2>/dev/null || true
                 git add -A
                 git commit -m "Merge task $TASK_ID (conflicts resolved)" || true

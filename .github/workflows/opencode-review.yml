@@ -58,10 +58,8 @@ jobs:
         run: |
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          # Install opencode CLI
-          VERSION=$(curl -sf https://api.github.com/repos/sst/opencode/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
-          curl -fsSL "https://github.com/sst/opencode/releases/download/${VERSION}/opencode-linux-x64.tar.gz" | tar -xz -C /usr/local/bin
-          chmod +x /usr/local/bin/opencode
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
 
       - name: Setup git identity
         run: |
@@ -83,9 +81,12 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          # Create prompt file
-          cat > /tmp/review_prompt.txt << 'PROMPT_EOF'
-          Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
+          DIFF_SNIPPET=$(head -500 /tmp/pr_diff.txt)
+          
+          bun run .github/scripts/opencode-run.ts \
+            --model "anthropic/claude-sonnet-4-20250514" \
+            --agent "oracle" \
+            --prompt "Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
 
           ## PR Title
           ${{ github.event.pull_request.title }}
@@ -96,8 +97,8 @@ jobs:
           ## Statistics
           - Commits: ${{ steps.diff.outputs.commit_count }}
 
-          ## Diff
-          $(cat /tmp/pr_diff.txt | head -500)
+          ## Diff (first 500 lines)
+          ${DIFF_SNIPPET}
 
           ## Instructions
           1. Check code quality, patterns, and potential issues
@@ -108,13 +109,8 @@ jobs:
 
           Respond with one of:
           - APPROVE: if changes look good
-          - REQUEST_CHANGES: if fixes are needed (list specific issues)
-          PROMPT_EOF
+          - REQUEST_CHANGES: if fixes are needed (list specific issues)" 2>&1 | tee /tmp/review_output.txt || true
 
-          # Run opencode in non-interactive mode
-          opencode run --prompt "$(cat /tmp/review_prompt.txt)" --agent oracle --model anthropic/claude-sonnet-4-20250514 2>&1 | tee /tmp/review_output.txt || true
-
-          # Parse decision from output
           if grep -qi "APPROVE" /tmp/review_output.txt; then
             echo "decision=approve" >> $GITHUB_OUTPUT
           else
@@ -188,10 +184,8 @@ jobs:
         run: |
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          # Install opencode CLI
-          VERSION=$(curl -sf https://api.github.com/repos/sst/opencode/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
-          curl -fsSL "https://github.com/sst/opencode/releases/download/${VERSION}/opencode-linux-x64.tar.gz" | tar -xz -C /usr/local/bin
-          chmod +x /usr/local/bin/opencode
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
 
       - name: Setup git identity
         run: |
@@ -222,8 +216,9 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          cat > /tmp/rework_prompt.txt << 'PROMPT_EOF'
-          Fix the issues identified in the review.
+          bun run .github/scripts/opencode-run.ts \
+            --model "anthropic/claude-sonnet-4-20250514" \
+            --prompt "Fix the issues identified in the review.
 
           ## Review Feedback
           ${{ steps.feedback.outputs.feedback }}
@@ -233,10 +228,7 @@ jobs:
           2. Keep changes minimal and focused
           3. Run 'bun run build' to verify no errors
 
-          When complete, summarize the fixes made.
-          PROMPT_EOF
-
-          opencode run --prompt "$(cat /tmp/rework_prompt.txt)" --model anthropic/claude-sonnet-4-20250514 || true
+          When complete, summarize the fixes made."
 
       - name: Commit fixes
         run: |
