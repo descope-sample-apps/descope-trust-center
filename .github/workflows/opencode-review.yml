@@ -78,7 +78,7 @@ jobs:
           # Get commit count to understand scope
           COMMIT_COUNT=$(git rev-list --count origin/main...HEAD)
 
-          REVIEW_OUTPUT=$(opencode --agent oracle --yes --print --prompt "
+          REVIEW_OUTPUT=$(opencode run "
           Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
 
           ## PR Title
@@ -105,7 +105,7 @@ jobs:
           Respond with one of:
           - APPROVE: if changes look good
           - REQUEST_CHANGES: if fixes are needed (list specific issues)
-          " 2>&1) || true
+          " --agent oracle 2>&1) || true
 
           echo "$REVIEW_OUTPUT"
 
@@ -211,7 +211,7 @@ jobs:
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
 
-          opencode --yes --print --prompt "
+          opencode run "
           Fix the issues identified in the review.
 
           ## Review Feedback

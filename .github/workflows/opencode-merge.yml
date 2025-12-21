@@ -222,7 +222,7 @@ jobs:
                 # Get list of conflicted files
                 CONFLICTED=$(git diff --name-only --diff-filter=U)
                 
-                opencode --yes --print --prompt "
+                opencode run "
                 Resolve merge conflicts in the following files:
                 
                 $CONFLICTED
