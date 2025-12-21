@@ -36,8 +36,8 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output beads.tar.gz
-          tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
+          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
+          tar -xzf /tmp/beads.tar.gz -C /tmp/bd && mv /tmp/bd/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
@@ -90,8 +90,8 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output beads.tar.gz
-          tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
+          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
+          tar -xzf /tmp/beads.tar.gz -C /tmp/bd && mv /tmp/bd/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
@@ -182,8 +182,8 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output beads.tar.gz
-          tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
+          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
+          tar -xzf /tmp/beads.tar.gz -C /tmp/bd && mv /tmp/bd/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
