@@ -84,7 +84,7 @@ jobs:
         run: |
           mkdir -p "$HOME/.local/bin"
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
-          tar -xzf /tmp/beads.tar.gz -C /tmp/bd && mv /tmp/bd/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
+          tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
