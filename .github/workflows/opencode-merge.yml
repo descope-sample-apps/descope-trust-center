@@ -8,7 +8,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
-  models: read
+  id-token: write
 
 jobs:
   merge:
@@ -166,7 +166,7 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Checkout feature branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.client_payload.branch }}
           token: ${{ steps.app-token.outputs.token }}
@@ -198,15 +198,10 @@ jobs:
 
       - name: Resolve conflicts with Sisyphus
         env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FEATURE_BRANCH: ${{ github.event.client_payload.branch }}
           TASK_IDS: ${{ toJson(github.event.client_payload.task_ids) }}
         run: |
-          curl -fsSL https://opencode.ai/install | bash
-          export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-
-          mkdir -p ~/.config/opencode
-          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-
           TASK_IDS_ARRAY=$(echo "$TASK_IDS" | jq -r '.[]')
 
           for TASK_ID in $TASK_IDS_ARRAY; do
@@ -221,20 +216,21 @@ jobs:
                 # Get list of conflicted files
                 CONFLICTED=$(git diff --name-only --diff-filter=U)
                 
-                opencode run "
-                Resolve merge conflicts in the following files:
-                
-                $CONFLICTED
-                
-                ## Instructions
-                1. Look at the conflict markers (<<<<<<, =======, >>>>>>)
-                2. Understand both versions of the code
-                3. Merge them intelligently, keeping functionality from both sides
-                4. Remove all conflict markers
-                5. The code must compile and work correctly
-                
-                After resolving, stage the files with 'git add'.
-                " || true
+                # Use opencode github run with conflict resolution prompt
+                export PROMPT="Resolve merge conflicts in the following files:
+
+          $CONFLICTED
+
+          ## Instructions
+          1. Look at the conflict markers (<<<<<<, =======, >>>>>>)
+          2. Understand both versions of the code
+          3. Merge them intelligently, keeping functionality from both sides
+          4. Remove all conflict markers
+          5. The code must compile and work correctly
+
+          After resolving, stage the files with 'git add'."
+
+                opencode github run || true
                 
                 # If still unresolved, take the incoming changes
                 git checkout --theirs . 2>/dev/null || true

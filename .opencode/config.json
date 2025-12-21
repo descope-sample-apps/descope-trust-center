@@ -4,14 +4,4 @@
     "oh-my-opencode"
   ],
   "model": "opencode/big-pickle",
-  "permissions": {
-    "allow": [
-      "Bash(*)",
-      "Read(*)",
-      "Write(*)",
-      "Edit(*)",
-      "Glob(*)",
-      "Grep(*)"
-    ]
-  }
 }

@@ -8,7 +8,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
-  models: read
+  id-token: write
 
 jobs:
   worker:
@@ -51,35 +51,44 @@ jobs:
           echo "sub_branch=$SUB_BRANCH" >> $GITHUB_OUTPUT
           echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
 
+      - name: Update task status to in-progress
+        run: |
+          bd update "${{ matrix.task.id }}" --status in-progress || true
+
       - name: Run OpenCode Sisyphus Agent
+        uses: sst/opencode/github@dev
         env:
           TASK_ID: ${{ matrix.task.id }}
           TASK_TITLE: ${{ matrix.task.title }}
           TASK_SUMMARY: ${{ matrix.task.summary }}
+        with:
+          model: opencode/big-pickle
+          prompt: |
+            Implement task: ${{ matrix.task.title || matrix.task.summary }}
+
+            Task ID: ${{ matrix.task.id }}
+
+            ## Instructions
+            1. Implement only this specific task
+            2. Follow existing code patterns
+            3. Run 'bun run build' to verify no errors
+            4. Make focused, atomic changes
+
+            When complete, summarize what was implemented.
+
+      - name: Update task status to done
         run: |
-          curl -fsSL https://opencode.ai/install | bash
-          export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
+          bd update "${{ matrix.task.id }}" --status done || true
 
-          mkdir -p ~/.config/opencode
-          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-
-          bd update "$TASK_ID" --status in-progress || true
-
-          opencode run "
-          Implement task: ${TASK_TITLE:-$TASK_SUMMARY}
-
-          Task ID: ${TASK_ID}
-
-          ## Instructions
-          1. Implement only this specific task
-          2. Follow existing code patterns
-          3. Run 'bun run build' to verify no errors
-          4. Make focused, atomic changes
-
-          When complete, summarize what was implemented.
-          " || true
-
-          bd update "$TASK_ID" --status done || true
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "feat(${{ matrix.task.id }}): ${{ matrix.task.title || matrix.task.summary }}"
+            git push -u origin "${{ steps.branch.outputs.sub_branch }}"
+          fi
 
       - name: Commit beads changes to beads-db branch
         run: |

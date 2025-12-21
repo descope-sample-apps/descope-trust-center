@@ -8,7 +8,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
-  models: read
+  id-token: write
 
 env:
   MAX_REVIEW_CYCLES: 3
@@ -59,68 +59,75 @@ jobs:
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
+      - name: Get diff for review
+        id: diff
+        run: |
+          DIFF=$(git diff origin/main...HEAD)
+          COMMIT_COUNT=$(git rev-list --count origin/main...HEAD)
+          echo "commit_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
+          # Store diff in a file to avoid shell escaping issues
+          echo "$DIFF" > /tmp/pr_diff.txt
+
       - name: Run OpenCode Review Agent
         id: review
+        uses: sst/opencode/github@dev
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          COMMIT_COUNT: ${{ steps.diff.outputs.commit_count }}
+        with:
+          model: opencode/big-pickle
+          agent: oracle
+          prompt: |
+            Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
+
+            ## PR Title
+            ${{ github.event.pull_request.title }}
+
+            ## PR Description
+            ${{ github.event.pull_request.body }}
+
+            ## Statistics
+            - Commits: ${{ steps.diff.outputs.commit_count }}
+
+            ## Instructions
+            1. Check code quality, patterns, and potential issues
+            2. Verify changes match the PR description
+            3. Look for inconsistencies between different parts of the implementation
+            4. Ensure all tasks work together cohesively
+            5. Run 'bun run build' to verify the build passes
+
+            Respond with one of:
+            - APPROVE: if changes look good
+            - REQUEST_CHANGES: if fixes are needed (list specific issues)
+
+      - name: Parse review decision
+        id: parse-decision
         run: |
-          curl -fsSL https://opencode.ai/install | bash
-          export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-
-          mkdir -p ~/.config/opencode
-          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BODY="${{ github.event.pull_request.body }}"
-
-          DIFF=$(git diff origin/main...HEAD)
-
-          # Get commit count to understand scope
-          COMMIT_COUNT=$(git rev-list --count origin/main...HEAD)
-
-          REVIEW_OUTPUT=$(opencode run "
-          Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
-
-          ## PR Title
-          ${PR_TITLE}
-
-          ## PR Description
-          ${PR_BODY}
-
-          ## Statistics
-          - Commits: ${COMMIT_COUNT}
-
-          ## Changes
-          \`\`\`diff
-          ${DIFF}
-          \`\`\`
-
-          ## Instructions
-          1. Check code quality, patterns, and potential issues
-          2. Verify changes match the PR description
-          3. Look for inconsistencies between different parts of the implementation
-          4. Ensure all tasks work together cohesively
-          5. Run 'bun run build' to verify the build passes
-
-          Respond with one of:
-          - APPROVE: if changes look good
-          - REQUEST_CHANGES: if fixes are needed (list specific issues)
-          " --agent oracle 2>&1) || true
-
-          echo "$REVIEW_OUTPUT"
-
-          if echo "$REVIEW_OUTPUT" | grep -qi "APPROVE"; then
-            echo "decision=approve" >> $GITHUB_OUTPUT
-          else
-            echo "decision=request_changes" >> $GITHUB_OUTPUT
-          fi
+          # The SST action posts a comment, check the latest comment for decision
+          echo "decision=approve" >> $GITHUB_OUTPUT
 
       - name: Post review comment
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const decision = '${{ steps.review.outputs.decision }}';
             const cycleCount = parseInt('${{ steps.get-cycle.outputs.count }}') + 1;
             const maxCycles = parseInt(process.env.MAX_REVIEW_CYCLES);
+
+            // Check the last comment from the bot to determine decision
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+
+            const lastBotComment = comments
+              .filter(c => c.user.login.includes('bot') || c.user.login.includes('opencode'))
+              .pop();
+
+            const decision = lastBotComment?.body?.toUpperCase().includes('APPROVE') ? 'approve' : 'request_changes';
+            core.exportVariable('REVIEW_DECISION', decision);
 
             let body = '';
 
@@ -155,6 +162,8 @@ jobs:
               body: body
             });
 
+            core.setOutput('decision', decision);
+
   rework:
     needs: review
     if: needs.review.outputs.decision == 'request_changes' && needs.review.outputs.cycle_count < 3
@@ -168,7 +177,7 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Checkout PR branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           token: ${{ steps.app-token.outputs.token }}
@@ -199,28 +208,23 @@ jobs:
             core.setOutput('feedback', feedback);
 
       - name: Run OpenCode Sisyphus Agent (Rework)
+        uses: sst/opencode/github@dev
         env:
           FEEDBACK: ${{ steps.feedback.outputs.feedback }}
-        run: |
-          curl -fsSL https://opencode.ai/install | bash
-          export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
+        with:
+          model: opencode/big-pickle
+          prompt: |
+            Fix the issues identified in the review.
 
-          mkdir -p ~/.config/opencode
-          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
+            ## Review Feedback
+            ${{ steps.feedback.outputs.feedback }}
 
-          opencode run "
-          Fix the issues identified in the review.
+            ## Instructions
+            1. Address each issue mentioned in the review
+            2. Keep changes minimal and focused
+            3. Run 'bun run build' to verify no errors
 
-          ## Review Feedback
-          ${FEEDBACK}
-
-          ## Instructions
-          1. Address each issue mentioned in the review
-          2. Keep changes minimal and focused
-          3. Run 'bun run build' to verify no errors
-
-          When complete, summarize the fixes made.
-          " || true
+            When complete, summarize the fixes made.
 
       - name: Commit fixes
         run: |
