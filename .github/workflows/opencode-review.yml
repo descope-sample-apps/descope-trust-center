@@ -65,7 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           curl -fsSL https://opencode.ai/install | bash
-          export PATH="$HOME/.local/bin:$PATH"
+          export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
           
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
@@ -206,7 +206,7 @@ jobs:
           FEEDBACK: ${{ steps.feedback.outputs.feedback }}
         run: |
           curl -fsSL https://opencode.ai/install | bash
-          export PATH="$HOME/.local/bin:$PATH"
+          export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
           
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
