@@ -49,7 +49,7 @@ jobs:
           MERGED=""
 
           for TASK_ID in $TASK_IDS_ARRAY; do
-            SUB_BRANCH="${FEATURE_BRANCH}/${TASK_ID}"
+            SUB_BRANCH="${FEATURE_BRANCH}-task-${TASK_ID}"
             echo "Processing: $SUB_BRANCH"
             
             # Check if branch exists
@@ -148,7 +148,7 @@ jobs:
           TASK_IDS_ARRAY=$(echo "$TASK_IDS" | jq -r '.[]')
 
           for TASK_ID in $TASK_IDS_ARRAY; do
-            SUB_BRANCH="${FEATURE_BRANCH}/${TASK_ID}"
+            SUB_BRANCH="${FEATURE_BRANCH}-task-${TASK_ID}"
             echo "Deleting: $SUB_BRANCH"
             git push origin --delete "$SUB_BRANCH" 2>/dev/null || echo "Branch $SUB_BRANCH already deleted or doesn't exist"
           done
@@ -205,7 +205,7 @@ jobs:
           TASK_IDS_ARRAY=$(echo "$TASK_IDS" | jq -r '.[]')
 
           for TASK_ID in $TASK_IDS_ARRAY; do
-            SUB_BRANCH="${FEATURE_BRANCH}/${TASK_ID}"
+            SUB_BRANCH="${FEATURE_BRANCH}-task-${TASK_ID}"
             
             if git ls-remote --heads origin "$SUB_BRANCH" | grep -q "$SUB_BRANCH"; then
               git fetch origin "$SUB_BRANCH"

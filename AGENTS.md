@@ -110,13 +110,16 @@ Comment on a GitHub Issue with:
 ### Branch Structure
 
 ```
-main                              # Production code
-├── opencode/issue-123            # Feature branch (consolidated)
-│   ├── opencode/issue-123/bd-abc.1   # Task sub-branch (temporary)
-│   ├── opencode/issue-123/bd-abc.2   # Task sub-branch (temporary)
-│   └── opencode/issue-123/bd-abc.3   # Task sub-branch (temporary)
-└── beads-db                      # Task database (isolated)
+main                                      # Production code
+├── opencode/issue-123                    # Feature branch (consolidated)
+├── opencode/issue-123-task-bd-abc.1      # Task sub-branch (temporary)
+├── opencode/issue-123-task-bd-abc.2      # Task sub-branch (temporary)
+├── opencode/issue-123-task-bd-abc.3      # Task sub-branch (temporary)
+└── beads-db                              # Task database (isolated)
 ```
+
+> **Note**: Task sub-branches use `-task-` suffix instead of `/` to avoid git ref conflicts
+> (git cannot have a branch that is both a name and a prefix for other branches).
 
 ## OhMyOpenCode Agents
 

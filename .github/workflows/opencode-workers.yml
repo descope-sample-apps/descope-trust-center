@@ -51,7 +51,7 @@ jobs:
         run: |
           TASK_ID="${{ matrix.task.id }}"
           FEATURE_BRANCH="${{ github.event.client_payload.branch }}"
-          SUB_BRANCH="${FEATURE_BRANCH}/${TASK_ID}"
+          SUB_BRANCH="${FEATURE_BRANCH}-task-${TASK_ID}"
           git checkout -b "$SUB_BRANCH"
           echo "sub_branch=$SUB_BRANCH" >> $GITHUB_OUTPUT
           echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT

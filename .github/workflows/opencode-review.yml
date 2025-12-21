@@ -58,6 +58,15 @@ jobs:
         run: |
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          # Install opencode CLI
+          VERSION=$(curl -sf https://api.github.com/repos/sst/opencode/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+          curl -fsSL "https://github.com/sst/opencode/releases/download/${VERSION}/opencode-linux-x64.tar.gz" | tar -xz -C /usr/local/bin
+          chmod +x /usr/local/bin/opencode
+
+      - name: Setup git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Get diff for review
         id: diff
@@ -70,44 +79,47 @@ jobs:
 
       - name: Run OpenCode Review Agent
         id: review
-        uses: sst/opencode/github@dev
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          COMMIT_COUNT: ${{ steps.diff.outputs.commit_count }}
-        with:
-          use_github_token: true
-          model: opencode/big-pickle
-          agent: oracle
-          prompt: |
-            Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
-
-            ## PR Title
-            ${{ github.event.pull_request.title }}
-
-            ## PR Description
-            ${{ github.event.pull_request.body }}
-
-            ## Statistics
-            - Commits: ${{ steps.diff.outputs.commit_count }}
-
-            ## Instructions
-            1. Check code quality, patterns, and potential issues
-            2. Verify changes match the PR description
-            3. Look for inconsistencies between different parts of the implementation
-            4. Ensure all tasks work together cohesively
-            5. Run 'bun run build' to verify the build passes
-
-            Respond with one of:
-            - APPROVE: if changes look good
-            - REQUEST_CHANGES: if fixes are needed (list specific issues)
-
-      - name: Parse review decision
-        id: parse-decision
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          # The SST action posts a comment, check the latest comment for decision
-          echo "decision=approve" >> $GITHUB_OUTPUT
+          # Create prompt file
+          cat > /tmp/review_prompt.txt << 'PROMPT_EOF'
+          Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
+
+          ## PR Title
+          ${{ github.event.pull_request.title }}
+
+          ## PR Description
+          ${{ github.event.pull_request.body }}
+
+          ## Statistics
+          - Commits: ${{ steps.diff.outputs.commit_count }}
+
+          ## Diff
+          $(cat /tmp/pr_diff.txt | head -500)
+
+          ## Instructions
+          1. Check code quality, patterns, and potential issues
+          2. Verify changes match the PR description
+          3. Look for inconsistencies between different parts of the implementation
+          4. Ensure all tasks work together cohesively
+          5. Run 'bun run build' to verify the build passes
+
+          Respond with one of:
+          - APPROVE: if changes look good
+          - REQUEST_CHANGES: if fixes are needed (list specific issues)
+          PROMPT_EOF
+
+          # Run opencode in non-interactive mode
+          opencode run --prompt "$(cat /tmp/review_prompt.txt)" --agent oracle --model anthropic/claude-sonnet-4-20250514 2>&1 | tee /tmp/review_output.txt || true
+
+          # Parse decision from output
+          if grep -qi "APPROVE" /tmp/review_output.txt; then
+            echo "decision=approve" >> $GITHUB_OUTPUT
+          else
+            echo "decision=request_changes" >> $GITHUB_OUTPUT
+          fi
 
       - name: Post review comment
         uses: actions/github-script@v8
@@ -116,20 +128,7 @@ jobs:
           script: |
             const cycleCount = parseInt('${{ steps.get-cycle.outputs.count }}') + 1;
             const maxCycles = parseInt(process.env.MAX_REVIEW_CYCLES);
-
-            // Check the last comment from the bot to determine decision
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number
-            });
-
-            const lastBotComment = comments
-              .filter(c => c.user.login.includes('bot') || c.user.login.includes('opencode'))
-              .pop();
-
-            const decision = lastBotComment?.body?.toUpperCase().includes('APPROVE') ? 'approve' : 'request_changes';
-            core.exportVariable('REVIEW_DECISION', decision);
+            const decision = '${{ steps.review.outputs.decision }}';
 
             let body = '';
 
@@ -189,6 +188,10 @@ jobs:
         run: |
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          # Install opencode CLI
+          VERSION=$(curl -sf https://api.github.com/repos/sst/opencode/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+          curl -fsSL "https://github.com/sst/opencode/releases/download/${VERSION}/opencode-linux-x64.tar.gz" | tar -xz -C /usr/local/bin
+          chmod +x /usr/local/bin/opencode
 
       - name: Setup git identity
         run: |
@@ -215,25 +218,25 @@ jobs:
             core.setOutput('feedback', feedback);
 
       - name: Run OpenCode Sisyphus Agent (Rework)
-        uses: sst/opencode/github@dev
         env:
-          FEEDBACK: ${{ steps.feedback.outputs.feedback }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        with:
-          use_github_token: true
-          model: opencode/big-pickle
-          prompt: |
-            Fix the issues identified in the review.
+        run: |
+          cat > /tmp/rework_prompt.txt << 'PROMPT_EOF'
+          Fix the issues identified in the review.
 
-            ## Review Feedback
-            ${{ steps.feedback.outputs.feedback }}
+          ## Review Feedback
+          ${{ steps.feedback.outputs.feedback }}
 
-            ## Instructions
-            1. Address each issue mentioned in the review
-            2. Keep changes minimal and focused
-            3. Run 'bun run build' to verify no errors
+          ## Instructions
+          1. Address each issue mentioned in the review
+          2. Keep changes minimal and focused
+          3. Run 'bun run build' to verify no errors
 
-            When complete, summarize the fixes made.
+          When complete, summarize the fixes made.
+          PROMPT_EOF
+
+          opencode run --prompt "$(cat /tmp/rework_prompt.txt)" --model anthropic/claude-sonnet-4-20250514 || true
 
       - name: Commit fixes
         run: |
