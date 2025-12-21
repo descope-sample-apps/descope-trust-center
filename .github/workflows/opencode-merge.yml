@@ -19,22 +19,17 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Checkout feature branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.client_payload.branch }}
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
-
-      - name: Setup git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Merge all task sub-branches
         id: merge-branches
@@ -87,7 +82,7 @@ jobs:
       - name: Create Pull Request
         id: create-pr
         if: steps.merge-branches.outputs.has_conflicts != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
@@ -160,13 +155,13 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Checkout feature branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.client_payload.branch }}
           token: ${{ steps.app-token.outputs.token }}
@@ -177,13 +172,8 @@ jobs:
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
-      - name: Setup git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
       - name: Post conflict notification
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
@@ -203,9 +193,6 @@ jobs:
         run: |
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-
-          mkdir -p ~/.config/opencode
-          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
 
           TASK_IDS_ARRAY=$(echo "$TASK_IDS" | jq -r '.[]')
 
@@ -249,7 +236,7 @@ jobs:
           git push origin ${{ github.event.client_payload.branch }}
 
       - name: Retry merge dispatch
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |

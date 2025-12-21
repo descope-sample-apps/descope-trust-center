@@ -21,13 +21,13 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Checkout feature branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.client_payload.branch }}
           token: ${{ steps.app-token.outputs.token }}
@@ -60,9 +60,6 @@ jobs:
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
 
-          mkdir -p ~/.config/opencode
-          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-
           bd update "$TASK_ID" --status in-progress || true
 
           opencode run "
@@ -91,14 +88,14 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Determine next action
         id: next
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
@@ -120,7 +117,7 @@ jobs:
             }
 
       - name: Post batch progress comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
@@ -145,7 +142,7 @@ jobs:
 
       - name: Dispatch next batch
         if: steps.next.outputs.action == 'next_batch'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
@@ -165,7 +162,7 @@ jobs:
 
       - name: Dispatch merge
         if: steps.next.outputs.action == 'merge'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
