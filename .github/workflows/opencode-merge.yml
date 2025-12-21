@@ -43,11 +43,11 @@ jobs:
           TASK_IDS: ${{ toJson(github.event.client_payload.task_ids) }}
         run: |
           echo "Merging task sub-branches into $FEATURE_BRANCH..."
-          
+
           TASK_IDS_ARRAY=$(echo "$TASK_IDS" | jq -r '.[]')
           CONFLICTS=""
           MERGED=""
-          
+
           for TASK_ID in $TASK_IDS_ARRAY; do
             SUB_BRANCH="${FEATURE_BRANCH}/${TASK_ID}"
             echo "Processing: $SUB_BRANCH"
@@ -69,14 +69,14 @@ jobs:
               echo "⚠ Branch $SUB_BRANCH not found (task may have had no changes)"
             fi
           done
-          
+
           if [ -n "$CONFLICTS" ]; then
             echo "has_conflicts=true" >> $GITHUB_OUTPUT
             echo "conflict_tasks=$CONFLICTS" >> $GITHUB_OUTPUT
           else
             echo "has_conflicts=false" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "merged_tasks=$MERGED" >> $GITHUB_OUTPUT
 
       - name: Push merged feature branch
@@ -94,16 +94,16 @@ jobs:
             const issueNumber = context.payload.client_payload.issue_number;
             const branch = context.payload.client_payload.branch;
             const taskIds = context.payload.client_payload.task_ids;
-            
+
             // Get issue details for PR title/body
             const { data: issue } = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber
             });
-            
+
             const taskList = taskIds.map(id => `- \`${id}\``).join('\n');
-            
+
             const { data: pr } = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -122,10 +122,10 @@ jobs:
               head: branch,
               base: 'main'
             });
-            
+
             console.log(`Created PR #${pr.number}`);
             core.setOutput('pr_number', pr.number);
-            
+
             // Comment on the issue
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -146,7 +146,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           TASK_IDS_ARRAY=$(echo "$TASK_IDS" | jq -r '.[]')
-          
+
           for TASK_ID in $TASK_IDS_ARRAY; do
             SUB_BRANCH="${FEATURE_BRANCH}/${TASK_ID}"
             echo "Deleting: $SUB_BRANCH"
@@ -198,18 +198,17 @@ jobs:
 
       - name: Resolve conflicts with Sisyphus
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           FEATURE_BRANCH: ${{ github.event.client_payload.branch }}
           TASK_IDS: ${{ toJson(github.event.client_payload.task_ids) }}
         run: |
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-          
+
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-          
+
           TASK_IDS_ARRAY=$(echo "$TASK_IDS" | jq -r '.[]')
-          
+
           for TASK_ID in $TASK_IDS_ARRAY; do
             SUB_BRANCH="${FEATURE_BRANCH}/${TASK_ID}"
             

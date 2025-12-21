@@ -84,6 +84,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          bd init
 
       - name: Create feature branch
         id: branch
@@ -107,8 +108,6 @@ jobs:
 
       - name: Run Planner-Sisyphus
         id: run-plan
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
@@ -324,8 +323,6 @@ jobs:
             });
 
       - name: Run Sisyphus
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"

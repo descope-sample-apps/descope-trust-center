@@ -39,6 +39,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          bd init
 
       - name: Create task sub-branch
         id: branch
@@ -52,7 +53,6 @@ jobs:
 
       - name: Run OpenCode Sisyphus Agent
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           TASK_ID: ${{ matrix.task.id }}
           TASK_TITLE: ${{ matrix.task.title }}
           TASK_SUMMARY: ${{ matrix.task.summary }}
