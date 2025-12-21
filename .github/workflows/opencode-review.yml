@@ -72,6 +72,7 @@ jobs:
         id: review
         uses: sst/opencode/github@dev
         env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           COMMIT_COUNT: ${{ steps.diff.outputs.commit_count }}
@@ -212,6 +213,7 @@ jobs:
         uses: sst/opencode/github@dev
         env:
           FEEDBACK: ${{ steps.feedback.outputs.feedback }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           use_github_token: true
           model: opencode/big-pickle

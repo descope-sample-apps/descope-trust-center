@@ -109,6 +109,8 @@ jobs:
       - name: Run Planner-Sisyphus
         id: run-plan
         uses: sst/opencode/github@dev
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           model: opencode/big-pickle
           use_github_token: true
@@ -309,6 +311,8 @@ jobs:
 
       - name: Run Sisyphus
         uses: sst/opencode/github@dev
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           model: opencode/big-pickle
           use_github_token: true

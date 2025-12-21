@@ -61,6 +61,7 @@ jobs:
           TASK_ID: ${{ matrix.task.id }}
           TASK_TITLE: ${{ matrix.task.title }}
           TASK_SUMMARY: ${{ matrix.task.summary }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           use_github_token: true
           model: opencode/big-pickle
