@@ -88,7 +88,8 @@ jobs:
       - name: Fetch Beads database
         run: |
           git fetch origin beads-db:beads-db || true
-          git checkout beads-db -- .beads/ 2>/dev/null || bd init
+          git checkout beads-db -- .beads/ 2>/dev/null || true
+          bd init --force || bd init
 
       - name: Create feature branch
         id: branch
