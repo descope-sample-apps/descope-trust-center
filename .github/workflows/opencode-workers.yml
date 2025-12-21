@@ -42,9 +42,9 @@ jobs:
           "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
 
-      - name: Pull beads state
+      - name: Sync beads state
         run: |
-          bd pull
+          bd prime
 
       - name: Get ready tasks
         id: ready
@@ -105,9 +105,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Pull beads state
+      - name: Sync beads state
         run: |
-          bd pull
+          bd prime
 
       - name: Create task sub-branch
         id: branch
@@ -188,9 +188,9 @@ jobs:
           "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
 
-      - name: Pull latest beads state
+      - name: Sync beads state
         run: |
-          bd pull
+          bd prime
 
       - name: Check for more ready tasks
         id: check
