@@ -70,7 +70,7 @@ jobs:
           
           bd update "$TASK_ID" --status in-progress || true
           
-          opencode --yes --print --prompt "
+          opencode run "
           Implement task: ${TASK_TITLE:-$TASK_SUMMARY}
 
           Task ID: ${TASK_ID}
@@ -90,16 +90,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          CURRENT_BRANCH=$(git branch --show-current)
-          mkdir -p /tmp/beads-backup && cp -r .beads/* /tmp/beads-backup/
-          git stash --include-untracked
-          git checkout beads-db
-          cp -r /tmp/beads-backup/* .beads/
-          git add .beads/ || true
-          git diff --staged --quiet || git commit -m "chore: update task ${{ matrix.task.id }} status"
-          git push origin beads-db || true
-          git checkout "$CURRENT_BRANCH"
-          git stash pop || true
+          bd sync -m "chore: update task ${{ matrix.task.id }} status"
 
       - name: Commit and push to sub-branch
         id: commit

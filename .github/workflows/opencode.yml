@@ -128,7 +128,7 @@ jobs:
           ISSUE_BODY_EOF
           )
           
-          opencode --agent Planner-Sisyphus --yes --print --prompt "
+          opencode run "
           Analyze GitHub Issue #${ISSUE_NUMBER} and break it into atomic, parallelizable tasks.
           
           ## Issue Title
@@ -157,7 +157,7 @@ jobs:
           - bd-abc.5 'Integration' depends on bd-abc.3, bd-abc.4
           
           Run 'bd list --json' when done.
-          " > plan_output.txt 2>&1 || true
+          " --agent Planner-Sisyphus > plan_output.txt 2>&1 || true
           
           cat plan_output.txt
           
@@ -256,16 +256,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          CURRENT_BRANCH=$(git branch --show-current)
-          mkdir -p /tmp/beads-backup && cp -r .beads/* /tmp/beads-backup/
-          git stash --include-untracked
-          git checkout beads-db
-          cp -r /tmp/beads-backup/* .beads/
-          git add .beads/
-          git diff --staged --quiet || git commit -m "chore: create epic and tasks for issue #${{ github.event.issue.number }}"
-          git push origin beads-db
-          git checkout "$CURRENT_BRANCH"
-          git stash pop || true
+          bd sync -m "chore: create epic and tasks for issue #${{ github.event.issue.number }}"
 
       - name: Dispatch first batch
         if: steps.batches.outputs.batch_count > 0
@@ -356,7 +347,7 @@ jobs:
           ISSUE_BODY_EOF
           )
           
-          opencode --yes --print --prompt "
+          opencode run "
           Implement the changes requested in GitHub Issue #${ISSUE_NUMBER}.
           
           ## Issue Title
