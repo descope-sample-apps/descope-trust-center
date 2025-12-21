@@ -44,7 +44,7 @@ jobs:
 
       - name: Sync beads state
         run: |
-          bd prime
+          bd sync --no-pull || true
 
       - name: Get ready tasks
         id: ready
@@ -107,7 +107,7 @@ jobs:
 
       - name: Sync beads state
         run: |
-          bd prime
+          bd sync --no-pull || true
 
       - name: Create task sub-branch
         id: branch
@@ -190,7 +190,7 @@ jobs:
 
       - name: Sync beads state
         run: |
-          bd prime
+          bd sync --no-pull || true
 
       - name: Check for more ready tasks
         id: check
