@@ -75,14 +75,20 @@ jobs:
           
           DIFF=$(git diff origin/main...HEAD)
           
+          # Get commit count to understand scope
+          COMMIT_COUNT=$(git rev-list --count origin/main...HEAD)
+          
           REVIEW_OUTPUT=$(opencode --agent oracle --yes --print --prompt "
-          Review this Pull Request.
+          Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
 
           ## PR Title
           ${PR_TITLE}
 
           ## PR Description
           ${PR_BODY}
+
+          ## Statistics
+          - Commits: ${COMMIT_COUNT}
 
           ## Changes
           \`\`\`diff
@@ -92,7 +98,9 @@ jobs:
           ## Instructions
           1. Check code quality, patterns, and potential issues
           2. Verify changes match the PR description
-          3. Run 'bun run build' if needed
+          3. Look for inconsistencies between different parts of the implementation
+          4. Ensure all tasks work together cohesively
+          5. Run 'bun run build' to verify the build passes
 
           Respond with one of:
           - APPROVE: if changes look good
@@ -151,7 +159,7 @@ jobs:
 
   rework:
     needs: review
-    if: needs.review.outputs.decision == 'request_changes' && needs.review.outputs.cycle_count < 3
+    if: needs.review.outputs.decision == 'request_changes' && needs.review.outputs.cycle_count < env.MAX_REVIEW_CYCLES
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
@@ -229,7 +237,7 @@ jobs:
 
   request-human-review:
     needs: review
-    if: needs.review.outputs.decision == 'approve' || needs.review.outputs.cycle_count >= 3
+    if: needs.review.outputs.decision == 'approve' || needs.review.outputs.cycle_count >= env.MAX_REVIEW_CYCLES
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token

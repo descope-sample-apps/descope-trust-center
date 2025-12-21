@@ -1,8 +1,8 @@
-name: OpenCode Workers
+name: OpenCode Batch Workers
 
 on:
   repository_dispatch:
-    types: [opencode-workers]
+    types: [opencode-batch]
 
 permissions:
   contents: write
@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       max-parallel: 5
       matrix:
-        task: ${{ github.event.client_payload.tasks }}
+        task: ${{ github.event.client_payload.batches[github.event.client_payload.batch_index] }}
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -26,10 +26,12 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - name: Checkout
+      - name: Checkout feature branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.client_payload.branch }}
           token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
 
       - name: Setup tools
         run: |
@@ -43,13 +45,14 @@ jobs:
           git fetch origin beads-db:beads-db || true
           git checkout beads-db -- .beads/ 2>/dev/null || bd init
 
-      - name: Create branch
+      - name: Create task sub-branch
         id: branch
         run: |
           TASK_ID="${{ matrix.task.id }}"
-          BRANCH_NAME="opencode/task-${TASK_ID}"
-          git checkout -b "$BRANCH_NAME"
-          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          FEATURE_BRANCH="${{ github.event.client_payload.branch }}"
+          SUB_BRANCH="${FEATURE_BRANCH}/${TASK_ID}"
+          git checkout -b "$SUB_BRANCH"
+          echo "sub_branch=$SUB_BRANCH" >> $GITHUB_OUTPUT
           echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
 
       - name: Run OpenCode Sisyphus Agent
@@ -88,62 +91,128 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           CURRENT_BRANCH=$(git branch --show-current)
-          cp -r .beads/ /tmp/beads-backup/
+          mkdir -p /tmp/beads-backup && cp -r .beads/* /tmp/beads-backup/
+          git stash --include-untracked
           git checkout beads-db
           cp -r /tmp/beads-backup/* .beads/
           git add .beads/ || true
           git diff --staged --quiet || git commit -m "chore: update task ${{ matrix.task.id }} status"
           git push origin beads-db || true
           git checkout "$CURRENT_BRANCH"
+          git stash pop || true
 
-      - name: Commit changes
+      - name: Commit and push to sub-branch
         id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Remove .beads from working tree (already committed to beads-db)
+          rm -rf .beads/
           git add -A
           if git diff --staged --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             git commit -m "feat(${{ steps.branch.outputs.task_id }}): implement task"
-            git push -u origin "${{ steps.branch.outputs.branch }}"
+            git push -u origin "${{ steps.branch.outputs.sub_branch }}"
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create Pull Request
-        if: steps.commit.outputs.has_changes == 'true'
+  batch-complete:
+    needs: worker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Determine next action
+        id: next
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const taskId = process.env.TASK_ID;
-            const taskTitle = process.env.TASK_TITLE || process.env.TASK_SUMMARY || 'Task';
-            const issueNumber = context.payload.client_payload.issue_number;
+            const payload = context.payload.client_payload;
+            const currentBatch = payload.batch_index;
+            const batches = payload.batches;
+            const totalBatches = batches.length;
+            const nextBatch = currentBatch + 1;
             
-            const { data: pr } = await github.rest.pulls.create({
+            console.log(`Batch ${currentBatch + 1}/${totalBatches} complete`);
+            
+            if (nextBatch < totalBatches) {
+              core.setOutput('action', 'next_batch');
+              core.setOutput('next_batch_index', nextBatch);
+              console.log(`Dispatching batch ${nextBatch + 1}...`);
+            } else {
+              core.setOutput('action', 'merge');
+              console.log('All batches complete. Dispatching merge...');
+            }
+
+      - name: Post batch progress comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const payload = context.payload.client_payload;
+            const currentBatch = payload.batch_index + 1;
+            const totalBatches = payload.batches.length;
+            const nextAction = '${{ steps.next.outputs.action }}';
+            
+            let body = '';
+            if (nextAction === 'next_batch') {
+              body = `### ✅ Batch ${currentBatch}/${totalBatches} Complete\n\nStarting batch ${currentBatch + 1}...`;
+            } else {
+              body = `### ✅ All Batches Complete (${totalBatches}/${totalBatches})\n\nMerging task branches and creating PR...`;
+            }
+            
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `🤖 [${taskId}] ${taskTitle}`,
-              body: `## Summary
-
-            Automated implementation of task \`${taskId}\`
-
-            Related issue: #${issueNumber}
-
-            ## Changes
-
-            _See commits for details_
-
-            ---
-
-            Part of #${issueNumber}`,
-              head: process.env.BRANCH,
-              base: 'main'
+              issue_number: payload.issue_number,
+              body: body
             });
+
+      - name: Dispatch next batch
+        if: steps.next.outputs.action == 'next_batch'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const payload = context.payload.client_payload;
             
-            console.log(`Created PR #${pr.number} for task ${taskId}`);
-        env:
-          BRANCH: ${{ steps.branch.outputs.branch }}
-          TASK_ID: ${{ matrix.task.id }}
-          TASK_TITLE: ${{ matrix.task.title }}
-          TASK_SUMMARY: ${{ matrix.task.summary }}
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'opencode-batch',
+              client_payload: {
+                issue_number: payload.issue_number,
+                branch: payload.branch,
+                batch_index: parseInt('${{ steps.next.outputs.next_batch_index }}'),
+                batches: payload.batches
+              }
+            });
+
+      - name: Dispatch merge
+        if: steps.next.outputs.action == 'merge'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const payload = context.payload.client_payload;
+            
+            // Collect all task IDs from all batches
+            const allTasks = payload.batches.flat().map(t => t.id);
+            
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'opencode-merge',
+              client_payload: {
+                issue_number: payload.issue_number,
+                branch: payload.branch,
+                task_ids: allTasks
+              }
+            });

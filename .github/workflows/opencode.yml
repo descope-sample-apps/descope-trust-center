@@ -25,7 +25,6 @@ jobs:
         id: parse
         run: |
           COMMENT='${{ github.event.comment.body }}'
-          
           if echo "$COMMENT" | grep -qiE '/(oc|opencode)\s+plan'; then
             echo "command=plan" >> $GITHUB_OUTPUT
             echo "is_valid=true" >> $GITHUB_OUTPUT
@@ -57,9 +56,6 @@ jobs:
     needs: [parse-command, acknowledge]
     if: needs.parse-command.outputs.command == 'plan'
     runs-on: ubuntu-latest
-    outputs:
-      tasks: ${{ steps.run-plan.outputs.tasks }}
-      task_count: ${{ steps.run-plan.outputs.task_count }}
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -72,14 +68,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
 
       - name: Setup tools
         run: |
-          # Install Beads
           curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          
-          # Install Bun (for OpenCode)
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
@@ -87,6 +81,14 @@ jobs:
         run: |
           git fetch origin beads-db:beads-db || true
           git checkout beads-db -- .beads/ 2>/dev/null || bd init
+
+      - name: Create feature branch
+        id: branch
+        run: |
+          BRANCH_NAME="opencode/issue-${{ github.event.issue.number }}"
+          git checkout -b "$BRANCH_NAME"
+          git push -u origin "$BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
       - name: Post planning started comment
         uses: actions/github-script@v7
@@ -97,23 +99,20 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.issue.number,
-              body: '🤖 **OpenCode Plan Agent Started**\n\nAnalyzing issue and breaking down into tasks...'
+              body: '🤖 **Planning Started**\n\nAnalyzing issue and breaking down into tasks...'
             });
 
-      - name: Run OpenCode Plan Agent
+      - name: Run Planner-Sisyphus
         id: run-plan
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          # Install OpenCode
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.local/bin:$PATH"
           
-          # Configure OhMyOpenCode plugin
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
           
-          # Create the planning prompt
           ISSUE_NUMBER="${{ github.event.issue.number }}"
           ISSUE_TITLE="${{ github.event.issue.title }}"
           ISSUE_BODY=$(cat << 'ISSUE_BODY_EOF'
@@ -121,7 +120,6 @@ jobs:
           ISSUE_BODY_EOF
           )
           
-          # Run OpenCode with Planner-Sisyphus agent (OhMyOpenCode)
           opencode --agent Planner-Sisyphus --yes --print --prompt "
           Analyze GitHub Issue #${ISSUE_NUMBER} and break it into atomic, parallelizable tasks.
           
@@ -132,47 +130,109 @@ jobs:
           ${ISSUE_BODY}
           
           ## Instructions
-          1. Create beads tasks using 'bd create' for each atomic work item
-          2. Set appropriate priorities (P0-P3)
-          3. Add dependencies between tasks using 'bd dep add'
-          4. Output the final task list as JSON
+          1. Create a beads epic for this issue:
+             bd create \"Issue #${ISSUE_NUMBER}: ${ISSUE_TITLE}\" -p 1
           
-          After creating all tasks, run 'bd ready --json' and output the result.
+          2. Create child tasks under the epic using bd create with appropriate priorities (1-4)
+          
+          3. Add dependencies between tasks using 'bd dep add <task-id> <depends-on-id>'
+             - Tasks that can run in parallel should have NO dependencies between them
+             - Tasks that must wait for others should declare dependencies
+          
+          4. After creating all tasks, output the task list
+          
+          Example dependency structure:
+          - bd-abc.1 'Setup types' (no deps - can start immediately)
+          - bd-abc.2 'Create component' (no deps - can start immediately)  
+          - bd-abc.3 'Add styling' depends on bd-abc.2
+          - bd-abc.4 'Write tests' depends on bd-abc.1, bd-abc.2
+          - bd-abc.5 'Integration' depends on bd-abc.3, bd-abc.4
+          
+          Run 'bd list --json' when done.
           " > plan_output.txt 2>&1 || true
           
-          # Extract tasks from beads
-          TASKS=$(bd ready --json 2>/dev/null || echo '[]')
-          TASK_COUNT=$(echo "$TASKS" | jq 'length')
+          cat plan_output.txt
           
+          TASKS=$(bd list --json 2>/dev/null || echo '[]')
           echo "tasks<<EOF" >> $GITHUB_OUTPUT
           echo "$TASKS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-          echo "task_count=$TASK_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Compute dependency batches
+        id: batches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tasks = JSON.parse(process.env.TASKS || '[]');
+            
+            if (tasks.length === 0) {
+              core.setOutput('batches', '[]');
+              core.setOutput('batch_count', 0);
+              return;
+            }
+            
+            const taskMap = new Map(tasks.map(t => [t.id, t]));
+            const completed = new Set();
+            const batches = [];
+            let remaining = [...tasks];
+            
+            while (remaining.length > 0) {
+              const batch = remaining.filter(t => {
+                const deps = t.dependencies || t.blocked_by || [];
+                return deps.every(d => completed.has(d));
+              });
+              
+              if (batch.length === 0) {
+                console.log('Circular dependency detected, adding remaining as final batch');
+                batches.push(remaining);
+                break;
+              }
+              
+              batches.push(batch);
+              batch.forEach(t => completed.add(t.id));
+              remaining = remaining.filter(t => !completed.has(t.id));
+            }
+            
+            console.log(`Created ${batches.length} batches from ${tasks.length} tasks`);
+            batches.forEach((b, i) => {
+              console.log(`Batch ${i + 1}: ${b.map(t => t.id).join(', ')}`);
+            });
+            
+            core.setOutput('batches', JSON.stringify(batches));
+            core.setOutput('batch_count', batches.length);
+        env:
+          TASKS: ${{ steps.run-plan.outputs.tasks }}
 
       - name: Post plan summary
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const tasks = JSON.parse(process.env.TASKS || '[]');
-            const taskCount = tasks.length;
+            const batches = JSON.parse(process.env.BATCHES || '[]');
+            const batchCount = batches.length;
+            const taskCount = batches.flat().length;
             
-            let taskList = '';
-            if (taskCount > 0) {
-              taskList = tasks.map((t, i) => `${i + 1}. \`${t.id}\` - ${t.title || t.summary || 'Task'}`).join('\n');
+            let batchList = '';
+            if (batchCount > 0) {
+              batchList = batches.map((batch, i) => {
+                const tasks = batch.map(t => `  - \`${t.id}\` ${t.title || t.summary || ''}`).join('\n');
+                return `**Batch ${i + 1}** (${batch.length} task${batch.length > 1 ? 's' : ''}):\n${tasks}`;
+              }).join('\n\n');
             } else {
-              taskList = '_No tasks created_';
+              batchList = '_No tasks created_';
             }
             
             const body = `## 📋 Plan Complete
 
-            **${taskCount} task(s)** created and ready for parallel execution.
+            **${taskCount} task(s)** organized into **${batchCount} batch(es)** based on dependencies.
 
-            ### Tasks
-            ${taskList}
+            ### Execution Plan
+            ${batchList}
 
             ---
-            🚀 Dispatching workers...`;
+            🚀 Starting batch 1...
+            
+            Branch: \`${process.env.BRANCH}\``;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -181,47 +241,53 @@ jobs:
               body: body
             });
         env:
-          TASKS: ${{ steps.run-plan.outputs.tasks }}
+          BATCHES: ${{ steps.batches.outputs.batches }}
+          BRANCH: ${{ steps.branch.outputs.branch }}
 
-      - name: Commit beads changes to beads-db branch
+      - name: Commit beads to beads-db branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git stash push -m "beads-changes" -- .beads/ || true
+          CURRENT_BRANCH=$(git branch --show-current)
+          mkdir -p /tmp/beads-backup && cp -r .beads/* /tmp/beads-backup/
+          git stash --include-untracked
           git checkout beads-db
+          cp -r /tmp/beads-backup/* .beads/
+          git add .beads/
+          git diff --staged --quiet || git commit -m "chore: create epic and tasks for issue #${{ github.event.issue.number }}"
+          git push origin beads-db
+          git checkout "$CURRENT_BRANCH"
           git stash pop || true
-          git add .beads/ || true
-          git diff --staged --quiet || git commit -m "chore: add beads tasks for issue #${{ github.event.issue.number }}"
-          git push origin beads-db || true
-          git checkout main
 
-      - name: Dispatch workers
-        if: steps.run-plan.outputs.task_count > 0
+      - name: Dispatch first batch
+        if: steps.batches.outputs.batch_count > 0
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const tasks = JSON.parse(process.env.TASKS || '[]');
+            const batches = JSON.parse(process.env.BATCHES || '[]');
             
-            if (tasks.length === 0) {
-              console.log('No tasks to dispatch');
+            if (batches.length === 0) {
+              console.log('No batches to dispatch');
               return;
             }
             
-            // Dispatch workers workflow with task matrix
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              event_type: 'opencode-workers',
+              event_type: 'opencode-batch',
               client_payload: {
                 issue_number: context.payload.issue.number,
-                tasks: tasks
+                branch: process.env.BRANCH,
+                batch_index: 0,
+                batches: batches
               }
             });
             
-            console.log(`Dispatched ${tasks.length} worker(s)`);
+            console.log(`Dispatched batch 1 with ${batches[0].length} task(s)`);
         env:
-          TASKS: ${{ steps.run-plan.outputs.tasks }}
+          BATCHES: ${{ steps.batches.outputs.batches }}
+          BRANCH: ${{ steps.branch.outputs.branch }}
 
   work:
     needs: [parse-command, acknowledge]
@@ -239,21 +305,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
 
       - name: Setup tools
         run: |
-          # Install Beads
-          curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          
-          # Install Bun
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
-      - name: Fetch Beads database
+      - name: Create feature branch
+        id: branch
         run: |
-          git fetch origin beads-db:beads-db || true
-          git checkout beads-db -- .beads/ 2>/dev/null || bd init
+          BRANCH_NAME="opencode/issue-${{ github.event.issue.number }}"
+          git checkout -b "$BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
       - name: Post work started comment
         uses: actions/github-script@v7
@@ -264,29 +328,19 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.issue.number,
-              body: '🤖 **OpenCode Build Agent Started**\n\nImplementing changes directly...'
+              body: '🤖 **Sisyphus Started**\n\nImplementing changes directly (no planning phase)...'
             });
 
-      - name: Create branch
-        id: branch
-        run: |
-          BRANCH_NAME="opencode/issue-${{ github.event.issue.number }}"
-          git checkout -b "$BRANCH_NAME"
-          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
-
-      - name: Run OpenCode Build Agent
+      - name: Run Sisyphus
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          # Install OpenCode
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.local/bin:$PATH"
           
-          # Configure OhMyOpenCode plugin
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
           
-          # Create the build prompt
           ISSUE_NUMBER="${{ github.event.issue.number }}"
           ISSUE_TITLE="${{ github.event.issue.title }}"
           ISSUE_BODY=$(cat << 'ISSUE_BODY_EOF'
@@ -294,7 +348,6 @@ jobs:
           ISSUE_BODY_EOF
           )
           
-          # Run OpenCode with Sisyphus (default OhMyOpenCode agent)
           opencode --yes --print --prompt "
           Implement the changes requested in GitHub Issue #${ISSUE_NUMBER}.
           
@@ -308,21 +361,16 @@ jobs:
           1. Implement the requested changes
           2. Follow existing code patterns
           3. Run 'bun run build' to verify no errors
-          4. Create atomic, focused commits
           
           When complete, summarize what was implemented.
           " || true
 
-      - name: Commit changes
+      - name: Commit and push
         id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Add all changes
           git add -A
-          
-          # Check if there are changes to commit
           if git diff --staged --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
@@ -345,10 +393,6 @@ jobs:
             
             Automated implementation for #${context.payload.issue.number}
             
-            ## Changes
-            
-            _See commits for details_
-            
             ---
             
             Closes #${context.payload.issue.number}`,
@@ -356,14 +400,11 @@ jobs:
               base: 'main'
             });
             
-            console.log(`Created PR #${pr.number}`);
-            
-            // Comment on the issue
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.issue.number,
-              body: `✅ **Implementation Complete**\n\nPull Request created: #${pr.number}\n\nThe Review Agent will now analyze the changes.`
+              body: `✅ **Implementation Complete**\n\nPull Request: #${pr.number}`
             });
         env:
           BRANCH: ${{ steps.branch.outputs.branch }}
@@ -378,5 +419,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.issue.number,
-              body: '⚠️ **No Changes Made**\n\nThe Build Agent did not produce any code changes. This could mean:\n- The issue is already resolved\n- More clarification is needed\n- The task requires manual intervention'
+              body: '⚠️ **No Changes Made**\n\nSisyphus did not produce any code changes.'
             });
