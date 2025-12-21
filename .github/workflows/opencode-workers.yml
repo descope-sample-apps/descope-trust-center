@@ -62,6 +62,7 @@ jobs:
           TASK_TITLE: ${{ matrix.task.title }}
           TASK_SUMMARY: ${{ matrix.task.summary }}
         with:
+          use_github_token: true
           model: opencode/big-pickle
           prompt: |
             Implement task: ${{ matrix.task.title || matrix.task.summary }}

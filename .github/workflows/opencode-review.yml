@@ -76,6 +76,7 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
           COMMIT_COUNT: ${{ steps.diff.outputs.commit_count }}
         with:
+          use_github_token: true
           model: opencode/big-pickle
           agent: oracle
           prompt: |
@@ -212,6 +213,7 @@ jobs:
         env:
           FEEDBACK: ${{ steps.feedback.outputs.feedback }}
         with:
+          use_github_token: true
           model: opencode/big-pickle
           prompt: |
             Fix the issues identified in the review.

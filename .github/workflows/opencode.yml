@@ -111,6 +111,7 @@ jobs:
         uses: sst/opencode/github@dev
         with:
           model: opencode/big-pickle
+          use_github_token: true
           agent: Planner-Sisyphus
           prompt: |
             Analyze this GitHub Issue and break it into atomic, parallelizable tasks.
@@ -310,6 +311,7 @@ jobs:
         uses: sst/opencode/github@dev
         with:
           model: opencode/big-pickle
+          use_github_token: true
           prompt: |
             Implement the changes requested in this GitHub Issue.
 
