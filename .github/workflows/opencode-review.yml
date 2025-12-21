@@ -29,7 +29,7 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
@@ -83,10 +83,10 @@ jobs:
         run: |
           DIFF_SNIPPET=$(head -500 /tmp/pr_diff.txt)
           
-          bun run .github/scripts/opencode-run.ts \
+          opencode run \
             --model "opencode/big-pickle" \
             --agent "oracle" \
-            --prompt "Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
+            "Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
 
           ## PR Title
           ${{ github.event.pull_request.title }}
@@ -109,7 +109,7 @@ jobs:
 
           Respond with one of:
           - APPROVE: if changes look good
-          - REQUEST_CHANGES: if fixes are needed (list specific issues)" 2>&1 | tee /tmp/review_output.txt || true
+          - REQUEST_CHANGES: if fixes are needed (list specific issues)" 2>&1 | tee /tmp/review_output.txt
 
           if grep -qi "APPROVE" /tmp/review_output.txt; then
             echo "decision=approve" >> $GITHUB_OUTPUT
@@ -174,7 +174,7 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Checkout PR branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           token: ${{ steps.app-token.outputs.token }}
@@ -216,9 +216,9 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          bun run .github/scripts/opencode-run.ts \
+          opencode run \
             --model "opencode/big-pickle" \
-            --prompt "Fix the issues identified in the review.
+            "Fix the issues identified in the review.
 
           ## Review Feedback
           ${{ steps.feedback.outputs.feedback }}

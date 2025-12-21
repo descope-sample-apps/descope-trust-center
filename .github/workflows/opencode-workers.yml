@@ -11,13 +11,11 @@ permissions:
   id-token: write
 
 jobs:
-  worker:
+  get-ready-tasks:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      max-parallel: 5
-      matrix:
-        task: ${{ github.event.client_payload.batches[github.event.client_payload.batch_index] }}
+    outputs:
+      matrix: ${{ steps.ready.outputs.matrix }}
+      has_tasks: ${{ steps.ready.outputs.has_tasks }}
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -27,7 +25,61 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Checkout feature branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup beads
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          gh release download --repo steveyegge/beads --pattern 'beads-*-linux-x64.tar.gz' --output beads.tar.gz
+          tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          "$HOME/.local/bin/bd" init
+          sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
+
+      - name: Pull beads state
+        run: |
+          bd pull
+
+      - name: Get ready tasks
+        id: ready
+        run: |
+          READY=$(bd ready --json 2>/dev/null || echo "[]")
+          echo "Raw ready output: $READY"
+          
+          if [ "$READY" = "[]" ] || [ -z "$READY" ]; then
+            echo "has_tasks=false" >> $GITHUB_OUTPUT
+            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+          else
+            # Transform to GitHub Actions matrix format
+            MATRIX=$(echo "$READY" | jq -c '{include: .}')
+            echo "has_tasks=true" >> $GITHUB_OUTPUT
+            echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          fi
+
+  worker:
+    needs: get-ready-tasks
+    if: needs.get-ready-tasks.outputs.has_tasks == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix: ${{ fromJson(needs.get-ready-tasks.outputs.matrix) }}
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.client_payload.branch }}
           token: ${{ steps.app-token.outputs.token }}
@@ -37,9 +89,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          mkdir -p "$HOME/.local/bin"
           gh release download --repo steveyegge/beads --pattern 'beads-*-linux-x64.tar.gz' --output beads.tar.gz
           tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
-          mkdir -p "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
@@ -53,10 +105,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Pull beads state
+        run: |
+          bd pull
+
       - name: Create task sub-branch
         id: branch
         run: |
-          TASK_ID="${{ matrix.task.id }}"
+          TASK_ID="${{ matrix.id }}"
           FEATURE_BRANCH="${{ github.event.client_payload.branch }}"
           SUB_BRANCH="${FEATURE_BRANCH}-task-${TASK_ID}"
           git checkout -b "$SUB_BRANCH"
@@ -65,18 +121,18 @@ jobs:
 
       - name: Update task status to in-progress
         run: |
-          bd update "${{ matrix.task.id }}" --status in-progress || true
+          bd update "${{ matrix.id }}" --status in-progress
 
       - name: Run OpenCode Sisyphus Agent
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          bun run .github/scripts/opencode-run.ts \
+          opencode run \
             --model "opencode/big-pickle" \
-            --prompt "Implement task: ${{ matrix.task.title || matrix.task.summary }}
+            "Implement task: ${{ matrix.title || matrix.summary }}
 
-          Task ID: ${{ matrix.task.id }}
+          Task ID: ${{ matrix.id }}
 
           ## Instructions
           1. Implement only this specific task
@@ -88,71 +144,87 @@ jobs:
 
       - name: Update task status to done
         run: |
-          bd update "${{ matrix.task.id }}" --status done || true
+          bd update "${{ matrix.id }}" --status done
 
       - name: Commit and push changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           if ! git diff --staged --quiet; then
-            git commit -m "feat(${{ matrix.task.id }}): ${{ matrix.task.title || matrix.task.summary }}"
+            git commit -m "feat(${{ matrix.id }}): ${{ matrix.title || matrix.summary }}"
             git push -u origin "${{ steps.branch.outputs.sub_branch }}"
           fi
 
       - name: Commit beads changes to beads-sync branch
         run: |
-          bd sync -m "chore: update task ${{ matrix.task.id }} status"
+          bd sync -m "chore: update task ${{ matrix.id }} status"
 
-  batch-complete:
-    needs: worker
+  check-next:
+    needs: [get-ready-tasks, worker]
+    if: always() && needs.get-ready-tasks.outputs.has_tasks == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - name: Determine next action
-        id: next
-        uses: actions/github-script@v7
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
         with:
-          github-token: ${{ steps.app-token.outputs.token }}
-          script: |
-            const payload = context.payload.client_payload;
-            const currentBatch = payload.batch_index;
-            const batches = payload.batches;
-            const totalBatches = batches.length;
-            const nextBatch = currentBatch + 1;
+          ref: ${{ github.event.client_payload.branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
 
-            console.log(`Batch ${currentBatch + 1}/${totalBatches} complete`);
+      - name: Setup beads
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          gh release download --repo steveyegge/beads --pattern 'beads-*-linux-x64.tar.gz' --output beads.tar.gz
+          tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          "$HOME/.local/bin/bd" init
+          sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
 
-            if (nextBatch < totalBatches) {
-              core.setOutput('action', 'next_batch');
-              core.setOutput('next_batch_index', nextBatch);
-              console.log(`Dispatching batch ${nextBatch + 1}...`);
-            } else {
-              core.setOutput('action', 'merge');
-              console.log('All batches complete. Dispatching merge...');
-            }
+      - name: Pull latest beads state
+        run: |
+          bd pull
+
+      - name: Check for more ready tasks
+        id: check
+        run: |
+          READY=$(bd ready --json 2>/dev/null || echo "[]")
+          READY_COUNT=$(echo "$READY" | jq 'length')
+          
+          # Get all tasks to collect IDs for merge
+          ALL_TASKS=$(bd list --json 2>/dev/null || echo "[]")
+          TASK_IDS=$(echo "$ALL_TASKS" | jq -c '[.[].id]')
+          
+          echo "ready_count=$READY_COUNT" >> $GITHUB_OUTPUT
+          echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
+          
+          if [ "$READY_COUNT" -gt 0 ]; then
+            echo "action=next_batch" >> $GITHUB_OUTPUT
+          else
+            echo "action=merge" >> $GITHUB_OUTPUT
+          fi
 
       - name: Post batch progress comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const payload = context.payload.client_payload;
-            const currentBatch = payload.batch_index + 1;
-            const totalBatches = payload.batches.length;
-            const nextAction = '${{ steps.next.outputs.action }}';
+            const nextAction = '${{ steps.check.outputs.action }}';
+            const readyCount = parseInt('${{ steps.check.outputs.ready_count }}');
 
             let body = '';
             if (nextAction === 'next_batch') {
-              body = `### ✅ Batch ${currentBatch}/${totalBatches} Complete\n\nStarting batch ${currentBatch + 1}...`;
+              body = `### ✅ Batch Complete\n\n${readyCount} more task(s) ready. Starting next batch...`;
             } else {
-              body = `### ✅ All Batches Complete (${totalBatches}/${totalBatches})\n\nMerging task branches and creating PR...`;
+              body = `### ✅ All Tasks Complete\n\nMerging task branches and creating PR...`;
             }
 
             await github.rest.issues.createComment({
@@ -163,8 +235,8 @@ jobs:
             });
 
       - name: Dispatch next batch
-        if: steps.next.outputs.action == 'next_batch'
-        uses: actions/github-script@v7
+        if: steps.check.outputs.action == 'next_batch'
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
@@ -176,22 +248,18 @@ jobs:
               event_type: 'opencode-batch',
               client_payload: {
                 issue_number: payload.issue_number,
-                branch: payload.branch,
-                batch_index: parseInt('${{ steps.next.outputs.next_batch_index }}'),
-                batches: payload.batches
+                branch: payload.branch
               }
             });
 
       - name: Dispatch merge
-        if: steps.next.outputs.action == 'merge'
-        uses: actions/github-script@v7
+        if: steps.check.outputs.action == 'merge'
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const payload = context.payload.client_payload;
-
-            // Collect all task IDs from all batches
-            const allTasks = payload.batches.flat().map(t => t.id);
+            const taskIds = JSON.parse('${{ steps.check.outputs.task_ids }}');
 
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
@@ -200,6 +268,6 @@ jobs:
               client_payload: {
                 issue_number: payload.issue_number,
                 branch: payload.branch,
-                task_ids: allTasks
+                task_ids: taskIds
               }
             });

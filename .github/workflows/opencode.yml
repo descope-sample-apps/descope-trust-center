@@ -82,9 +82,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          mkdir -p "$HOME/.local/bin"
           gh release download --repo steveyegge/beads --pattern 'beads-*-linux-x64.tar.gz' --output beads.tar.gz
           tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
-          mkdir -p "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
@@ -119,15 +119,14 @@ jobs:
             });
 
       - name: Run Planner-Sisyphus
-        id: run-plan
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          bun run .github/scripts/opencode-run.ts \
+          opencode run \
             --model "opencode/big-pickle" \
             --agent "Planner-Sisyphus" \
-            --prompt "Analyze this GitHub Issue and break it into atomic, parallelizable tasks.
+            "Analyze this GitHub Issue and break it into atomic, parallelizable tasks.
 
           ## Instructions
           1. Create a beads epic for this issue:
@@ -150,89 +149,35 @@ jobs:
 
           Run 'bd list --json' when done."
 
-      - name: Get tasks from beads
-        id: get-tasks
+      - name: Get task summary
+        id: tasks
         run: |
-          TASKS=$(bd list --json 2>/dev/null || echo '[]')
-          echo "tasks<<EOF" >> $GITHUB_OUTPUT
-          echo "$TASKS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Compute dependency batches
-        id: batches
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const tasks = JSON.parse(process.env.TASKS || '[]');
-
-            if (tasks.length === 0) {
-              core.setOutput('batches', '[]');
-              core.setOutput('batch_count', 0);
-              return;
-            }
-
-            const taskMap = new Map(tasks.map(t => [t.id, t]));
-            const completed = new Set();
-            const batches = [];
-            let remaining = [...tasks];
-
-            while (remaining.length > 0) {
-              const batch = remaining.filter(t => {
-                const deps = t.dependencies || t.blocked_by || [];
-                return deps.every(d => completed.has(d));
-              });
-              
-              if (batch.length === 0) {
-                console.log('Circular dependency detected, adding remaining as final batch');
-                batches.push(remaining);
-                break;
-              }
-              
-              batches.push(batch);
-              batch.forEach(t => completed.add(t.id));
-              remaining = remaining.filter(t => !completed.has(t.id));
-            }
-
-            console.log(`Created ${batches.length} batches from ${tasks.length} tasks`);
-            batches.forEach((b, i) => {
-              console.log(`Batch ${i + 1}: ${b.map(t => t.id).join(', ')}`);
-            });
-
-            core.setOutput('batches', JSON.stringify(batches));
-            core.setOutput('batch_count', batches.length);
-        env:
-          TASKS: ${{ steps.get-tasks.outputs.tasks }}
+          TOTAL=$(bd list --json 2>/dev/null | jq 'length' || echo '0')
+          READY=$(bd ready --json 2>/dev/null | jq 'length' || echo '0')
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "ready=$READY" >> $GITHUB_OUTPUT
 
       - name: Post plan summary
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const batches = JSON.parse(process.env.BATCHES || '[]');
-            const batchCount = batches.length;
-            const taskCount = batches.flat().length;
-
-            let batchList = '';
-            if (batchCount > 0) {
-              batchList = batches.map((batch, i) => {
-                const tasks = batch.map(t => `  - \`${t.id}\` ${t.title || t.summary || ''}`).join('\n');
-                return `**Batch ${i + 1}** (${batch.length} task${batch.length > 1 ? 's' : ''}):\n${tasks}`;
-              }).join('\n\n');
-            } else {
-              batchList = '_No tasks created_';
-            }
+            const total = parseInt('${{ steps.tasks.outputs.total }}') || 0;
+            const ready = parseInt('${{ steps.tasks.outputs.ready }}') || 0;
 
             const body = `## 📋 Plan Complete
 
-            **${taskCount} task(s)** organized into **${batchCount} batch(es)** based on dependencies.
+            **${total} task(s)** created, **${ready}** ready to start (no blockers).
 
-            ### Execution Plan
-            ${batchList}
+            Tasks will be executed in waves based on dependencies:
+            - Ready tasks run in parallel
+            - When complete, newly unblocked tasks run
+            - Repeat until all done
 
             ---
-            🚀 Starting batch 1...
+            🚀 Starting first wave with ${ready} task(s)...
 
-            Branch: \`${process.env.BRANCH}\``;
+            Branch: \`${{ steps.branch.outputs.branch }}\``;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -240,43 +185,27 @@ jobs:
               issue_number: context.payload.issue.number,
               body: body
             });
-        env:
-          BATCHES: ${{ steps.batches.outputs.batches }}
-          BRANCH: ${{ steps.branch.outputs.branch }}
 
       - name: Commit beads database
         run: |
           bd sync -m "chore: create epic and tasks for issue #${{ github.event.issue.number }}"
 
-      - name: Dispatch first batch
-        if: steps.batches.outputs.batch_count > 0
+      - name: Dispatch batch workers
+        if: steps.tasks.outputs.ready > 0
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const batches = JSON.parse(process.env.BATCHES || '[]');
-
-            if (batches.length === 0) {
-              console.log('No batches to dispatch');
-              return;
-            }
-
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,
               event_type: 'opencode-batch',
               client_payload: {
                 issue_number: context.payload.issue.number,
-                branch: process.env.BRANCH,
-                batch_index: 0,
-                batches: batches
+                branch: '${{ steps.branch.outputs.branch }}'
               }
             });
-
-            console.log(`Dispatched batch 1 with ${batches[0].length} task(s)`);
-        env:
-          BATCHES: ${{ steps.batches.outputs.batches }}
-          BRANCH: ${{ steps.branch.outputs.branch }}
+            console.log('Dispatched batch workers');
 
   work:
     needs: [parse-command, acknowledge]
@@ -332,9 +261,9 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          bun run .github/scripts/opencode-run.ts \
+          opencode run \
             --model "opencode/big-pickle" \
-            --prompt "Implement the changes requested in this GitHub Issue.
+            "Implement the changes requested in this GitHub Issue.
 
           ## Instructions
           1. Implement the requested changes
@@ -346,8 +275,6 @@ jobs:
       - name: Commit and push
         id: commit
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --staged --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
@@ -374,7 +301,7 @@ jobs:
             ---
 
             Closes #${context.payload.issue.number}`,
-              head: process.env.BRANCH,
+              head: '${{ steps.branch.outputs.branch }}',
               base: 'main'
             });
 
@@ -384,8 +311,6 @@ jobs:
               issue_number: context.payload.issue.number,
               body: `✅ **Implementation Complete**\n\nPull Request: #${pr.number}`
             });
-        env:
-          BRANCH: ${{ steps.branch.outputs.branch }}
 
       - name: No changes comment
         if: steps.commit.outputs.has_changes == 'false'
