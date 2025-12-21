@@ -84,7 +84,7 @@ jobs:
           DIFF_SNIPPET=$(head -500 /tmp/pr_diff.txt)
           
           bun run .github/scripts/opencode-run.ts \
-            --model "anthropic/claude-sonnet-4-20250514" \
+            --model "opencode/big-pickle" \
             --agent "oracle" \
             --prompt "Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
 
@@ -217,7 +217,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           bun run .github/scripts/opencode-run.ts \
-            --model "anthropic/claude-sonnet-4-20250514" \
+            --model "opencode/big-pickle" \
             --prompt "Fix the issues identified in the review.
 
           ## Review Feedback

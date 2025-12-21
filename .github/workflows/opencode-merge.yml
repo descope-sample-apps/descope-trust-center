@@ -218,7 +218,7 @@ jobs:
                 CONFLICTED=$(git diff --name-only --diff-filter=U)
                 
                 bun run .github/scripts/opencode-run.ts \
-                  --model "anthropic/claude-sonnet-4-20250514" \
+                  --model "opencode/big-pickle" \
                   --prompt "Resolve merge conflicts in the following files:
 
           $CONFLICTED

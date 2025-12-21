@@ -121,7 +121,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           bun run .github/scripts/opencode-run.ts \
-            --model "anthropic/claude-sonnet-4-20250514" \
+            --model "opencode/big-pickle" \
             --agent "Planner-Sisyphus" \
             --prompt "Analyze this GitHub Issue and break it into atomic, parallelizable tasks.
 
@@ -329,7 +329,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           bun run .github/scripts/opencode-run.ts \
-            --model "anthropic/claude-sonnet-4-20250514" \
+            --model "opencode/big-pickle" \
             --prompt "Implement the changes requested in this GitHub Issue.
 
           ## Instructions
