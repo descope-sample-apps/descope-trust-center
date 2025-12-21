@@ -40,11 +40,6 @@ jobs:
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
-      - name: Fetch Beads database
-        run: |
-          git fetch origin beads-db:beads-db || true
-          git checkout beads-db -- .beads/ 2>/dev/null || bd init
-
       - name: Create task sub-branch
         id: branch
         run: |
@@ -64,12 +59,12 @@ jobs:
         run: |
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-          
+
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-          
+
           bd update "$TASK_ID" --status in-progress || true
-          
+
           opencode run "
           Implement task: ${TASK_TITLE:-$TASK_SUMMARY}
 
@@ -83,30 +78,12 @@ jobs:
 
           When complete, summarize what was implemented.
           " || true
-          
+
           bd update "$TASK_ID" --status done || true
 
       - name: Commit beads changes to beads-db branch
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           bd sync -m "chore: update task ${{ matrix.task.id }} status"
-
-      - name: Commit and push to sub-branch
-        id: commit
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Remove .beads from working tree (already committed to beads-db)
-          rm -rf .beads/
-          git add -A
-          if git diff --staged --quiet; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          else
-            git commit -m "feat(${{ steps.branch.outputs.task_id }}): implement task"
-            git push -u origin "${{ steps.branch.outputs.sub_branch }}"
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          fi
 
   batch-complete:
     needs: worker
@@ -130,9 +107,9 @@ jobs:
             const batches = payload.batches;
             const totalBatches = batches.length;
             const nextBatch = currentBatch + 1;
-            
+
             console.log(`Batch ${currentBatch + 1}/${totalBatches} complete`);
-            
+
             if (nextBatch < totalBatches) {
               core.setOutput('action', 'next_batch');
               core.setOutput('next_batch_index', nextBatch);
@@ -151,14 +128,14 @@ jobs:
             const currentBatch = payload.batch_index + 1;
             const totalBatches = payload.batches.length;
             const nextAction = '${{ steps.next.outputs.action }}';
-            
+
             let body = '';
             if (nextAction === 'next_batch') {
               body = `### ✅ Batch ${currentBatch}/${totalBatches} Complete\n\nStarting batch ${currentBatch + 1}...`;
             } else {
               body = `### ✅ All Batches Complete (${totalBatches}/${totalBatches})\n\nMerging task branches and creating PR...`;
             }
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -173,7 +150,7 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const payload = context.payload.client_payload;
-            
+
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -193,10 +170,10 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const payload = context.payload.client_payload;
-            
+
             // Collect all task IDs from all batches
             const allTasks = payload.batches.flat().map(t => t.id);
-            
+
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,

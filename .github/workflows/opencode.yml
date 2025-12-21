@@ -85,11 +85,6 @@ jobs:
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
-      - name: Fetch Beads database
-        run: |
-          git fetch origin beads-db:beads-db || true
-          git checkout beads-db -- .beads/ 2>/dev/null || bd init
-
       - name: Create feature branch
         id: branch
         run: |
@@ -117,50 +112,50 @@ jobs:
         run: |
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-          
+
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-          
+
           ISSUE_NUMBER="${{ github.event.issue.number }}"
           ISSUE_TITLE="${{ github.event.issue.title }}"
           ISSUE_BODY=$(cat << 'ISSUE_BODY_EOF'
           ${{ github.event.issue.body }}
           ISSUE_BODY_EOF
           )
-          
+
           opencode run "
           Analyze GitHub Issue #${ISSUE_NUMBER} and break it into atomic, parallelizable tasks.
-          
+
           ## Issue Title
           ${ISSUE_TITLE}
-          
+
           ## Issue Body
           ${ISSUE_BODY}
-          
+
           ## Instructions
           1. Create a beads epic for this issue:
              bd create \"Issue #${ISSUE_NUMBER}: ${ISSUE_TITLE}\" -p 1
-          
+
           2. Create child tasks under the epic using bd create with appropriate priorities (1-4)
-          
+
           3. Add dependencies between tasks using 'bd dep add <task-id> <depends-on-id>'
              - Tasks that can run in parallel should have NO dependencies between them
              - Tasks that must wait for others should declare dependencies
-          
+
           4. After creating all tasks, output the task list
-          
+
           Example dependency structure:
           - bd-abc.1 'Setup types' (no deps - can start immediately)
           - bd-abc.2 'Create component' (no deps - can start immediately)  
           - bd-abc.3 'Add styling' depends on bd-abc.2
           - bd-abc.4 'Write tests' depends on bd-abc.1, bd-abc.2
           - bd-abc.5 'Integration' depends on bd-abc.3, bd-abc.4
-          
+
           Run 'bd list --json' when done.
           " --agent Planner-Sisyphus > plan_output.txt 2>&1 || true
-          
+
           cat plan_output.txt
-          
+
           TASKS=$(bd list --json 2>/dev/null || echo '[]')
           echo "tasks<<EOF" >> $GITHUB_OUTPUT
           echo "$TASKS" >> $GITHUB_OUTPUT
@@ -172,18 +167,18 @@ jobs:
         with:
           script: |
             const tasks = JSON.parse(process.env.TASKS || '[]');
-            
+
             if (tasks.length === 0) {
               core.setOutput('batches', '[]');
               core.setOutput('batch_count', 0);
               return;
             }
-            
+
             const taskMap = new Map(tasks.map(t => [t.id, t]));
             const completed = new Set();
             const batches = [];
             let remaining = [...tasks];
-            
+
             while (remaining.length > 0) {
               const batch = remaining.filter(t => {
                 const deps = t.dependencies || t.blocked_by || [];
@@ -200,12 +195,12 @@ jobs:
               batch.forEach(t => completed.add(t.id));
               remaining = remaining.filter(t => !completed.has(t.id));
             }
-            
+
             console.log(`Created ${batches.length} batches from ${tasks.length} tasks`);
             batches.forEach((b, i) => {
               console.log(`Batch ${i + 1}: ${b.map(t => t.id).join(', ')}`);
             });
-            
+
             core.setOutput('batches', JSON.stringify(batches));
             core.setOutput('batch_count', batches.length);
         env:
@@ -219,7 +214,7 @@ jobs:
             const batches = JSON.parse(process.env.BATCHES || '[]');
             const batchCount = batches.length;
             const taskCount = batches.flat().length;
-            
+
             let batchList = '';
             if (batchCount > 0) {
               batchList = batches.map((batch, i) => {
@@ -229,7 +224,7 @@ jobs:
             } else {
               batchList = '_No tasks created_';
             }
-            
+
             const body = `## 📋 Plan Complete
 
             **${taskCount} task(s)** organized into **${batchCount} batch(es)** based on dependencies.
@@ -239,9 +234,9 @@ jobs:
 
             ---
             🚀 Starting batch 1...
-            
+
             Branch: \`${process.env.BRANCH}\``;
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -252,10 +247,8 @@ jobs:
           BATCHES: ${{ steps.batches.outputs.batches }}
           BRANCH: ${{ steps.branch.outputs.branch }}
 
-      - name: Commit beads to beads-db branch
+      - name: Commit beads database
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           bd sync -m "chore: create epic and tasks for issue #${{ github.event.issue.number }}"
 
       - name: Dispatch first batch
@@ -265,12 +258,12 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const batches = JSON.parse(process.env.BATCHES || '[]');
-            
+
             if (batches.length === 0) {
               console.log('No batches to dispatch');
               return;
             }
-            
+
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -282,7 +275,7 @@ jobs:
                 batches: batches
               }
             });
-            
+
             console.log(`Dispatched batch 1 with ${batches[0].length} task(s)`);
         env:
           BATCHES: ${{ steps.batches.outputs.batches }}
@@ -336,31 +329,31 @@ jobs:
         run: |
           curl -fsSL https://opencode.ai/install | bash
           export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-          
+
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
-          
+
           ISSUE_NUMBER="${{ github.event.issue.number }}"
           ISSUE_TITLE="${{ github.event.issue.title }}"
           ISSUE_BODY=$(cat << 'ISSUE_BODY_EOF'
           ${{ github.event.issue.body }}
           ISSUE_BODY_EOF
           )
-          
+
           opencode run "
           Implement the changes requested in GitHub Issue #${ISSUE_NUMBER}.
-          
+
           ## Issue Title
           ${ISSUE_TITLE}
-          
+
           ## Issue Body
           ${ISSUE_BODY}
-          
+
           ## Instructions
           1. Implement the requested changes
           2. Follow existing code patterns
           3. Run 'bun run build' to verify no errors
-          
+
           When complete, summarize what was implemented.
           " || true
 
@@ -389,16 +382,16 @@ jobs:
               repo: context.repo.repo,
               title: `🤖 ${context.payload.issue.title}`,
               body: `## Summary
-            
+
             Automated implementation for #${context.payload.issue.number}
-            
+
             ---
-            
+
             Closes #${context.payload.issue.number}`,
               head: process.env.BRANCH,
               base: 'main'
             });
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
