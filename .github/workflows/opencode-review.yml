@@ -1,0 +1,257 @@
+name: OpenCode Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  models: read
+
+env:
+  MAX_REVIEW_CYCLES: 3
+
+jobs:
+  review:
+    if: startsWith(github.head_ref, 'opencode/')
+    runs-on: ubuntu-latest
+    outputs:
+      decision: ${{ steps.review.outputs.decision }}
+      cycle_count: ${{ steps.get-cycle.outputs.count }}
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Get review cycle count
+        id: get-cycle
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+            
+            const cycleMarkers = comments.filter(c => 
+              c.body && c.body.includes('<!-- review-cycle:')
+            );
+            
+            const count = cycleMarkers.length;
+            core.setOutput('count', count);
+            console.log(`Current review cycle: ${count}`);
+
+      - name: Setup tools
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Run OpenCode Review Agent
+        id: review
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          export PATH="$HOME/.local/bin:$PATH"
+          
+          mkdir -p ~/.config/opencode
+          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
+          
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          DIFF=$(git diff origin/main...HEAD)
+          
+          REVIEW_OUTPUT=$(opencode --agent oracle --yes --print --prompt "
+          Review this Pull Request.
+
+          ## PR Title
+          ${PR_TITLE}
+
+          ## PR Description
+          ${PR_BODY}
+
+          ## Changes
+          \`\`\`diff
+          ${DIFF}
+          \`\`\`
+
+          ## Instructions
+          1. Check code quality, patterns, and potential issues
+          2. Verify changes match the PR description
+          3. Run 'bun run build' if needed
+
+          Respond with one of:
+          - APPROVE: if changes look good
+          - REQUEST_CHANGES: if fixes are needed (list specific issues)
+          " 2>&1) || true
+          
+          echo "$REVIEW_OUTPUT"
+          
+          if echo "$REVIEW_OUTPUT" | grep -qi "APPROVE"; then
+            echo "decision=approve" >> $GITHUB_OUTPUT
+          else
+            echo "decision=request_changes" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post review comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const decision = '${{ steps.review.outputs.decision }}';
+            const cycleCount = parseInt('${{ steps.get-cycle.outputs.count }}') + 1;
+            const maxCycles = parseInt(process.env.MAX_REVIEW_CYCLES);
+            
+            let body = '';
+            
+            if (decision === 'approve') {
+              body = `## ✅ Review Passed
+
+            <!-- review-cycle:${cycleCount} -->
+
+            The changes look good. Requesting human review from CODEOWNERS.`;
+            } else {
+              if (cycleCount >= maxCycles) {
+                body = `## ⚠️ Max Review Cycles Reached
+
+            <!-- review-cycle:${cycleCount} -->
+
+            After ${maxCycles} review cycles, issues remain unresolved.
+            Requesting human intervention from CODEOWNERS.`;
+              } else {
+                body = `## 🔄 Changes Requested (Cycle ${cycleCount}/${maxCycles})
+
+            <!-- review-cycle:${cycleCount} -->
+
+            The review agent found issues that need to be addressed.
+            A rework cycle will be triggered automatically.`;
+              }
+            }
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: body
+            });
+
+  rework:
+    needs: review
+    if: needs.review.outputs.decision == 'request_changes' && needs.review.outputs.cycle_count < 3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup tools
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Get review feedback
+        id: feedback
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+            
+            const reviewComments = comments
+              .filter(c => c.body && c.body.includes('review-cycle:'))
+              .slice(-1);
+            
+            const feedback = reviewComments.length > 0 ? reviewComments[0].body : '';
+            core.setOutput('feedback', feedback);
+
+      - name: Run OpenCode Sisyphus Agent (Rework)
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          FEEDBACK: ${{ steps.feedback.outputs.feedback }}
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          export PATH="$HOME/.local/bin:$PATH"
+          
+          mkdir -p ~/.config/opencode
+          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
+          
+          opencode --yes --print --prompt "
+          Fix the issues identified in the review.
+
+          ## Review Feedback
+          ${FEEDBACK}
+
+          ## Instructions
+          1. Address each issue mentioned in the review
+          2. Keep changes minimal and focused
+          3. Run 'bun run build' to verify no errors
+
+          When complete, summarize the fixes made.
+          " || true
+
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "fix: address review feedback"
+            git push
+          fi
+
+  request-human-review:
+    needs: review
+    if: needs.review.outputs.decision == 'approve' || needs.review.outputs.cycle_count >= 3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Request CODEOWNERS review
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                reviewers: []  // CODEOWNERS will be auto-added
+              });
+              console.log('Review requested from CODEOWNERS');
+            } catch (e) {
+              console.log('Could not request reviewers:', e.message);
+            }

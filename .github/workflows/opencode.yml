@@ -1,0 +1,380 @@
+name: OpenCode
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  models: read
+
+jobs:
+  parse-command:
+    if: |
+      github.event.issue.pull_request == null &&
+      (contains(github.event.comment.body, '/oc ') || 
+       contains(github.event.comment.body, '/opencode '))
+    runs-on: ubuntu-latest
+    outputs:
+      command: ${{ steps.parse.outputs.command }}
+      is_valid: ${{ steps.parse.outputs.is_valid }}
+    steps:
+      - name: Parse command
+        id: parse
+        run: |
+          COMMENT='${{ github.event.comment.body }}'
+          
+          if echo "$COMMENT" | grep -qiE '/(oc|opencode)\s+plan'; then
+            echo "command=plan" >> $GITHUB_OUTPUT
+            echo "is_valid=true" >> $GITHUB_OUTPUT
+          elif echo "$COMMENT" | grep -qiE '/(oc|opencode)\s+work'; then
+            echo "command=work" >> $GITHUB_OUTPUT
+            echo "is_valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "command=unknown" >> $GITHUB_OUTPUT
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+          fi
+
+  acknowledge:
+    needs: parse-command
+    if: needs.parse-command.outputs.is_valid == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add rocket reaction
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+  plan:
+    needs: [parse-command, acknowledge]
+    if: needs.parse-command.outputs.command == 'plan'
+    runs-on: ubuntu-latest
+    outputs:
+      tasks: ${{ steps.run-plan.outputs.tasks }}
+      task_count: ${{ steps.run-plan.outputs.task_count }}
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Setup tools
+        run: |
+          # Install Beads
+          curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          
+          # Install Bun (for OpenCode)
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Initialize Beads
+        run: |
+          if [ ! -d ".beads" ]; then
+            bd init
+          fi
+
+      - name: Post planning started comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: '🤖 **OpenCode Plan Agent Started**\n\nAnalyzing issue and breaking down into tasks...'
+            });
+
+      - name: Run OpenCode Plan Agent
+        id: run-plan
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Install OpenCode
+          curl -fsSL https://opencode.ai/install | bash
+          export PATH="$HOME/.local/bin:$PATH"
+          
+          # Configure OhMyOpenCode plugin
+          mkdir -p ~/.config/opencode
+          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
+          
+          # Create the planning prompt
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          ISSUE_BODY=$(cat << 'ISSUE_BODY_EOF'
+          ${{ github.event.issue.body }}
+          ISSUE_BODY_EOF
+          )
+          
+          # Run OpenCode with Planner-Sisyphus agent (OhMyOpenCode)
+          opencode --agent Planner-Sisyphus --yes --print --prompt "
+          Analyze GitHub Issue #${ISSUE_NUMBER} and break it into atomic, parallelizable tasks.
+          
+          ## Issue Title
+          ${ISSUE_TITLE}
+          
+          ## Issue Body
+          ${ISSUE_BODY}
+          
+          ## Instructions
+          1. Create beads tasks using 'bd create' for each atomic work item
+          2. Set appropriate priorities (P0-P3)
+          3. Add dependencies between tasks using 'bd dep add'
+          4. Output the final task list as JSON
+          
+          After creating all tasks, run 'bd ready --json' and output the result.
+          " > plan_output.txt 2>&1 || true
+          
+          # Extract tasks from beads
+          TASKS=$(bd ready --json 2>/dev/null || echo '[]')
+          TASK_COUNT=$(echo "$TASKS" | jq 'length')
+          
+          echo "tasks<<EOF" >> $GITHUB_OUTPUT
+          echo "$TASKS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "task_count=$TASK_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Post plan summary
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const tasks = JSON.parse(process.env.TASKS || '[]');
+            const taskCount = tasks.length;
+            
+            let taskList = '';
+            if (taskCount > 0) {
+              taskList = tasks.map((t, i) => `${i + 1}. \`${t.id}\` - ${t.title || t.summary || 'Task'}`).join('\n');
+            } else {
+              taskList = '_No tasks created_';
+            }
+            
+            const body = `## 📋 Plan Complete
+
+            **${taskCount} task(s)** created and ready for parallel execution.
+
+            ### Tasks
+            ${taskList}
+
+            ---
+            🚀 Dispatching workers...`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: body
+            });
+        env:
+          TASKS: ${{ steps.run-plan.outputs.tasks }}
+
+      - name: Commit beads changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .beads/ || true
+          git diff --staged --quiet || git commit -m "chore: add beads tasks for issue #${{ github.event.issue.number }}"
+          git push || true
+
+      - name: Dispatch workers
+        if: steps.run-plan.outputs.task_count > 0
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const tasks = JSON.parse(process.env.TASKS || '[]');
+            
+            if (tasks.length === 0) {
+              console.log('No tasks to dispatch');
+              return;
+            }
+            
+            // Dispatch workers workflow with task matrix
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'opencode-workers',
+              client_payload: {
+                issue_number: context.payload.issue.number,
+                tasks: tasks
+              }
+            });
+            
+            console.log(`Dispatched ${tasks.length} worker(s)`);
+        env:
+          TASKS: ${{ steps.run-plan.outputs.tasks }}
+
+  work:
+    needs: [parse-command, acknowledge]
+    if: needs.parse-command.outputs.command == 'work'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Setup tools
+        run: |
+          # Install Beads
+          curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          
+          # Install Bun
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Initialize Beads
+        run: |
+          if [ ! -d ".beads" ]; then
+            bd init
+          fi
+
+      - name: Post work started comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: '🤖 **OpenCode Build Agent Started**\n\nImplementing changes directly...'
+            });
+
+      - name: Create branch
+        id: branch
+        run: |
+          BRANCH_NAME="opencode/issue-${{ github.event.issue.number }}"
+          git checkout -b "$BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Run OpenCode Build Agent
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Install OpenCode
+          curl -fsSL https://opencode.ai/install | bash
+          export PATH="$HOME/.local/bin:$PATH"
+          
+          # Configure OhMyOpenCode plugin
+          mkdir -p ~/.config/opencode
+          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
+          
+          # Create the build prompt
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          ISSUE_BODY=$(cat << 'ISSUE_BODY_EOF'
+          ${{ github.event.issue.body }}
+          ISSUE_BODY_EOF
+          )
+          
+          # Run OpenCode with Sisyphus (default OhMyOpenCode agent)
+          opencode --yes --print --prompt "
+          Implement the changes requested in GitHub Issue #${ISSUE_NUMBER}.
+          
+          ## Issue Title
+          ${ISSUE_TITLE}
+          
+          ## Issue Body
+          ${ISSUE_BODY}
+          
+          ## Instructions
+          1. Implement the requested changes
+          2. Follow existing code patterns
+          3. Run 'bun run build' to verify no errors
+          4. Create atomic, focused commits
+          
+          When complete, summarize what was implemented.
+          " || true
+
+      - name: Commit changes
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add all changes
+          git add -A
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "feat: implement #${{ github.event.issue.number }}"
+            git push -u origin "${{ steps.branch.outputs.branch }}"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.commit.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🤖 ${context.payload.issue.title}`,
+              body: `## Summary
+            
+            Automated implementation for #${context.payload.issue.number}
+            
+            ## Changes
+            
+            _See commits for details_
+            
+            ---
+            
+            Closes #${context.payload.issue.number}`,
+              head: process.env.BRANCH,
+              base: 'main'
+            });
+            
+            console.log(`Created PR #${pr.number}`);
+            
+            // Comment on the issue
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: `✅ **Implementation Complete**\n\nPull Request created: #${pr.number}\n\nThe Review Agent will now analyze the changes.`
+            });
+        env:
+          BRANCH: ${{ steps.branch.outputs.branch }}
+
+      - name: No changes comment
+        if: steps.commit.outputs.has_changes == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: '⚠️ **No Changes Made**\n\nThe Build Agent did not produce any code changes. This could mean:\n- The issue is already resolved\n- More clarification is needed\n- The task requires manual intervention'
+            });

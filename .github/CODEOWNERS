@@ -1,0 +1,14 @@
+# CODEOWNERS - Defines who must review PRs before merge
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+# These users will be requested for review when OpenCode approves a PR
+* @omercnet
+
+# You can add more specific rules:
+# /src/components/    @frontend-team
+# /docs/              @docs-team
+# *.ts                @typescript-reviewers
+
+# For organization teams, use: @org/team-name
+# Example: *       @descope/maintainers

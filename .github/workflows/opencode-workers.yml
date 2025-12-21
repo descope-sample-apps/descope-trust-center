@@ -1,0 +1,131 @@
+name: OpenCode Workers
+
+on:
+  repository_dispatch:
+    types: [opencode-workers]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  models: read
+
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        task: ${{ github.event.client_payload.tasks }}
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Setup tools
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Create branch
+        id: branch
+        run: |
+          TASK_ID="${{ matrix.task.id }}"
+          BRANCH_NAME="opencode/task-${TASK_ID}"
+          git checkout -b "$BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
+
+      - name: Run OpenCode Sisyphus Agent
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          TASK_ID: ${{ matrix.task.id }}
+          TASK_TITLE: ${{ matrix.task.title }}
+          TASK_SUMMARY: ${{ matrix.task.summary }}
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          export PATH="$HOME/.local/bin:$PATH"
+          
+          mkdir -p ~/.config/opencode
+          echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
+          
+          bd update "$TASK_ID" --status in-progress || true
+          
+          opencode --yes --print --prompt "
+          Implement task: ${TASK_TITLE:-$TASK_SUMMARY}
+
+          Task ID: ${TASK_ID}
+
+          ## Instructions
+          1. Implement only this specific task
+          2. Follow existing code patterns
+          3. Run 'bun run build' to verify no errors
+          4. Make focused, atomic changes
+
+          When complete, summarize what was implemented.
+          " || true
+          
+          bd update "$TASK_ID" --status done || true
+
+      - name: Commit changes
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "feat(${{ steps.branch.outputs.task_id }}): implement task"
+            git push -u origin "${{ steps.branch.outputs.branch }}"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.commit.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const taskId = process.env.TASK_ID;
+            const taskTitle = process.env.TASK_TITLE || process.env.TASK_SUMMARY || 'Task';
+            const issueNumber = context.payload.client_payload.issue_number;
+            
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🤖 [${taskId}] ${taskTitle}`,
+              body: `## Summary
+
+            Automated implementation of task \`${taskId}\`
+
+            Related issue: #${issueNumber}
+
+            ## Changes
+
+            _See commits for details_
+
+            ---
+
+            Part of #${issueNumber}`,
+              head: process.env.BRANCH,
+              base: 'main'
+            });
+            
+            console.log(`Created PR #${pr.number} for task ${taskId}`);
+        env:
+          BRANCH: ${{ steps.branch.outputs.branch }}
+          TASK_ID: ${{ matrix.task.id }}
+          TASK_TITLE: ${{ matrix.task.title }}
+          TASK_SUMMARY: ${{ matrix.task.summary }}
