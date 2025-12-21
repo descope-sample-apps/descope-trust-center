@@ -203,7 +203,7 @@ jobs:
           TASK_IDS: ${{ toJson(github.event.client_payload.task_ids) }}
         run: |
           curl -fsSL https://opencode.ai/install | bash
-          export PATH="$HOME/.local/bin:$PATH"
+          export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
           
           mkdir -p ~/.config/opencode
           echo '{"plugin":["oh-my-opencode"]}' > ~/.config/opencode/opencode.json
