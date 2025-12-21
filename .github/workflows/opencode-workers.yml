@@ -97,7 +97,7 @@ jobs:
             git push -u origin "${{ steps.branch.outputs.sub_branch }}"
           fi
 
-      - name: Commit beads changes to beads-db branch
+      - name: Commit beads changes to beads-sync branch
         run: |
           bd sync -m "chore: update task ${{ matrix.task.id }} status"
 

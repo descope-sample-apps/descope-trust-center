@@ -86,8 +86,8 @@ jobs:
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
           # Initialize beads with correct sync branch
           bd init
-          # Ensure config uses beads-db branch for sync
-          sed -i 's/^# sync-branch:.*/sync-branch: "beads-db"/' .beads/config.yaml || echo 'sync-branch: "beads-db"' >> .beads/config.yaml
+          # Ensure config uses beads-sync branch for sync
+          sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
 
       - name: Setup git identity
         run: |

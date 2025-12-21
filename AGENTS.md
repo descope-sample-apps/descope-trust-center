@@ -10,10 +10,10 @@ This project supports AI-powered autonomous development through GitHub Issues an
 
 Comment on a GitHub Issue with:
 
-| Command | Description |
-|---------|-------------|
+| Command    | Description                                                                |
+| ---------- | -------------------------------------------------------------------------- |
 | `/oc plan` | Analyze the issue and break it into parallelizable tasks with dependencies |
-| `/oc work` | Directly implement the fix/feature in the issue (no planning phase) |
+| `/oc work` | Directly implement the fix/feature in the issue (no planning phase)        |
 
 ### How It Works
 
@@ -115,7 +115,7 @@ main                                      # Production code
 ├── opencode/issue-123-task-bd-abc.1      # Task sub-branch (temporary)
 ├── opencode/issue-123-task-bd-abc.2      # Task sub-branch (temporary)
 ├── opencode/issue-123-task-bd-abc.3      # Task sub-branch (temporary)
-└── beads-db                              # Task database (isolated)
+└── beads-sync                              # Task database (isolated)
 ```
 
 > **Note**: Task sub-branches use `-task-` suffix instead of `/` to avoid git ref conflicts
@@ -125,13 +125,13 @@ main                                      # Production code
 
 This repository uses OhMyOpenCode's built-in agents:
 
-| Agent | Purpose |
-|-------|---------|
-| **Sisyphus** | Main orchestrator - implements features, coordinates work |
-| **Planner-Sisyphus** | Breaks down issues into atomic tasks with dependencies |
-| **Oracle** | Code review, architecture decisions, debugging assistance |
-| **Librarian** | Documentation lookup, OSS implementation examples |
-| **Explore** | Fast codebase exploration and pattern matching |
+| Agent                | Purpose                                                   |
+| -------------------- | --------------------------------------------------------- |
+| **Sisyphus**         | Main orchestrator - implements features, coordinates work |
+| **Planner-Sisyphus** | Breaks down issues into atomic tasks with dependencies    |
+| **Oracle**           | Code review, architecture decisions, debugging assistance |
+| **Librarian**        | Documentation lookup, OSS implementation examples         |
+| **Explore**          | Fast codebase exploration and pattern matching            |
 
 ## Task Tracking with Beads
 
@@ -184,7 +184,7 @@ bd-abc.5 "Integration"           # Deps: .3, .4 → Batch 3
 .opencode/
 └── config.json               # OpenCode + OhMyOpenCode configuration
 
-.beads/                       # Task database (on beads-db branch)
+.beads/                       # Task database (on beads-sync branch)
 ```
 
 ## For AI Agents
