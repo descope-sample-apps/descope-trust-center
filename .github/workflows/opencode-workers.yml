@@ -36,7 +36,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          gh release download --repo steveyegge/beads --pattern 'beads-*-linux-x64.tar.gz' --output beads.tar.gz
+          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output beads.tar.gz
           tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           "$HOME/.local/bin/bd" init
@@ -51,7 +51,7 @@ jobs:
         run: |
           READY=$(bd ready --json 2>/dev/null || echo "[]")
           echo "Raw ready output: $READY"
-          
+
           if [ "$READY" = "[]" ] || [ -z "$READY" ]; then
             echo "has_tasks=false" >> $GITHUB_OUTPUT
             echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
@@ -90,7 +90,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          gh release download --repo steveyegge/beads --pattern 'beads-*-linux-x64.tar.gz' --output beads.tar.gz
+          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output beads.tar.gz
           tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           curl -fsSL https://bun.sh/install | bash
@@ -182,7 +182,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          gh release download --repo steveyegge/beads --pattern 'beads-*-linux-x64.tar.gz' --output beads.tar.gz
+          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output beads.tar.gz
           tar -xzf beads.tar.gz && mv beads-*-linux-x64/bd "$HOME/.local/bin/" && rm -rf beads.tar.gz beads-*-linux-x64
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           "$HOME/.local/bin/bd" init
@@ -197,14 +197,14 @@ jobs:
         run: |
           READY=$(bd ready --json 2>/dev/null || echo "[]")
           READY_COUNT=$(echo "$READY" | jq 'length')
-          
+
           # Get all tasks to collect IDs for merge
           ALL_TASKS=$(bd list --json 2>/dev/null || echo "[]")
           TASK_IDS=$(echo "$ALL_TASKS" | jq -c '[.[].id]')
-          
+
           echo "ready_count=$READY_COUNT" >> $GITHUB_OUTPUT
           echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
-          
+
           if [ "$READY_COUNT" -gt 0 ]; then
             echo "action=next_batch" >> $GITHUB_OUTPUT
           else
