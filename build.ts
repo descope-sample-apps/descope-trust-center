@@ -129,6 +129,7 @@ const result = await Bun.build({
   minify: true,
   target: "browser",
   sourcemap: "linked",
+  external: ["react", "react-dom", "lucide-react"],
   define: {
     "process.env.NODE_ENV": JSON.stringify("production"),
   },
