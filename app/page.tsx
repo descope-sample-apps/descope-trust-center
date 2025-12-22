@@ -1,7 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
+import { Badge } from "./components/ui/badge";
+import { Separator } from "./components/ui/separator";
 import { FAQSection } from "./components/ui/faq-section";
-import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink } from "lucide-react";
+import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink, ShieldCheck, Users, Globe } from "lucide-react";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -173,16 +175,16 @@ export default function Page() {
     }
   ];
 
-  const getStatusColor = (status: ComplianceItem["status"]) => {
+  const getStatusVariant = (status: ComplianceItem["status"]) => {
     switch (status) {
       case "compliant":
-        return "text-green-600 bg-green-100";
+        return "success";
       case "pending":
-        return "text-yellow-600 bg-yellow-100";
+        return "warning";
       case "in-progress":
-        return "text-blue-600 bg-blue-100";
+        return "info";
       default:
-        return "text-gray-600 bg-gray-100";
+        return "secondary";
     }
   };
 
@@ -213,22 +215,30 @@ export default function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Skip navigation link for accessibility */}
       <a 
         href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-md z-50"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-primary-foreground px-4 py-2 rounded-md z-50"
       >
         Skip to main content
       </a>
-      <header className="bg-white border-b border-gray-200" role="banner">
+      <header className="bg-card border-b border-border" role="banner">
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center space-x-3">
-              <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Descope Trust Center</h1>
+              <div className="bg-primary/10 p-2 rounded-lg">
+                <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Descope Trust Center</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">Security, compliance, and transparency</p>
+              </div>
             </div>
-            <p className="text-sm sm:text-base text-gray-600 text-center sm:text-right">Security, compliance, and transparency</p>
+            <Badge variant="outline" className="hidden sm:flex">
+              <ShieldCheck className="h-3 w-3 mr-1" />
+              Enterprise Ready
+            </Badge>
           </div>
         </div>
       </header>
@@ -236,8 +246,8 @@ export default function Page() {
       <main id="main-content" className="container mx-auto px-4 sm:px-6 py-6 sm:py-8" role="main">
         <section className="mb-8 sm:mb-12" aria-labelledby="overview-heading">
           <div className="text-center mb-6 sm:mb-8">
-            <h2 id="overview-heading" className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Security & Compliance Overview</h2>
-            <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto px-4">
+            <h2 id="overview-heading" className="text-2xl sm:text-3xl font-bold text-foreground mb-3 sm:mb-4">Security & Compliance Overview</h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto px-4">
               We're committed to maintaining the highest standards of security and compliance. 
               Our comprehensive security program protects your data and ensures regulatory compliance.
             </p>
@@ -245,51 +255,63 @@ export default function Page() {
         </section>
 
         <section className="mb-8 sm:mb-12" aria-labelledby="compliance-heading">
-          <h3 id="compliance-heading" className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Compliance Status</h3>
+          <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+            <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <h3 id="compliance-heading" className="text-xl sm:text-2xl font-semibold text-foreground">Compliance Status</h3>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
             {complianceItems.map((item, index) => (
               <Card key={index} className="hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <CardTitle className="text-base sm:text-lg">{item.name}</CardTitle>
-                    <div 
-                      className={`flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(item.status)}`}
-                      aria-label={`Compliance status: ${item.status.replace('-', ' ')}`}
-                    >
-                      {getStatusIcon(item.status)}
-                      <span className="capitalize hidden sm:inline">{item.status.replace('-', ' ')}</span>
-                      <span className="capitalize sm:hidden">{item.status === 'in-progress' ? 'In Progress' : item.status}</span>
-                    </div>
-                  </div>
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                     <CardTitle className="text-base sm:text-lg">{item.name}</CardTitle>
+                     <Badge 
+                       variant={getStatusVariant(item.status)} 
+                       className="flex items-center space-x-1.5"
+                       aria-label={`Compliance status: ${item.status.replace('-', ' ')}`}
+                     >
+                       {getStatusIcon(item.status)}
+                       <span className="capitalize hidden sm:inline">{item.status.replace('-', ' ')}</span>
+                       <span className="capitalize sm:hidden">{item.status === 'in-progress' ? 'In Progress' : item.status}</span>
+                     </Badge>
+                   </div>
                   <CardDescription>{item.description}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-500">
-                    Last updated: {new Date(item.lastUpdated).toLocaleDateString()}
-                  </p>
-                </CardContent>
+<CardContent>
+                   <p className="text-xs sm:text-sm text-muted-foreground">
+                     Last updated: {new Date(item.lastUpdated).toLocaleDateString()}
+                   </p>
+                 </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
         <section className="mb-8 sm:mb-12" aria-labelledby="documents-heading">
-          <h3 id="documents-heading" className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Security Documents</h3>
+          <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <h3 id="documents-heading" className="text-xl sm:text-2xl font-semibold text-foreground">Security Documents</h3>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
             {documents.map((doc) => (
               <Card key={doc.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start space-x-3">
-                    {getDocumentIcon(doc.type)}
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{doc.title}</CardTitle>
-                      <CardDescription className="mt-2">{doc.description}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                     <p className="text-xs sm:text-sm text-gray-500">
+<CardHeader>
+                   <div className="flex items-start space-x-3">
+                     {getDocumentIcon(doc.type)}
+                     <div className="flex-1">
+                       <div className="flex items-center space-x-2 mb-2">
+                         <CardTitle className="text-base sm:text-lg">{doc.title}</CardTitle>
+                         <Badge variant="outline" size="sm">
+                           {doc.type}
+                         </Badge>
+                       </div>
+                       <CardDescription>{doc.description}</CardDescription>
+                     </div>
+                   </div>
+                 </CardHeader>
+<CardContent>
+                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                     <p className="text-xs sm:text-sm text-muted-foreground">
                        Updated: {new Date(doc.lastUpdated).toLocaleDateString()}
                      </p>
                      <div className="flex space-x-2">
@@ -307,77 +329,100 @@ export default function Page() {
                        </Button>
                      </div>
                    </div>
-                </CardContent>
+                 </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
         <section className="mb-8 sm:mb-12" aria-labelledby="highlights-heading">
-          <h3 id="highlights-heading" className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Security Highlights</h3>
+          <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+            <Award className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <h3 id="highlights-heading" className="text-xl sm:text-2xl font-semibold text-foreground">Security Highlights</h3>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-<Card className="text-center">
-               <CardHeader>
-                 <Lock className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-3 sm:mb-4" />
-                 <CardTitle className="text-base sm:text-lg">End-to-End Encryption</CardTitle>
-               </CardHeader>
-               <CardContent>
-                 <p className="text-gray-600 text-sm sm:text-base">
-                   All data is encrypted in transit and at rest using industry-standard encryption protocols.
-                 </p>
-               </CardContent>
-             </Card>
-             
-             <Card className="text-center">
-               <CardHeader>
-                 <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-green-600 mx-auto mb-3 sm:mb-4" />
-                 <CardTitle className="text-base sm:text-lg">24/7 Monitoring</CardTitle>
-               </CardHeader>
-               <CardContent>
-                 <p className="text-gray-600 text-sm sm:text-base">
-                   Continuous security monitoring and threat detection to keep your data safe.
-                 </p>
-               </CardContent>
-             </Card>
-             
-             <Card className="text-center">
-               <CardHeader>
-                 <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-purple-600 mx-auto mb-3 sm:mb-4" />
-                 <CardTitle className="text-base sm:text-lg">Regular Audits</CardTitle>
-               </CardHeader>
-               <CardContent>
-                 <p className="text-gray-600 text-sm sm:text-base">
-                   Third-party security audits and penetration testing to validate our security controls.
-                 </p>
-               </CardContent>
-             </Card>
+<Card className="text-center hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="bg-blue-100 dark:bg-blue-900/20 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <Lock className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <CardTitle className="text-base sm:text-lg">End-to-End Encryption</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm sm:text-base">
+                    All data is encrypted in transit and at rest using industry-standard encryption protocols.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="text-center hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="bg-green-100 dark:bg-green-900/20 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <Shield className="h-8 w-8 sm:h-10 sm:w-10 text-green-600 dark:text-green-400" />
+                  </div>
+                  <CardTitle className="text-base sm:text-lg">24/7 Monitoring</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm sm:text-base">
+                    Continuous security monitoring and threat detection to keep your data safe.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="text-center hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="bg-purple-100 dark:bg-purple-900/20 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <CardTitle className="text-base sm:text-lg">Regular Audits</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm sm:text-base">
+                    Third-party security audits and penetration testing to validate our security controls.
+                  </p>
+                </CardContent>
+              </Card>
           </div>
         </section>
 
+        <Separator className="my-8 sm:my-12" />
+        
         <FAQSection items={faqItems} />
 
-        <section className="bg-blue-50 rounded-lg p-6 sm:p-8 text-center">
-          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4">Have Questions?</h3>
-          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 max-w-2xl mx-auto px-4">
-            Our security team is here to help. If you have questions about our security practices, 
-            compliance status, or need access to additional documentation, please don't hesitate to reach out.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4">
-            <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
-              Contact Security Team
-            </Button>
-            <Button variant="outline" className="w-full sm:w-auto">
-              Request Audit Report
-            </Button>
+        <Separator className="my-8 sm:my-12" />
+
+        <section className="bg-muted/50 rounded-xl p-6 sm:p-8 text-center border border-border">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-xl sm:text-2xl font-semibold text-foreground mb-3 sm:mb-4">Have Questions?</h3>
+            <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 px-4">
+              Our security team is here to help. If you have questions about our security practices, 
+              compliance status, or need access to additional documentation, please don't hesitate to reach out.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4">
+              <Button size="lg" className="w-full sm:w-auto">
+                <Globe className="h-4 w-4 mr-2" />
+                Contact Security Team
+              </Button>
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                <FileText className="h-4 w-4 mr-2" />
+                Request Audit Report
+              </Button>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="bg-white border-t border-gray-200 mt-12 sm:mt-16" role="contentinfo">
+      <footer className="bg-card border-t border-border mt-12 sm:mt-16" role="contentinfo">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="text-center text-gray-600">
-            <p className="text-sm sm:text-base">&copy; 2024 Descope. All rights reserved.</p>
-            <p className="mt-1 sm:mt-2 text-xs sm:text-sm">
+          <div className="text-center text-muted-foreground">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <Shield className="h-4 w-4" />
+              <p className="text-sm sm:text-base">&copy; 2024 Descope. All rights reserved.</p>
+            </div>
+            <p className="text-xs sm:text-sm">
               Trust Center last updated: {new Date().toLocaleDateString()}
             </p>
           </div>
