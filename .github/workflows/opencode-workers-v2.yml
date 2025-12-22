@@ -87,14 +87,16 @@ jobs:
           echo "task_count=$TASK_COUNT" >> $GITHUB_OUTPUT
           
           echo "Found $TASK_COUNT ready tasks: $TASK_IDS"
+          echo "DEBUG: task_ids output is: '$TASK_IDS'"
+          echo "DEBUG: task_count output is: '$TASK_COUNT'"
 
       - name: Post wave start comment
-        if: steps.ready.outputs.task_count > 0
+        if: fromJson(needs.get-ready-tasks.outputs.task_count) > 0
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const taskIds = JSON.parse('${{ steps.ready.outputs.task_ids }}');
+            const taskIds = JSON.parse('${{ needs.get-ready-tasks.outputs.task_ids }}');
             const count = taskIds.length;
             
             await github.rest.issues.createComment({
