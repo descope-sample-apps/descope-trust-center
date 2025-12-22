@@ -16,7 +16,8 @@
     "test:ui": "playwright test --ui",
     "test:debug": "playwright test --debug",
     "test:report": "playwright show-report",
-    "test:codegen": "playwright codegen"
+    "test:codegen": "playwright codegen",
+    "test:visual": "bun scripts/visual-test.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
