@@ -62,23 +62,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Get diff for review
-        id: diff
-        run: |
-          DIFF=$(git diff origin/main...HEAD)
-          COMMIT_COUNT=$(git rev-list --count origin/main...HEAD)
-          echo "commit_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
-          # Store diff in a file to avoid shell escaping issues
-          echo "$DIFF" > /tmp/pr_diff.txt
-
       - name: Run OpenCode Review Agent
         id: review
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          DIFF_SNIPPET=$(head -500 /tmp/pr_diff.txt)
-
           opencode run \
             --model "opencode/big-pickle" \
             --agent "Reviewer" \
@@ -90,18 +79,13 @@ jobs:
           ## PR Description
           ${{ github.event.pull_request.body }}
 
-          ## Statistics
-          - Commits: ${{ steps.diff.outputs.commit_count }}
-
-          ## Diff (first 500 lines)
-          ${DIFF_SNIPPET}
-
           ## Instructions
           1. Check code quality, patterns, and potential issues
-          2. Verify changes match the PR description
-          3. Look for inconsistencies between different parts of the implementation
-          4. Ensure all tasks work together cohesively
-          5. Run 'bun run build' to verify the build passes
+          2. Use gh cli to fetch any failed checks or comments related to this PR for review
+          3. Verify changes match the PR description
+          4. Look for inconsistencies between different parts of the implementation
+          5. Ensure all tasks work together cohesively
+          6. Run 'bun run build' to verify the build passes
 
           Respond with:
           - APPROVE or LGTM if changes look good

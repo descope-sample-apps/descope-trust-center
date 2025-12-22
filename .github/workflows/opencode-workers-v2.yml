@@ -526,6 +526,85 @@ jobs:
             echo "Created PR #$PR_NUMBER"
           fi
 
+      - name: Update PR with task status
+        if: steps.pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          EPIC_ID: ${{ steps.payload.outputs.epic_id }}
+          ISSUE_NUMBER: ${{ steps.payload.outputs.issue_number }}
+          MERGED_COUNT: ${{ steps.merge.outputs.merged_count }}
+          CONFLICT_COUNT: ${{ steps.merge.outputs.conflict_count }}
+        run: |
+          # Get all tasks for this epic
+          ALL_TASKS=$("$HOME/.local/bin/bd" list --json 2>/dev/null || echo '[]')
+          EPIC_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select((.parent // empty) == $epic_id)]')
+          
+          # Count tasks by status
+          TOTAL=$(echo "$EPIC_TASKS" | jq 'length')
+          COMPLETED=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "closed")] | length')
+          IN_PROGRESS=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "in_progress")] | length')
+          READY=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "open" and (.dependencies // [] | length == 0) and (.blocked_by // [] | length == 0)] | length')
+          BLOCKED=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "blocked")] | length')
+          PENDING=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "open" and ((.dependencies // [] | length > 0) or (.blocked_by // [] | length > 0))] | length')
+          
+          # Generate task checklist
+          TASK_CHECKLIST=$(echo "$EPIC_TASKS" | jq -r '.[] | if .status == "closed" then "- [x] \(.title)" else "- [ ] \(.title)" end')
+          
+          echo "Task counts: Total=$TOTAL, Completed=$COMPLETED, In Progress=$IN_PROGRESS, Ready=$READY, Blocked=$BLOCKED, Pending=$PENDING"
+          
+          # Update PR with task status
+          gh pr edit "$PR_NUMBER" --body "$(cat << 'EOF'
+          ## Summary
+
+          Automated implementation of issue #$ISSUE_NUMBER.
+
+          **Tasks Completed:** $MERGED_COUNT
+          **Merge Conflicts:** $CONFLICT_COUNT (auto-resolved)
+          **Build Status:** ✅ Passed
+
+          ---
+
+          ## Task Progress
+
+          **Total Tasks:** $TOTAL
+          **Completed:** $COMPLETED ✅
+          **In Progress:** $IN_PROGRESS 🔄
+          **Ready:** $READY 🚀
+          **Blocked:** $BLOCKED 🚫
+          **Pending:** $PENDING ⏳
+
+          ### Task Progress
+
+          **Total Tasks:** $TOTAL
+          **Completed:** $COMPLETED ✅
+          **In Progress:** $IN_PROGRESS 🔄
+          **Ready:** $READY 🚀
+          **Blocked:** $BLOCKED 🚫
+          **Pending:** $PENDING ⏳
+
+          ### Task Checklist
+
+          $TASK_CHECKLIST
+
+          ### Next Steps
+
+          Current wave complete. Next wave will process remaining ready tasks.
+
+          ---
+
+          ### Changes
+
+          $(git log --oneline main..${{ steps.payload.outputs.branch }} | head -20)
+
+          ---
+
+          Closes #$ISSUE_NUMBER
+          EOF
+          )"
+          
+          echo "Updated PR #$PR_NUMBER with task status"
+
       - name: Cleanup task branches
         if: success()
         run: |
@@ -575,11 +654,13 @@ jobs:
             const completedTasks = `${{ steps.completed-tasks.outputs.completed_tasks_details }}`;
 
             let body = `### 🎉 Wave Complete!\n\n**Tasks Completed:** ${merged}\n**Conflicts Auto-Resolved:** ${conflicts}\n**Pull Request:** #${prNumber}\n**Build:** ✅ Passed\n\n`;
-
+            
             if (completedTasks && completedTasks.trim()) {
               body += `**Completed Tasks:**\n${completedTasks}\n\n`;
             }
-
+            
+            body += `📝 **PR Updated:** Task status has been updated in the PR description\n\n`;
+            
             if (nextWaveCount > 0) {
               body += `🚀 **Next Wave Starting:** ${nextWaveCount} tasks ready\n\n_Staying in execution mode..._`;
             } else {
