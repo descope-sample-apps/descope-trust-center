@@ -122,6 +122,7 @@ jobs:
       - name: Update task status to in-progress
         run: |
           bd update "${{ matrix.id }}" --status in_progress
+          bd sync -m "chore: start task ${{ matrix.id }}"
 
       - name: Run OpenCode Sisyphus Agent
         env:
@@ -145,6 +146,7 @@ jobs:
       - name: Close task
         run: |
           bd close "${{ matrix.id }}"
+          bd sync -m "chore: complete task ${{ matrix.id }}"
 
       - name: Commit and push changes
         run: |
@@ -153,10 +155,6 @@ jobs:
             git commit -m "feat(${{ matrix.id }}): ${{ matrix.title || matrix.summary }}"
             git push -u origin "${{ steps.branch.outputs.sub_branch }}"
           fi
-
-      - name: Commit beads changes to beads-sync branch
-        run: |
-          bd sync -m "chore: update task ${{ matrix.id }} status"
 
   check-next:
     needs: [get-ready-tasks, worker]
