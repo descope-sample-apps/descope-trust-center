@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: 'Issue number'
+        description: "Issue number"
         required: true
         type: number
       branch:
-        description: 'Feature branch name'
+        description: "Feature branch name"
         required: true
         type: string
 
@@ -54,20 +54,20 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          
+
           # Install beads
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          
+
           # Install bun
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          
+
           # Install opencode
           curl -fsSL https://opencode.ai/install | bash
           echo "$HOME/.opencode/bin" >> $GITHUB_PATH
-          
+
           # Install bun dependencies
           $HOME/.bun/bin/bun install
 
@@ -75,10 +75,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           # Configure beads sync branch
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
-          
+
           # Initialize and sync beads
           "$HOME/.local/bin/bd" init
           "$HOME/.local/bin/bd" sync
@@ -108,6 +108,7 @@ jobs:
         run: |
           # Run Sisyphus with the coordinator prompt
           opencode run \
+            --agent "Sisyphus" \
             --model "opencode/big-pickle" \
             "# EPIC COORDINATOR - Implement All Tasks, Merge, and Create PR
 
@@ -133,7 +134,7 @@ jobs:
 
           ## Step 2: Spawn Parallel Subagents for Ready Tasks
           For EACH ready task, spawn a subagent using Task tool with subagent_type=\"general\".
-          
+
           **CRITICAL**: Spawn ALL ready tasks in ONE message with MULTIPLE Task calls for parallelism.
 
           Each subagent prompt:
@@ -255,7 +256,7 @@ jobs:
           3. If a subagent fails, note it but continue with others
           4. Resolve merge conflicts - don't give up
           5. The PR must be created before you're done" 2>&1 | tee /tmp/sisyphus-output.txt
-          
+
           # Parse output for results
           if grep -q "EPIC_COMPLETE: true" /tmp/sisyphus-output.txt; then
             echo "epic_complete=true" >> $GITHUB_OUTPUT
@@ -273,7 +274,7 @@ jobs:
             const epicComplete = '${{ steps.sisyphus.outputs.epic_complete }}' === 'true';
             const prNumber = '${{ steps.sisyphus.outputs.pr_number }}';
             const commentId = parseInt('${{ steps.comment.outputs.result }}');
-            
+
             let body;
             if (epicComplete && prNumber) {
               body = `### 🎉 Implementation Complete\n\nAll tasks implemented and merged.\n\n**Pull Request:** #${prNumber}`;
@@ -282,7 +283,7 @@ jobs:
             } else {
               body = '### ⚠️ Implementation Finished with Issues\n\nSome tasks may have failed. Check workflow logs for details.';
             }
-            
+
             await github.rest.issues.updateComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

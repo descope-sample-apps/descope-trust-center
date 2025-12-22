@@ -263,6 +263,7 @@ jobs:
         run: |
           opencode run \
             --model "opencode/big-pickle" \
+            --agent "Sisyphus" \
             "Implement the changes requested in this GitHub Issue.
 
           ## Instructions
