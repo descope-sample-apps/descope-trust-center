@@ -9,6 +9,27 @@ interface ContactFormData {
   topic: 'general' | 'security' | 'compliance' | 'technical' | 'partnership';
 }
 
+function sanitizeForLogging(value: unknown): unknown {
+  if (typeof value === 'string') {
+    // Remove newline and carriage return characters to prevent log injection
+    return value.replace(/[\r\n]/g, '');
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeForLogging(item));
+  }
+
+  if (value && typeof value === 'object') {
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      sanitized[key] = sanitizeForLogging(val);
+    }
+    return sanitized;
+  }
+
+  return value;
+}
+
 function validateContactForm(data: unknown): { success: true; data: ContactFormData } | { success: false; errors: string[] } {
   const errors: string[] = [];
   
@@ -102,7 +123,7 @@ export async function POST(request: Request) {
     // 4. Log the submission
     
     // For demo purposes, we'll just return success
-    console.log('Contact form submission:', validatedData);
+    console.log('Contact form submission:', sanitizeForLogging(validatedData));
     
     return NextResponse.json({
       success: true,
