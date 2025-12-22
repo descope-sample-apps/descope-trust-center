@@ -35,15 +35,27 @@ const commands = {
     args: ['test', 'tests/enhanced-visual.spec.ts'],
   },
   
+  // Comprehensive visual tests
+  'comprehensive': {
+    description: 'Run comprehensive visual regression test suite',
+    args: ['test', 'tests/comprehensive-visual.spec.ts'],
+  },
+  
+  // Cross-browser visual tests
+  'cross-browser': {
+    description: 'Run cross-browser visual consistency tests',
+    args: ['test', 'tests/cross-browser-visual.spec.ts'],
+  },
+  
   // All visual tests
   'all': {
     description: 'Run all visual tests',
     args: ['test', 'tests/'],
   },
   
-  // Cross-browser tests
-  'cross-browser': {
-    description: 'Run tests across all browsers',
+  // Cross-browser project tests
+  'cross-browser-projects': {
+    description: 'Run tests across all browser projects',
     args: ['test', '--project=chromium', '--project=firefox', '--project=webkit'],
   },
   
@@ -96,7 +108,7 @@ const commands = {
   },
 };
 
-function runCommand(command: string, args: string[]) {
+function runCommand(_command: string, args: string[]) {
   return new Promise((resolve, reject) => {
     console.log(`🚀 Running: bunx playwright ${args.join(' ')}`);
     
