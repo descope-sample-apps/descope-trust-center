@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SubprocessorsTable } from "@/components/subprocessors-table";
 import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink } from "lucide-react";
 
 interface ComplianceItem {
@@ -16,6 +17,17 @@ interface Document {
   description: string;
   lastUpdated: string;
   downloadUrl?: string;
+}
+
+interface Subprocessor {
+  id: string;
+  name: string;
+  category: string;
+  purpose: string;
+  dataLocation: string;
+  status: "active" | "under-review" | "inactive";
+  lastReviewed: string;
+  dpaUrl?: string;
 }
 
 export function HomePage() {
@@ -43,6 +55,84 @@ export function HomePage() {
       status: "in-progress",
       description: "Health Insurance Portability and Accountability Act",
       lastUpdated: "2024-12-01"
+    }
+  ];
+
+  const subprocessors: Subprocessor[] = [
+    {
+      id: "1",
+      name: "Amazon Web Services",
+      category: "Cloud Infrastructure",
+      purpose: "Cloud hosting and infrastructure services",
+      dataLocation: "United States, EU",
+      status: "active",
+      lastReviewed: "2024-11-15",
+      dpaUrl: "https://aws.amazon.com/compliance/dpa/"
+    },
+    {
+      id: "2",
+      name: "Google Cloud Platform",
+      category: "Cloud Infrastructure", 
+      purpose: "Cloud storage and computing services",
+      dataLocation: "United States, EU",
+      status: "active",
+      lastReviewed: "2024-11-10",
+      dpaUrl: "https://cloud.google.com/terms/dpa/"
+    },
+    {
+      id: "3",
+      name: "Stripe",
+      category: "Payment Processing",
+      purpose: "Payment processing and billing services",
+      dataLocation: "United States",
+      status: "active",
+      lastReviewed: "2024-11-20",
+      dpaUrl: "https://stripe.com/privacy"
+    },
+    {
+      id: "4",
+      name: "SendGrid",
+      category: "Communication",
+      purpose: "Email delivery and notification services",
+      dataLocation: "United States, EU",
+      status: "active",
+      lastReviewed: "2024-10-30"
+    },
+    {
+      id: "5",
+      name: "Datadog",
+      category: "Monitoring",
+      purpose: "Application monitoring and analytics",
+      dataLocation: "United States",
+      status: "under-review",
+      lastReviewed: "2024-09-15"
+    },
+    {
+      id: "6",
+      name: "Twilio",
+      category: "Communication",
+      purpose: "SMS and voice communication services",
+      dataLocation: "United States",
+      status: "active",
+      lastReviewed: "2024-11-05"
+    },
+    {
+      id: "7",
+      name: "Vercel",
+      category: "Hosting",
+      purpose: "Frontend hosting and CDN services",
+      dataLocation: "United States, EU",
+      status: "active",
+      lastReviewed: "2024-11-18"
+    },
+    {
+      id: "8",
+      name: "Legacy Analytics Provider",
+      category: "Analytics",
+      purpose: "Web analytics and user tracking",
+      dataLocation: "United States",
+      status: "inactive",
+      lastReviewed: "2024-06-30"
     }
   ];
 
@@ -204,6 +294,10 @@ export function HomePage() {
               </Card>
             ))}
           </div>
+        </section>
+
+        <section className="mb-12">
+          <SubprocessorsTable subprocessors={subprocessors} />
         </section>
 
         <section className="mb-12">
