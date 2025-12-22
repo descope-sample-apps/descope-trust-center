@@ -8,7 +8,7 @@ import { FileText, Shield, Award, Download, ExternalLink, Search, Filter } from 
 interface Document {
   id: string;
   title: string;
-  type: "policy" | "report" | "certificate" | "guide" | "technical";
+  type: "policy" | "report" | "certificate" | "guide" | "technical" | "legal";
   category: "security" | "compliance" | "privacy" | "technical" | "legal";
   description: string;
   lastUpdated: string;
@@ -109,7 +109,8 @@ const typeConfig = {
   report: { icon: Shield, color: "text-green-600", label: "Report" },
   certificate: { icon: Award, color: "text-purple-600", label: "Certificate" },
   guide: { icon: FileText, color: "text-orange-600", label: "Guide" },
-  technical: { icon: FileText, color: "text-gray-600", label: "Technical" }
+  technical: { icon: FileText, color: "text-gray-600", label: "Technical" },
+  legal: { icon: FileText, color: "text-indigo-600", label: "Legal" }
 } as const;
 
 const categoryConfig = {
