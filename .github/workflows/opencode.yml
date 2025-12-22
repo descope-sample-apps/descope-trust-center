@@ -295,17 +295,15 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          opencode run \
-            --model "opencode/big-pickle" \
-            
-            "Implement the changes requested in this GitHub Issue.
+          opencode run --model "opencode/big-pickle" "Implement the changes requested in this GitHub Issue.
 
           ## Instructions
           1. Implement the requested changes
-          2. Follow existing code patterns
-          3. Run 'bun run build' to verify no errors
+          2. Follow existing code patterns in the repository  
+          3. Run 'bun run build' to verify there are no errors
+          4. Commit and push your changes when complete
 
-          When complete, summarize what was implemented."
+          When complete, provide a summary of what was implemented."
 
       - name: Commit and push
         id: commit
