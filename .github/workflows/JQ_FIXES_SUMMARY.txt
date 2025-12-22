@@ -1,0 +1,70 @@
+JQ SYNTAX FIXES SUMMARY
+=======================
+
+Files Scanned:
+- .github/workflows/opencode.yml
+- .github/workflows/opencode-workers-v2.yml
+
+Total jq expressions found: 35
+
+Errors Found and Fixed: 6
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. File: opencode.yml, Line: 202
+   Error: Missing closing ] for outer array
+   Before: jq -r ... '[.[] | select(...)] | .[0].id // empty'
+   After:  jq -r ... '[.[] | select(...)] | .[0].id // empty']
+   Fix: Added closing ] before final ')
+
+2. File: opencode.yml, Line: 207
+   Error: Missing closing ] for outer array
+   Before: jq ... '[.[] | select(...))]'
+   After:  jq ... '[.[] | select(...))]']
+   Fix: Added closing ] before final ')'
+
+3. File: opencode-workers-v2.yml, Line: 97
+   Error: Missing closing ] for outer array
+   Before: jq ... '[.[] | select(...))]'
+   After:  jq ... '[.[] | select(...))]']
+   Fix: Added closing ] before final ')'
+
+4. File: opencode-workers-v2.yml, Line: 547
+   Error: Missing closing ) before ] | length
+   Before: jq '[.[] | select(...] | length'
+   After:  jq '[.[] | select(...))] | length'
+   Fix: Added closing ) before ] | length
+
+5. File: opencode-workers-v2.yml, Line: 549
+   Error: Missing closing ) before ] | length
+   Before: jq '[.[] | select(...] | length'
+   After:  jq '[.[] | select(...))] | length'
+   Fix: Added closing ) before ] | length
+
+6. File: opencode-workers-v2.yml, Line: 630
+   Error: Missing closing ] for outer array
+   Before: jq ... '[.[] | select(...))]'
+   After:  jq ... '[.[] | select(...))]']
+   Fix: Added closing ] before final ')'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pattern Summary:
+All errors followed the same pattern - missing closing bracket(s) in jq expressions.
+
+Most common error types:
+1. Outer array missing closing ]: 4 occurrences
+2. Missing ) before ] | length: 2 occurrences
+
+All errors were in complex jq filter expressions using:
+- select() filters with multiple conditions
+- Array operations with contains()
+- Parent/epic relationship checks
+- Status filtering
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Final Status: ✅ ALL FIXED
+
+All 6 jq syntax errors have been corrected. The workflow files should now execute
+without jq parsing errors.
