@@ -90,9 +90,8 @@ jobs:
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
           curl -fsSL https://opencode.ai/install | bash
           echo "$HOME/.opencode/bin" >> $GITHUB_PATH
-          "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
-          bd init
+          "$HOME/.local/bin/bd" init
 
       - name: Setup git identity
         run: |
