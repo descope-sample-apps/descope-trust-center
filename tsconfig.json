@@ -1,18 +1,22 @@
 {
   "compilerOptions": {
     // Environment setup & latest features
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
 
     // Bundler mode
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
+    "isolatedModules": true,
 
     // Best practices
     "strict": true,
@@ -20,17 +24,37 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/styles/*": ["./styles/*"]
     },
 
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+
+    // Additional type checking
+    "resolveJsonModule": true
   },
 
-  "exclude": ["dist", "node_modules"]
+  "include": [
+    "src/**/*",
+    "styles/**/*",
+    "*.ts",
+    "*.tsx",
+    "*.d.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "build",
+    "coverage"
+  ]
 }
