@@ -1,64 +1,101 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SecurityOverviewDashboard } from "./components/SecurityOverviewDashboard";
-import { Shield } from "lucide-react";
+import { ComplianceDisplay } from "@/components/ui/compliance-display";
+import { APITester } from "./APITester";
+import { Shield, FileText, Download, CheckCircle, Lock, AlertCircle } from "lucide-react";
 import "./index.css";
+
+import logo from "./logo.svg";
+import reactLogo from "./react.svg";
+
+const mockComplianceData = [
+  {
+    id: "1",
+    name: "GDPR Compliance",
+    status: "compliant" as const,
+    description: "General Data Protection Regulation compliance check",
+    lastChecked: new Date("2024-12-20"),
+    score: 95,
+    details: [
+      "Data processing agreements in place",
+      "Consent management implemented",
+      "Data subject rights configured",
+    ],
+  },
+  {
+    id: "2", 
+    name: "SOC 2 Type II",
+    status: "partial" as const,
+    description: "Service Organization Control 2 Type II audit",
+    lastChecked: new Date("2024-12-18"),
+    score: 78,
+    details: [
+      "Security controls implemented",
+      "Availability monitoring in progress",
+      "Processing integrity needs review",
+    ],
+  },
+  {
+    id: "3",
+    name: "ISO 27001",
+    status: "pending" as const,
+    description: "Information Security Management System certification",
+    lastChecked: new Date("2024-12-15"),
+    details: [
+      "Initial assessment completed",
+      "Waiting for external auditor",
+    ],
+  },
+  {
+    id: "4",
+    name: "HIPAA Compliance",
+    status: "non-compliant" as const,
+    description: "Health Insurance Portability and Accountability Act",
+    lastChecked: new Date("2024-12-22"),
+    score: 45,
+    details: [
+      "Encryption standards not met",
+      "Access controls need updating",
+      "Audit trails incomplete",
+    ],
+  },
+];
 
 export function App() {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Shield className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold">Descope Trust Center</h1>
-            </div>
-            <Button variant="outline">Contact Security</Button>
-          </div>
-        </div>
-      </header>
+    <div className="container mx-auto p-8 space-y-8 relative z-10">
+      <div className="flex justify-center items-center gap-8">
+        <img
+          src={logo}
+          alt="Bun Logo"
+          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#646cffaa] scale-120"
+        />
+        <img
+          src={reactLogo}
+          alt="React Logo"
+          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#61dafbaa] [animation:spin_20s_linear_infinite]"
+        />
+      </div>
+      
+      <Card>
+        <CardHeader className="gap-4">
+          <CardTitle className="text-3xl font-bold">Descope Trust Center</CardTitle>
+          <CardDescription>
+            Compliance monitoring and security status dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <APITester />
+        </CardContent>
+      </Card>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
-        <SecurityOverviewDashboard />
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t bg-card mt-16">
-        <div className="container mx-auto px-6 py-8">
-          <div className="grid gap-8 md:grid-cols-3">
-            <div>
-              <h3 className="font-semibold mb-3">Security</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground">Security Overview</a></li>
-                <li><a href="#" className="hover:text-foreground">Compliance</a></li>
-                <li><a href="#" className="hover:text-foreground">Vulnerability Program</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-3">Legal</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-foreground">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-foreground">DPA</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-3">Contact</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>security@descope.com</li>
-                <li><a href="#" className="hover:text-foreground">Report a Vulnerability</a></li>
-                <li><a href="#" className="hover:text-foreground">Security Questions</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 pt-6 border-t text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 Descope. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <ComplianceDisplay
+        title="Security & Compliance Overview"
+        description="Real-time monitoring of our security and compliance posture"
+        items={mockComplianceData}
+        overallScore={72}
+        lastUpdated={new Date()}
+      />
     </div>
   );
 }
