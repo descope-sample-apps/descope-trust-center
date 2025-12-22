@@ -146,8 +146,11 @@ jobs:
           # Parse output for results
           if grep -q "EPIC_COMPLETE: true" /tmp/orchestrator-output.txt; then
             echo "epic_complete=true" >> $GITHUB_OUTPUT
-            PR_NUM=$(grep "PR_NUMBER:" /tmp/orchestrator-output.txt | sed 's/PR_NUMBER: //' | tr -d ' ')
-            echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
+            # Get last occurrence of PR_NUMBER (in case of multiple outputs) and extract only the number
+            PR_NUM=$(grep "PR_NUMBER:" /tmp/orchestrator-output.txt | tail -1 | sed 's/.*PR_NUMBER: *//' | tr -d ' ' | grep -o '[0-9]*')
+            if [ -n "$PR_NUM" ]; then
+              echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
+            fi
           else
             echo "epic_complete=false" >> $GITHUB_OUTPUT
           fi
