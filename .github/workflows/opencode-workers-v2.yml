@@ -94,7 +94,7 @@ jobs:
           if [ -n "$EPIC_ID" ]; then
             # Get all tasks and filter for children of this epic that are ready
             ALL_TASKS=$("$HOME/.local/bin/bd" list --json)
-            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id))]')
+            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id))]'])
           else
             # Fallback if no epic_id provided (shouldn't happen in normal flow)
             READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
@@ -544,9 +544,9 @@ jobs:
           TOTAL=$(echo "$EPIC_TASKS" | jq 'length')
           COMPLETED=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "closed")] | length')
           IN_PROGRESS=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "in_progress")] | length')
-          READY=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "open" and (.dependencies // [] | length == 0) and (.blocked_by // [] | length == 0)] | length')
+          READY=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "open" and (.dependencies // [] | length == 0) and (.blocked_by // [] | length == 0))] | length')
           BLOCKED=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "blocked")] | length')
-          PENDING=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "open" and ((.dependencies // [] | length > 0) or (.blocked_by // [] | length > 0))] | length')
+          PENDING=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "open" and ((.dependencies // [] | length > 0) or (.blocked_by // [] | length > 0)))] | length')
           
           # Generate task checklist
           TASK_CHECKLIST=$(echo "$EPIC_TASKS" | jq -r '.[] | if .status == "closed" then "- [x] \(.title)" else "- [ ] \(.title)" end')
@@ -627,7 +627,7 @@ jobs:
           if [ -n "$EPIC_ID" ]; then
             # Get all tasks and filter for children of this epic that are ready
             ALL_TASKS=$("$HOME/.local/bin/bd" list --json)
-            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id))]')
+            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id))]'])
             TASK_COUNT=$(echo "$READY_TASKS" | jq 'length')
           else
             # Fallback if no epic_id provided
