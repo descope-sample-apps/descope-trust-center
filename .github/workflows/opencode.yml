@@ -129,8 +129,9 @@ jobs:
           ISSUE_BODY=$(echo "$ISSUE_JSON" | jq -r '.body')
           
           # Run CI Orchestrator in planning mode
+          # Note: Use the exact "name" from agent frontmatter, not "id"
           opencode run \
-            --agent "ci-orchestrator" \
+            --agent "CI Orchestrator" \
             --model "opencode/big-pickle" \
             "Execute CI workflow in PLANNING mode for this GitHub issue.
 

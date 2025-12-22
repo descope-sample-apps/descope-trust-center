@@ -107,8 +107,9 @@ jobs:
           ISSUE_NUMBER: ${{ steps.payload.outputs.issue_number }}
         run: |
           # Run CI Orchestrator agent
+          # Note: Use the exact "name" from agent frontmatter, not "id"
           opencode run \
-            --agent "ci-orchestrator" \
+            --agent "CI Orchestrator" \
             --model "opencode/big-pickle" \
             "Execute complete CI workflow for this GitHub issue.
           
