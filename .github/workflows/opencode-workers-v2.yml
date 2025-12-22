@@ -67,16 +67,14 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Configure Beads
+      - name: Configure Beads (read-only mode)
         run: |
+          # Initialize beads with sync branch config
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
           "$HOME/.local/bin/bd" init
-
-      - name: Get ready tasks
-        id: ready
-        run: |
-          # Sync to get latest task statuses
-          "$HOME/.local/bin/bd" sync
+          
+          # Pull from beads-sync but don't sync (avoid conflicts with parallel workers)
+          git fetch origin beads-sync:beads-sync || echo "beads-sync branch not found"
           
           # Get ready tasks (no dependencies blocking them)
           READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
@@ -169,11 +167,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Configure Beads
+      - name: Configure Beads (read-only mode)
         run: |
+          # Initialize beads with sync branch config
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
           "$HOME/.local/bin/bd" init
-          "$HOME/.local/bin/bd" sync
+          
+          # Pull from beads-sync but don't sync (avoid conflicts with parallel workers)
+          git fetch origin beads-sync:beads-sync || echo "beads-sync branch not found"
 
       - name: Get task specification
         id: task-spec
