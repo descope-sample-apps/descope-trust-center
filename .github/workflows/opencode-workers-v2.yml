@@ -554,53 +554,47 @@ jobs:
           echo "Task counts: Total=$TOTAL, Completed=$COMPLETED, In Progress=$IN_PROGRESS, Ready=$READY, Blocked=$BLOCKED, Pending=$PENDING"
           
           # Update PR with task status
-          gh pr edit "$PR_NUMBER" --body "$(cat << 'EOF'
-          ## Summary
+          BRANCH="${{ steps.payload.outputs.branch }}"
+          CHANGES=$(git log --oneline main.."$BRANCH" | head -20)
+          
+          gh pr edit "$PR_NUMBER" --body "$(cat << EOF
+## Summary
 
-          Automated implementation of issue #$ISSUE_NUMBER.
+Automated implementation of issue #$ISSUE_NUMBER.
 
-          **Tasks Completed:** $MERGED_COUNT
-          **Merge Conflicts:** $CONFLICT_COUNT (auto-resolved)
-          **Build Status:** ✅ Passed
+**Tasks Completed:** $MERGED_COUNT
+**Merge Conflicts:** $CONFLICT_COUNT (auto-resolved)
+**Build Status:** ✅ Passed
 
-          ---
+---
 
-          ## Task Progress
+## Task Progress
 
-          **Total Tasks:** $TOTAL
-          **Completed:** $COMPLETED ✅
-          **In Progress:** $IN_PROGRESS 🔄
-          **Ready:** $READY 🚀
-          **Blocked:** $BLOCKED 🚫
-          **Pending:** $PENDING ⏳
+**Total Tasks:** $TOTAL
+**Completed:** $COMPLETED ✅
+**In Progress:** $IN_PROGRESS 🔄
+**Ready:** $READY 🚀
+**Blocked:** $BLOCKED 🚫
+**Pending:** $PENDING ⏳
 
-          ### Task Progress
+### Task Checklist
 
-          **Total Tasks:** $TOTAL
-          **Completed:** $COMPLETED ✅
-          **In Progress:** $IN_PROGRESS 🔄
-          **Ready:** $READY 🚀
-          **Blocked:** $BLOCKED 🚫
-          **Pending:** $PENDING ⏳
+$TASK_CHECKLIST
 
-          ### Task Checklist
+### Next Steps
 
-          $TASK_CHECKLIST
+Current wave complete. Next wave will process remaining ready tasks.
 
-          ### Next Steps
+---
 
-          Current wave complete. Next wave will process remaining ready tasks.
+### Changes
 
-          ---
+$CHANGES
 
-          ### Changes
+---
 
-          $(git log --oneline main..${{ steps.payload.outputs.branch }} | head -20)
-
-          ---
-
-          Closes #$ISSUE_NUMBER
-          EOF
+Closes #$ISSUE_NUMBER
+EOF
           )"
           
           echo "Updated PR #$PR_NUMBER with task status"
