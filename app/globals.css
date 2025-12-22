@@ -42,71 +42,107 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Descope Brand Color Palette - Light Theme */
+  --background: oklch(0.99 0.005 200);
+  --foreground: oklch(0.15 0.015 220);
+  --card: oklch(1 0.003 210);
+  --card-foreground: oklch(0.15 0.015 220);
+  --popover: oklch(1 0.003 210);
+  --popover-foreground: oklch(0.15 0.015 220);
+  
+  /* Descope Primary - Teal/Cyan brand colors */
+  --primary: oklch(0.55 0.16 185);
+  --primary-foreground: oklch(0.98 0.01 200);
+  
+  /* Descope Secondary - Blue tones */
+  --secondary: oklch(0.94 0.03 200);
+  --secondary-foreground: oklch(0.25 0.04 210);
+  
+  /* Descope Muted - Light cyan/teal */
+  --muted: oklch(0.96 0.02 195);
+  --muted-foreground: oklch(0.45 0.01 200);
+  
+  /* Descope Accent - Bright cyan */
+  --accent: oklch(0.92 0.08 190);
+  --accent-foreground: oklch(0.15 0.015 220);
+  
+  /* Descope Destructive - Red with proper contrast */
+  --destructive: oklch(0.55 0.22 15);
+  --destructive-foreground: oklch(0.98 0.01 200);
+  
+  /* Descope Border - Light cyan */
+  --border: oklch(0.88 0.02 195);
+  --input: oklch(0.92 0.02 195);
+  --ring: oklch(0.55 0.16 185);
+  
+  /* Descope Chart Colors - Based on brand palette */
+  --chart-1: oklch(0.55 0.16 185); /* Primary teal */
+  --chart-2: oklch(0.45 0.18 210); /* Blue */
+  --chart-3: oklch(0.65 0.15 145); /* Green */
+  --chart-4: oklch(0.75 0.12 195); /* Light cyan */
+  --chart-5: oklch(0.35 0.14 240); /* Deep blue */
+  
+  /* Descope Sidebar - Consistent with main theme */
+  --sidebar: oklch(0.97 0.01 200);
+  --sidebar-foreground: oklch(0.15 0.015 220);
+  --sidebar-primary: oklch(0.55 0.16 185);
+  --sidebar-primary-foreground: oklch(0.98 0.01 200);
+  --sidebar-accent: oklch(0.92 0.04 195);
+  --sidebar-accent-foreground: oklch(0.15 0.015 220);
+  --sidebar-border: oklch(0.88 0.02 195);
+  --sidebar-ring: oklch(0.55 0.16 185);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Descope Brand Color Palette - Dark Theme */
+  --background: oklch(0.12 0.015 220);
+  --foreground: oklch(0.95 0.01 200);
+  --card: oklch(0.15 0.02 210);
+  --card-foreground: oklch(0.95 0.01 200);
+  --popover: oklch(0.15 0.02 210);
+  --popover-foreground: oklch(0.95 0.01 200);
+  
+  /* Descope Primary - Brighter teal for dark theme */
+  --primary: oklch(0.65 0.18 185);
+  --primary-foreground: oklch(0.08 0.015 220);
+  
+  /* Descope Secondary - Deeper blue for dark theme */
+  --secondary: oklch(0.22 0.04 210);
+  --secondary-foreground: oklch(0.92 0.02 200);
+  
+  /* Descope Muted - Subtle teal for dark theme */
+  --muted: oklch(0.18 0.03 200);
+  --muted-foreground: oklch(0.65 0.01 195);
+  
+  /* Descope Accent - Vibrant cyan for dark theme */
+  --accent: oklch(0.25 0.08 190);
+  --accent-foreground: oklch(0.95 0.01 200);
+  
+  /* Descope Destructive - Brighter red for dark theme */
+  --destructive: oklch(0.65 0.24 15);
+  --destructive-foreground: oklch(0.95 0.01 200);
+  
+  /* Descope Border - Subtle borders for dark theme */
+  --border: oklch(0.22 0.02 195 / 40%);
+  --input: oklch(0.18 0.02 195 / 60%);
+  --ring: oklch(0.65 0.18 185);
+  
+  /* Descope Chart Colors - Optimized for dark theme */
+  --chart-1: oklch(0.65 0.18 185); /* Brighter primary teal */
+  --chart-2: oklch(0.55 0.20 210); /* Brighter blue */
+  --chart-3: oklch(0.75 0.17 145); /* Brighter green */
+  --chart-4: oklch(0.85 0.14 195); /* Brighter light cyan */
+  --chart-5: oklch(0.45 0.16 240); /* Brighter deep blue */
+  
+  /* Descope Sidebar - Dark theme consistent */
+  --sidebar: oklch(0.15 0.02 210);
+  --sidebar-foreground: oklch(0.95 0.01 200);
+  --sidebar-primary: oklch(0.65 0.18 185);
+  --sidebar-primary-foreground: oklch(0.08 0.015 220);
+  --sidebar-accent: oklch(0.22 0.06 195);
+  --sidebar-accent-foreground: oklch(0.95 0.01 200);
+  --sidebar-border: oklch(0.22 0.02 195 / 40%);
+  --sidebar-ring: oklch(0.65 0.18 185);
 }
 
 @layer base {
@@ -115,6 +151,53 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Descope Brand Color Utilities */
+  .bg-descope-teal {
+    background-color: oklch(0.55 0.16 185);
+  }
+  .bg-descope-blue {
+    background-color: oklch(0.45 0.18 210);
+  }
+  .bg-descope-cyan {
+    background-color: oklch(0.65 0.12 190);
+  }
+  .bg-descope-green {
+    background-color: oklch(0.65 0.15 145);
+  }
+  
+  .text-descope-teal {
+    color: oklch(0.55 0.16 185);
+  }
+  .text-descope-blue {
+    color: oklch(0.45 0.18 210);
+  }
+  .text-descope-cyan {
+    color: oklch(0.65 0.12 190);
+  }
+  .text-descope-green {
+    color: oklch(0.65 0.15 145);
+  }
+  
+  /* Descope Gradient Utilities */
+  .bg-descope-gradient {
+    background: linear-gradient(135deg, oklch(0.55 0.16 185) 0%, oklch(0.65 0.12 190) 50%, oklch(0.45 0.18 210) 100%);
+  }
+  
+  .bg-descope-gradient-subtle {
+    background: linear-gradient(135deg, oklch(0.92 0.08 190) 0%, oklch(0.88 0.06 195) 50%, oklch(0.84 0.04 200) 100%);
+  }
+  
+  /* Dark theme gradients */
+  .dark .bg-descope-gradient {
+    background: linear-gradient(135deg, oklch(0.65 0.18 185) 0%, oklch(0.75 0.14 195) 50%, oklch(0.55 0.20 210) 100%);
+  }
+  
+  .dark .bg-descope-gradient-subtle {
+    background: linear-gradient(135deg, oklch(0.25 0.08 190) 0%, oklch(0.22 0.06 195) 50%, oklch(0.18 0.04 200) 100%);
   }
 }
 
