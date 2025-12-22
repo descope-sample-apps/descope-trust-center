@@ -1,6 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { FAQSection } from "@/components/ui/faq-section";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
+import { Button } from "./components/ui/button";
+import { FAQSection } from "./components/ui/faq-section";
 import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink } from "lucide-react";
 
 interface ComplianceItem {
@@ -26,7 +26,7 @@ interface FAQItem {
   category: string;
 }
 
-export function HomePage() {
+export default function Page() {
   const complianceItems: ComplianceItem[] = [
     {
       name: "SOC 2 Type II",
