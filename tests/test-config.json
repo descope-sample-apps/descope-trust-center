@@ -1,0 +1,72 @@
+{
+  "name": "Descope Trust Center Visual Tests",
+  "version": "1.0.0",
+  "description": "Visual testing configuration for Descope Trust Center",
+  "testConfig": {
+    "retries": {
+      "local": 0,
+      "ci": 2
+    },
+    "timeout": {
+      "default": 30000,
+      "navigation": 15000
+    },
+    "viewports": [
+      {
+        "name": "Desktop",
+        "width": 1920,
+        "height": 1080
+      },
+      {
+        "name": "Tablet",
+        "width": 1024,
+        "height": 768
+      },
+      {
+        "name": "Mobile",
+        "width": 375,
+        "height": 667
+      }
+    ],
+    "browsers": ["chromium", "firefox", "webkit"],
+    "screenshotOptions": {
+      "fullPage": false,
+      "animations": "disabled",
+      "clip": null
+    },
+    "visualRegression": {
+      "threshold": 0.2,
+      "pixelmatch": {
+        "threshold": 0.1,
+        "aa": true,
+        "diffMask": true
+      }
+    }
+  },
+  "testSuites": [
+    {
+      "name": "Basic Visual Tests",
+      "file": "visual.spec.ts",
+      "description": "Basic page load and navigation visual tests"
+    },
+    {
+      "name": "Component Tests",
+      "file": "components.spec.ts", 
+      "description": "Visual tests for individual components"
+    },
+    {
+      "name": "Accessibility Tests",
+      "file": "accessibility.spec.ts",
+      "description": "Accessibility and visual regression tests"
+    }
+  ],
+  "ignorePatterns": [
+    "*.spec.ts.skip",
+    "*.spec.ts.temp"
+  ],
+  "reporting": {
+    "type": "html",
+    "outputDir": "playwright-report",
+    "open": "never"
+  }
+}
