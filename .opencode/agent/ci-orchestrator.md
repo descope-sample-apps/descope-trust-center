@@ -268,58 +268,97 @@ tags:
          bd sync -m "ci: start wave with $READY_COUNT tasks"
          ```
       
-      5. Spawn CI Worker for EACH task in parallel:
+      5. Spawn Coder Agent for EACH task in parallel:
          
          **CRITICAL**: Use SINGLE message with MULTIPLE task() calls for parallel execution
          
          For each ready task:
          ```
          task(
-           subagent_type="subagents/ci/ci-worker",
+           subagent_type="Coder Agent",
            description="Execute task $TASK_ID",
-           prompt="# CI Worker Task Assignment
+           prompt="# Task Implementation Assignment
            
-           Execute this Beads task on behalf of CI Orchestrator:
+           You are implementing task $TASK_ID from GitHub issue #$ISSUE_NUMBER.
            
-           ## Task Information
-           - Task ID: $TASK_ID
-           - Task Title: $TASK_TITLE
-           - Feature Branch: $FEATURE_BRANCH
-           - Issue Number: $ISSUE_NUMBER
+           ## Step 1: Load Task Specification
            
-           ## Load Task Details
-           Get full task information from Beads:
+           Get the task details from Beads:
            \`\`\`bash
            bd show $TASK_ID --json
            \`\`\`
            
-           Parse the JSON output to get:
-           - title: What to implement
-           - description/notes: Detailed specifications
-           - depends_on: Dependencies (should be empty for ready tasks)
+           The task description/notes contain the full specification with:
+           - Objective: What to implement
+           - Deliverables: Files to create/modify
+           - Steps: Implementation approach
+           - Acceptance Criteria: What success looks like
            
-           ## Your Responsibilities
-           1. Create task branch: $FEATURE_BRANCH-task-$TASK_ID
-           2. Mark task in_progress: bd update $TASK_ID --status in_progress && bd sync
-           3. Read task description for implementation details
-           4. Implement the task using Coder Agent or OpenCoder
-           5. Run build verification: bun run build
-           6. Commit and push to task branch
-           7. Mark task complete: bd close $TASK_ID && bd sync
-           8. Return to feature branch
+           ## Step 2: Create Task Branch
            
-           ## Context Files to Load
-           - .opencode/context/core/standards/code.md (coding standards)
-           - Task description from Beads (implementation spec)
+           Work on an isolated branch:
+           \`\`\`bash
+           git checkout $FEATURE_BRANCH
+           git checkout -b $FEATURE_BRANCH-task-$TASK_ID
+           \`\`\`
            
-           ## Expected Output
-           Report:
+           ## Step 3: Mark In Progress
+           
+           Update Beads status:
+           \`\`\`bash
+           bd update $TASK_ID --status in_progress
+           bd sync -m \"ci: start task $TASK_ID\"
+           \`\`\`
+           
+           ## Step 4: Implement
+           
+           Follow the coding standards in .opencode/context/core/standards/code.md:
+           - TypeScript with strict types
+           - React 19 functional components  
+           - Tailwind CSS v4
+           - Bun as runtime
+           
+           Implement the task according to the specification from Beads.
+           
+           ## Step 5: Verify Build
+           
+           \`\`\`bash
+           bun run build
+           \`\`\`
+           
+           Build MUST pass before completing the task.
+           
+           ## Step 6: Commit and Push
+           
+           \`\`\`bash
+           git add -A
+           git commit -m \"feat: implement $TASK_TITLE (task $TASK_ID)\"
+           git push -u origin $FEATURE_BRANCH-task-$TASK_ID
+           \`\`\`
+           
+           ## Step 7: Mark Complete
+           
+           \`\`\`bash
+           bd close $TASK_ID
+           bd sync -m \"ci: complete task $TASK_ID\"
+           \`\`\`
+           
+           ## Step 8: Return to Feature Branch
+           
+           \`\`\`bash
+           git checkout $FEATURE_BRANCH
+           \`\`\`
+           
+           ## Report Back
+           
+           Provide a summary:
+           - Task ID: $TASK_ID
            - Files modified/created
-           - Build status (pass/fail)
-           - Task branch name
-           - Completion status
+           - Build status: PASS/FAIL
+           - Task branch: $FEATURE_BRANCH-task-$TASK_ID
+           - Status: completed/failed
            
-           CRITICAL: Do NOT merge branches - only implement and push to task branch."
+           CRITICAL: Do NOT merge the task branch - CI Orchestrator will handle merging."
          )
          ```
       
