@@ -27,34 +27,59 @@ Comment on a GitHub Issue with:
 │  opencode.yml (plan job)                                                    │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │ 1. Create feature branch: opencode/issue-123                        │    │
-│  │ 2. Planner-Sisyphus creates epic + tasks with dependencies          │    │
+│  │ 2. CI Orchestrator delegates to Task Manager                        │    │
+│  │    - Creates tasks/subtasks/{feature}/ directory                    │    │
+│  │    - Converts to Beads tasks with dependencies                      │    │
 │  │ 3. Dispatch opencode-batch event                                    │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────┬───────────────────────────────────────────┘
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  opencode-workers.yml (single coordinator)                                  │
+│  opencode-workers.yml (CI Orchestrator execution)                           │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                     Sisyphus Coordinator                            │    │
+│  │                     CI Orchestrator                                 │    │
 │  │  ┌──────────────────────────────────────────────────────────────┐   │    │
-│  │  │ PHASE 1: Implement Tasks in Waves                            │   │    │
+│  │  │ STAGE 1: Initialize Environment                              │   │    │
+│  │  │   - Verify tools, sync Beads from beads-sync branch          │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │ STAGE 2: Wave Execution (True Parallelism)                   │   │    │
 │  │  │                                                              │   │    │
-│  │  │   bd ready → spawn parallel subagents → wait → repeat        │   │    │
+│  │  │   bd ready → spawn parallel CI Workers → wait → repeat       │   │    │
 │  │  │                                                              │   │    │
-│  │  │   Wave 1: [Task A] [Task B] [Task C] (parallel subagents)    │   │    │
-│  │  │   Wave 2: [Task D] [Task E] (after deps satisfied)           │   │    │
+│  │  │   Wave 1: [CI Worker A] [CI Worker B] [CI Worker C]         │   │    │
+│  │  │             (parallel - independent tasks)                   │   │    │
+│  │  │                                                              │   │    │
+│  │  │   Each CI Worker:                                            │   │    │
+│  │  │     1. Create isolated task branch                           │   │    │
+│  │  │     2. Mark in_progress in Beads + sync                      │   │    │
+│  │  │     3. Delegate to Coder Agent/OpenCoder                     │   │    │
+│  │  │     4. Verify build passes (bun run build)                   │   │    │
+│  │  │     5. Commit and push to task branch                        │   │    │
+│  │  │     6. Close task in Beads + sync                            │   │    │
+│  │  │                                                              │   │    │
+│  │  │   Wave 2: [CI Worker D] [CI Worker E]                       │   │    │
+│  │  │             (tasks unblocked after Wave 1)                   │   │    │
+│  │  │                                                              │   │    │
 │  │  │   ...until all tasks closed                                  │   │    │
 │  │  └──────────────────────────────────────────────────────────────┘   │    │
 │  │  ┌──────────────────────────────────────────────────────────────┐   │    │
-│  │  │ PHASE 2: Merge All Task Branches                             │   │    │
-│  │  │                                                              │   │    │
-│  │  │   git merge task branches → resolve conflicts if any         │   │    │
+│  │  │ STAGE 3: Merge All Task Branches                             │   │    │
+│  │  │   - Fetch all task branches from origin                      │   │    │
+│  │  │   - Merge each into feature branch sequentially              │   │    │
+│  │  │   - Intelligently resolve conflicts                          │   │    │
+│  │  │   - Verify final build passes                                │   │    │
 │  │  └──────────────────────────────────────────────────────────────┘   │    │
 │  │  ┌──────────────────────────────────────────────────────────────┐   │    │
-│  │  │ PHASE 3: Create Pull Request                                 │   │    │
-│  │  │                                                              │   │    │
-│  │  │   gh pr create → cleanup task branches                       │   │    │
+│  │  │ STAGE 4: Create Pull Request                                 │   │    │
+│  │  │   - Generate comprehensive PR summary                        │   │    │
+│  │  │   - List all completed tasks                                 │   │    │
+│  │  │   - Link to issue and task directory                         │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │ STAGE 5: Cleanup (Optional)                                  │   │    │
+│  │  │   - Delete remote task branches                              │   │    │
 │  │  └──────────────────────────────────────────────────────────────┘   │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────┬───────────────────────────────────────────┘
@@ -64,8 +89,8 @@ Comment on a GitHub Issue with:
 │  opencode-review.yml                                                        │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │                     ┌──────────────┐                                │    │
-│  │                     │    Oracle    │                                │    │
-│  │                     │   reviews    │                                │    │
+│  │                     │   Reviewer   │                                │    │
+│  │                     │    Agent     │                                │    │
 │  │                     └──────┬───────┘                                │    │
 │  │                            │                                        │    │
 │  │              ┌─────────────┴─────────────┐                          │    │
@@ -76,8 +101,8 @@ Comment on a GitHub Issue with:
 │  │             │                            │                          │    │
 │  │             │                            ▼                          │    │
 │  │             │                     ┌──────────────┐                  │    │
-│  │             │                     │  Sisyphus    │                  │    │
-│  │             │                     │  reworks     │ (max 3 cycles)   │    │
+│  │             │                     │   Rework     │                  │    │
+│  │             │                     │   Agent      │ (max 3 cycles)   │    │
 │  │             │                     └──────┬───────┘                  │    │
 │  │             │                            │                          │    │
 │  │             │                            └────────► (loop back)     │    │
@@ -104,17 +129,21 @@ main                                      # Production code
 > **Note**: Task sub-branches use `-task-` suffix instead of `/` to avoid git ref conflicts
 > (git cannot have a branch that is both a name and a prefix for other branches).
 
-## OhMyOpenCode Agents
+## OpenCode Agents
 
-This repository uses OhMyOpenCode's built-in agents:
+This repository uses a custom autonomous CI system built with OpenCode agents:
 
-| Agent                | Purpose                                                   |
-| -------------------- | --------------------------------------------------------- |
-| **Sisyphus**         | Main orchestrator - implements features, coordinates work |
-| **Planner-Sisyphus** | Breaks down issues into atomic tasks with dependencies    |
-| **Oracle**           | Code review, architecture decisions, debugging assistance |
-| **Librarian**        | Documentation lookup, OSS implementation examples         |
-| **Explore**          | Fast codebase exploration and pattern matching            |
+| Agent                | Purpose                                                   | Location |
+| -------------------- | --------------------------------------------------------- | -------- |
+| **CI Orchestrator**  | Master coordinator for CI workflows - plans and executes features | `.opencode/agent/ci-orchestrator.md` |
+| **CI Worker**        | Parallel task executor - implements individual tasks | `.opencode/agent/subagents/ci/ci-worker.md` |
+| **Task Manager**     | Breaks down complex features into atomic tasks | `.opencode/agent/subagents/core/task-manager.md` |
+| **Coder Agent**      | Simple, focused implementations | `.opencode/agent/subagents/code/coder-agent.md` |
+| **OpenCoder**        | Complex features with full planning workflow | `.opencode/agent/core/opencoder.md` |
+| **Reviewer**         | Code review and quality assurance | `.opencode/agent/subagents/code/reviewer.md` |
+| **Tester**           | Test generation and TDD workflows | `.opencode/agent/subagents/code/tester.md` |
+
+For detailed architecture documentation, see [CI Architecture](./.opencode/docs/ci-architecture.md).
 
 ## Task Tracking with Beads
 

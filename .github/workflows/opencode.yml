@@ -118,36 +118,66 @@ jobs:
               body: '🤖 **Planning Started**\n\nAnalyzing issue and breaking down into tasks...'
             });
 
-      - name: Run Planner-Sisyphus
+      - name: Run CI Orchestrator for Planning
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
+          # Get issue details
+          ISSUE_JSON=$(gh issue view ${{ github.event.issue.number }} --json title,body)
+          ISSUE_TITLE=$(echo "$ISSUE_JSON" | jq -r '.title')
+          ISSUE_BODY=$(echo "$ISSUE_JSON" | jq -r '.body')
+          
+          # Run CI Orchestrator in planning mode
           opencode run \
+            --agent "ci-orchestrator" \
             --model "opencode/big-pickle" \
-            --agent "Planner-Sisyphus" \
-            "Analyze this GitHub Issue and break it into atomic, parallelizable tasks.
+            "Execute CI workflow in PLANNING mode for this GitHub issue.
 
-          ## Instructions
-          1. Create a beads epic for this issue:
-             bd create \"Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}\" -p 1
+          ## Issue Information
+          - Issue Number: ${{ github.event.issue.number }}
+          - Issue Title: $ISSUE_TITLE
+          - Issue Body:
+          $ISSUE_BODY
 
-          2. Create child tasks under the epic using bd create with appropriate priorities (1-4)
+          ## Environment
+          - FEATURE_BRANCH: $BRANCH_NAME
+          - MODE: plan
 
-          3. Add dependencies between tasks using 'bd dep add <task-id> <depends-on-id>'
-             - Tasks that can run in parallel should have NO dependencies between them
-             - Tasks that must wait for others should declare dependencies
-
-          4. After creating all tasks, output the task list
-
-          Example dependency structure:
-          - bd-abc.1 'Setup types' (no deps - can start immediately)
-          - bd-abc.2 'Create component' (no deps - can start immediately)  
-          - bd-abc.3 'Add styling' depends on bd-abc.2
-          - bd-abc.4 'Write tests' depends on bd-abc.1, bd-abc.2
-          - bd-abc.5 'Integration' depends on bd-abc.3, bd-abc.4
-
-          Run 'bd list --json' when done."
+          ## Your Mission
+          Execute Stage 1 (Planning) of your workflow:
+          
+          1. Analyze the issue and break it into atomic tasks
+          2. Create epic in Beads: bd create \"Issue #${{ github.event.issue.number }}: $ISSUE_TITLE\"
+          3. Create child tasks with detailed descriptions using bd note
+          4. Map dependencies between tasks using bd dep add
+          5. Sync to beads-sync branch
+          6. Post planning summary to GitHub issue
+          7. Output task counts for workflow to capture
+          
+          Store detailed task specifications in Beads notes using this format:
+          
+          ## Objective
+          [What this task accomplishes]
+          
+          ## Deliverables
+          - File: path/to/file.ts
+          - Function: functionName
+          
+          ## Steps
+          1. [Implementation step 1]
+          2. [Implementation step 2]
+          
+          ## Acceptance Criteria
+          - [ ] Criteria 1
+          - [ ] Criteria 2
+          
+          ## Validation
+          \`\`\`bash
+          bun run build
+          \`\`\`
+          
+          CI Workers will read these Beads notes for implementation guidance."
 
       - name: Get task summary
         id: tasks
@@ -263,7 +293,7 @@ jobs:
         run: |
           opencode run \
             --model "opencode/big-pickle" \
-            --agent "Sisyphus" \
+            
             "Implement the changes requested in this GitHub Issue.
 
           ## Instructions

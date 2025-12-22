@@ -93,174 +93,59 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
-              body: '### 🔄 Implementation Started\n\nSisyphus is implementing all tasks, merging branches, and will create a PR when complete...'
+              body: '### 🔄 Implementation Started\n\nCI Orchestrator is executing all tasks in parallel waves, merging branches, and will create a PR when complete...'
             });
             return comment.id;
           result-encoding: string
 
-      - name: Run Sisyphus Coordinator
-        id: sisyphus
+      - name: Run CI Orchestrator
+        id: orchestrator
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FEATURE_BRANCH: ${{ steps.payload.outputs.branch }}
           ISSUE_NUMBER: ${{ steps.payload.outputs.issue_number }}
         run: |
-          # Run Sisyphus with the coordinator prompt
+          # Run CI Orchestrator agent
           opencode run \
-            --agent "Sisyphus" \
+            --agent "ci-orchestrator" \
             --model "opencode/big-pickle" \
-            "# EPIC COORDINATOR - Implement All Tasks, Merge, and Create PR
-
-          You are the EPIC COORDINATOR. Your job is to:
-          1. Implement ALL tasks in waves (parallel subagents per batch)
-          2. Merge all task branches into the feature branch
-          3. Create a Pull Request
-          4. Clean up task branches
-
-          ## Environment
-          - Feature branch: $FEATURE_BRANCH
-          - Issue number: $ISSUE_NUMBER
-          - Tools available: bd, bun, git, gh
-
-          ---
-
-          # PHASE 1: IMPLEMENT ALL TASKS
-
-          ## Step 1: Check Ready Tasks
-          \`\`\`bash
-          bd ready --json
-          \`\`\`
-
-          ## Step 2: Spawn Parallel Subagents for Ready Tasks
-          For EACH ready task, spawn a subagent using Task tool with subagent_type=\"general\".
-
-          **CRITICAL**: Spawn ALL ready tasks in ONE message with MULTIPLE Task calls for parallelism.
-
-          Each subagent prompt:
-          \`\`\`
-          Implement this task on branch $FEATURE_BRANCH:
-
-          Task ID: <id>
-          Task Title: <title>
-
-          ## Instructions
-          1. git checkout $FEATURE_BRANCH && git pull origin $FEATURE_BRANCH
-          2. git checkout -b \"$FEATURE_BRANCH-task-<id>\"
-          3. bd update <id> --status in_progress && bd sync -m \"start <id>\"
-          4. Implement the task following existing code patterns
-          5. bun run build (must pass)
-          6. git add -A && git commit -m \"feat(<id>): <title>\"
-          7. git push -u origin \"$FEATURE_BRANCH-task-<id>\"
-          8. bd close <id> && bd sync -m \"complete <id>\"
-          9. git checkout $FEATURE_BRANCH
-
-          Report what was implemented.
-          \`\`\`
-
-          ## Step 3: After Subagents Complete
-          \`\`\`bash
-          bd sync
-          bd ready --json
-          \`\`\`
-          If more tasks ready → repeat Step 2
-          If none ready → check if all closed with \`bd list --json\`
-
-          ## Step 4: Verify All Tasks Closed
-          ALL tasks must have status \"closed\" before proceeding to Phase 2.
-
-          ---
-
-          # PHASE 2: MERGE ALL TASK BRANCHES
-
-          After ALL tasks are closed:
-
-          \`\`\`bash
-          git checkout $FEATURE_BRANCH
-          git pull origin $FEATURE_BRANCH
-          \`\`\`
-
-          Get list of task branches:
-          \`\`\`bash
-          git fetch --all
-          git branch -r | grep \"$FEATURE_BRANCH-task-\" | sed 's|origin/||'
-          \`\`\`
-
-          For each task branch, merge into feature branch:
-          \`\`\`bash
-          git merge origin/<task-branch> --no-edit -m \"Merge <task-id>\"
-          \`\`\`
-
-          If conflicts occur:
-          1. Examine conflicted files
-          2. Resolve conflicts intelligently (keep functionality from both sides)
-          3. Remove conflict markers
-          4. git add -A && git commit -m \"Merge <task-id> (resolved conflicts)\"
-
-          After all merges:
-          \`\`\`bash
-          git push origin $FEATURE_BRANCH
-          \`\`\`
-
-          ---
-
-          # PHASE 3: CREATE PULL REQUEST
-
-          Use gh CLI to create the PR:
-          \`\`\`bash
-          gh pr create \\
-            --base main \\
-            --head $FEATURE_BRANCH \\
-            --title \"🤖 <issue title>\" \\
-            --body \"## Summary
-
-          Automated implementation for #$ISSUE_NUMBER
-
-          ## Tasks Completed
-          <list task IDs and titles>
-
-          ---
-          Closes #$ISSUE_NUMBER\"
-          \`\`\`
-
-          Save the PR number from the output.
-
-          ---
-
-          # PHASE 4: CLEANUP TASK BRANCHES
-
-          Delete all task sub-branches:
-          \`\`\`bash
-          git push origin --delete \"<task-branch>\"
-          \`\`\`
-
-          ---
-
-          # COMPLETION
-
-          When everything is done, output EXACTLY:
+            "Execute complete CI workflow for this GitHub issue.
+          
+          ## Environment Variables
+          - ISSUE_NUMBER: $ISSUE_NUMBER
+          - FEATURE_BRANCH: $FEATURE_BRANCH
+          - MODE: execute (tasks already created from planning stage)
+          
+          ## Your Mission
+          Execute your complete workflow:
+          1. Stage 0: Initialize (verify tools, sync Beads)
+          2. Stage 2: Wave Execution (skip planning - tasks already exist)
+             - Query bd ready for tasks
+             - Spawn CI Worker subagents in parallel
+             - Track progress and handle failures
+          3. Stage 3: Merge all task branches
+          4. Stage 4: Create pull request
+          5. Stage 5: Clean up task branches
+          
+          ## Expected Output
+          When complete:
           \`\`\`
           EPIC_COMPLETE: true
           PR_NUMBER: <number>
           \`\`\`
-
-          If any phase fails unrecoverably:
+          
+          On failure:
           \`\`\`
           EPIC_COMPLETE: false
           ERROR: <description>
-          \`\`\`
-
-          ## Important Rules
-          1. Each subagent works on its OWN task branch (no conflicts during implementation)
-          2. Use bd sync after EVERY status change
-          3. If a subagent fails, note it but continue with others
-          4. Resolve merge conflicts - don't give up
-          5. The PR must be created before you're done" 2>&1 | tee /tmp/sisyphus-output.txt
+          STAGE_FAILED: <stage_name>
+          \`\`\`" 2>&1 | tee /tmp/orchestrator-output.txt
 
           # Parse output for results
-          if grep -q "EPIC_COMPLETE: true" /tmp/sisyphus-output.txt; then
+          if grep -q "EPIC_COMPLETE: true" /tmp/orchestrator-output.txt; then
             echo "epic_complete=true" >> $GITHUB_OUTPUT
-            PR_NUM=$(grep "PR_NUMBER:" /tmp/sisyphus-output.txt | sed 's/PR_NUMBER: //' | tr -d ' ')
+            PR_NUM=$(grep "PR_NUMBER:" /tmp/orchestrator-output.txt | sed 's/PR_NUMBER: //' | tr -d ' ')
             echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
           else
             echo "epic_complete=false" >> $GITHUB_OUTPUT
@@ -271,8 +156,8 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const epicComplete = '${{ steps.sisyphus.outputs.epic_complete }}' === 'true';
-            const prNumber = '${{ steps.sisyphus.outputs.pr_number }}';
+            const epicComplete = '${{ steps.orchestrator.outputs.epic_complete }}' === 'true';
+            const prNumber = '${{ steps.orchestrator.outputs.pr_number }}';
             const commentId = parseInt('${{ steps.comment.outputs.result }}');
 
             let body;
