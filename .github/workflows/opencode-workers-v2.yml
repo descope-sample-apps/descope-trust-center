@@ -85,15 +85,18 @@ jobs:
           # Get ready tasks (no dependencies blocking them)
           READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
 
-          # Extract just the IDs as a JSON array
+          # Extract IDs and titles as JSON arrays
           TASK_IDS=$(echo "$READY_TASKS" | jq -c '[.[].id]')
+          TASK_TITLES=$(echo "$READY_TASKS" | jq -c '[.[].title]')
           TASK_COUNT=$(echo "$TASK_IDS" | jq 'length')
 
           echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
+          echo "task_titles=$TASK_TITLES" >> $GITHUB_OUTPUT
           echo "task_count=$TASK_COUNT" >> $GITHUB_OUTPUT
 
           echo "Found $TASK_COUNT ready tasks: $TASK_IDS"
           echo "DEBUG: task_ids output is: '$TASK_IDS'"
+          echo "DEBUG: task_titles output is: '$TASK_TITLES'"
           echo "DEBUG: task_count output is: '$TASK_COUNT'"
 
       - name: Post wave start comment
@@ -103,13 +106,20 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const taskIds = JSON.parse('${{ steps.get-ready-tasks.outputs.task_ids }}');
+            const taskTitles = JSON.parse('${{ steps.get-ready-tasks.outputs.task_titles }}');
             const count = taskIds.length;
+
+            // Create list items with ID and title
+            const taskList = taskIds.map((id, index) => {
+              const title = taskTitles[index] || 'Unknown task';
+              return `- \`${id}\`: ${title}`;
+            }).join('\n');
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
-              body: `### 🚀 Wave Execution Started\n\nExecuting **${count}** tasks in parallel:\n${taskIds.map(id => `- \`${id}\``).join('\n')}\n\n_Workers running concurrently..._`
+              body: `### 🚀 Wave Execution Started\n\nExecuting **${count}** tasks in parallel:\n${taskList}\n\n_Workers running concurrently..._`
             });
 
   # Job 2: Execute tasks in parallel (matrix strategy)
@@ -401,7 +411,25 @@ jobs:
 
           echo "merged_count=$MERGED_COUNT" >> $GITHUB_OUTPUT
           echo "conflict_count=$CONFLICT_COUNT" >> $GITHUB_OUTPUT
+          echo "completed_task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
           echo "Merged $MERGED_COUNT tasks ($CONFLICT_COUNT with conflicts)"
+
+      - name: Get completed task titles
+        id: completed-tasks
+        run: |
+          TASK_IDS='${{ steps.merge.outputs.completed_task_ids }}'
+          
+          # Get task details for completed tasks
+          TASK_DETAILS=""
+          for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
+            TASK_JSON=$("$HOME/.local/bin/bd" show "$TASK_ID" --json 2>/dev/null || echo '[]')
+            TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.[0].title // "Unknown task"')
+            TASK_DETAILS="${TASK_DETAILS}- \`${TASK_ID}\`: ${TASK_TITLE}\n"
+          done
+          
+          echo "completed_tasks_details<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$TASK_DETAILS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Batch update Beads
         run: |
@@ -409,7 +437,10 @@ jobs:
 
           # Close all successfully merged tasks
           for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
-            echo "Closing task $TASK_ID..."
+            # Get task title for logging
+            TASK_JSON=$("$HOME/.local/bin/bd" show "$TASK_ID" --json 2>/dev/null || echo '[]')
+            TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.[0].title // "Unknown task"')
+            echo "Closing task $TASK_ID: $TASK_TITLE..."
             "$HOME/.local/bin/bd" close "$TASK_ID" || echo "Failed to close $TASK_ID"
           done
 
@@ -500,8 +531,13 @@ jobs:
             const merged = '${{ steps.merge.outputs.merged_count }}';
             const conflicts = '${{ steps.merge.outputs.conflict_count }}';
             const nextWaveCount = parseInt('${{ steps.next-wave.outputs.ready_count }}') || 0;
+            const completedTasks = `${{ steps.completed-tasks.outputs.completed_tasks_details }}`;
             
             let body = `### 🎉 Wave Complete!\n\n**Tasks Completed:** ${merged}\n**Conflicts Auto-Resolved:** ${conflicts}\n**Pull Request:** #${prNumber}\n**Build:** ✅ Passed\n\n`;
+            
+            if (completedTasks && completedTasks.trim()) {
+              body += `**Completed Tasks:**\n${completedTasks}\n\n`;
+            }
             
             if (nextWaveCount > 0) {
               body += `🚀 **Next Wave Starting:** ${nextWaveCount} tasks ready\n\n_Staying in execution mode..._`;

@@ -190,8 +190,11 @@ jobs:
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
           echo "ready=$READY" >> $GITHUB_OUTPUT
           # Also output ready tasks as JSON for workers
-          TASK_IDS=$(bd ready --json 2>/dev/null | jq -c '[.[].id]' || echo '[]')
+          READY_TASKS=$(bd ready --json 2>/dev/null)
+          TASK_IDS=$(echo "$READY_TASKS" | jq -c '[.[].id]' || echo '[]')
+          TASK_TITLES=$(echo "$READY_TASKS" | jq -c '[.[].title]' || echo '[]')
           echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
+          echo "task_titles=$TASK_TITLES" >> $GITHUB_OUTPUT
 
       - name: Post plan summary
         uses: actions/github-script@v8
@@ -200,6 +203,17 @@ jobs:
           script: |
             const total = parseInt('${{ steps.tasks.outputs.total }}') || 0;
             const ready = parseInt('${{ steps.tasks.outputs.ready }}') || 0;
+            const taskIds = JSON.parse('${{ steps.tasks.outputs.task_ids }}') || [];
+            const taskTitles = JSON.parse('${{ steps.tasks.outputs.task_titles }}') || [];
+
+            let tasksSection = '';
+            if (ready > 0 && taskIds.length > 0) {
+              const taskList = taskIds.map((id, index) => {
+                const title = taskTitles[index] || 'Unknown task';
+                return `- \`${id}\`: ${title}`;
+              }).join('\n');
+              tasksSection = `\n**First Wave Tasks:**\n${taskList}\n`;
+            }
 
             const body = `## 📋 Plan Complete
 
@@ -210,6 +224,7 @@ jobs:
             - When complete, newly unblocked tasks run
             - Repeat until all done
 
+            ${tasksSection}
             ---
             🚀 Starting first wave with ${ready} task(s)...
 
