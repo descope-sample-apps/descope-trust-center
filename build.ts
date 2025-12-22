@@ -33,7 +33,7 @@ Example:
   process.exit(0);
 }
 
-const toCamelCase = (str: string): string => str.replace(/-([a-z])/g, g => g[1].toUpperCase());
+const toCamelCase = (str: string): string => str.replace(/-([a-z])/g, g => g[1]?.toUpperCase() ?? '');
 
 const parseValue = (value: string): any => {
   if (value === "true") return true;
@@ -58,13 +58,13 @@ function parseArgs(): Partial<Bun.BuildConfig> {
 
     if (arg.startsWith("--no-")) {
       const key = toCamelCase(arg.slice(5));
-      config[key] = false;
+      (config as any)[key] = false;
       continue;
     }
 
     if (!arg.includes("=") && (i === args.length - 1 || args[i + 1]?.startsWith("--"))) {
       const key = toCamelCase(arg.slice(2));
-      config[key] = true;
+      (config as any)[key] = true;
       continue;
     }
 
@@ -82,10 +82,12 @@ function parseArgs(): Partial<Bun.BuildConfig> {
 
     if (key.includes(".")) {
       const [parentKey, childKey] = key.split(".");
-      config[parentKey] = config[parentKey] || {};
-      config[parentKey][childKey] = parseValue(value);
+      if (parentKey && childKey) {
+        (config as any)[parentKey] = (config as any)[parentKey] || {};
+        (config as any)[parentKey][childKey] = parseValue(value);
+      }
     } else {
-      config[key] = parseValue(value);
+      (config as any)[key] = parseValue(value);
     }
   }
 
