@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DocumentLibrary } from "@/components/document-library";
+import { SubprocessorsTable } from "@/components/subprocessors-table";
 import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink } from "lucide-react";
 
 interface ComplianceItem {
@@ -10,7 +10,25 @@ interface ComplianceItem {
   lastUpdated: string;
 }
 
+interface Document {
+  id: string;
+  title: string;
+  type: "policy" | "report" | "certificate";
+  description: string;
+  lastUpdated: string;
+  downloadUrl?: string;
+}
 
+interface Subprocessor {
+  id: string;
+  name: string;
+  category: string;
+  purpose: string;
+  dataLocation: string;
+  status: "active" | "under-review" | "inactive";
+  lastReviewed: string;
+  dpaUrl?: string;
+}
 
 export function HomePage() {
   const complianceItems: ComplianceItem[] = [
@@ -40,7 +58,116 @@ export function HomePage() {
     }
   ];
 
-  
+  const subprocessors: Subprocessor[] = [
+    {
+      id: "1",
+      name: "Amazon Web Services",
+      category: "Cloud Infrastructure",
+      purpose: "Cloud hosting and infrastructure services",
+      dataLocation: "United States, EU",
+      status: "active",
+      lastReviewed: "2024-11-15",
+      dpaUrl: "https://aws.amazon.com/compliance/dpa/"
+    },
+    {
+      id: "2",
+      name: "Google Cloud Platform",
+      category: "Cloud Infrastructure", 
+      purpose: "Cloud storage and computing services",
+      dataLocation: "United States, EU",
+      status: "active",
+      lastReviewed: "2024-11-10",
+      dpaUrl: "https://cloud.google.com/terms/dpa/"
+    },
+    {
+      id: "3",
+      name: "Stripe",
+      category: "Payment Processing",
+      purpose: "Payment processing and billing services",
+      dataLocation: "United States",
+      status: "active",
+      lastReviewed: "2024-11-20",
+      dpaUrl: "https://stripe.com/privacy"
+    },
+    {
+      id: "4",
+      name: "SendGrid",
+      category: "Communication",
+      purpose: "Email delivery and notification services",
+      dataLocation: "United States, EU",
+      status: "active",
+      lastReviewed: "2024-10-30"
+    },
+    {
+      id: "5",
+      name: "Datadog",
+      category: "Monitoring",
+      purpose: "Application monitoring and analytics",
+      dataLocation: "United States",
+      status: "under-review",
+      lastReviewed: "2024-09-15"
+    },
+    {
+      id: "6",
+      name: "Twilio",
+      category: "Communication",
+      purpose: "SMS and voice communication services",
+      dataLocation: "United States",
+      status: "active",
+      lastReviewed: "2024-11-05"
+    },
+    {
+      id: "7",
+      name: "Vercel",
+      category: "Hosting",
+      purpose: "Frontend hosting and CDN services",
+      dataLocation: "United States, EU",
+      status: "active",
+      lastReviewed: "2024-11-18"
+    },
+    {
+      id: "8",
+      name: "Legacy Analytics Provider",
+      category: "Analytics",
+      purpose: "Web analytics and user tracking",
+      dataLocation: "United States",
+      status: "inactive",
+      lastReviewed: "2024-06-30"
+    }
+  ];
+
+  const documents: Document[] = [
+    {
+      id: "1",
+      title: "Security Policy",
+      type: "policy",
+      description: "Comprehensive security policies and procedures",
+      lastUpdated: "2024-11-01"
+    },
+    {
+      id: "2", 
+      title: "Privacy Policy",
+      type: "policy",
+      description: "How we collect, use, and protect customer data",
+      lastUpdated: "2024-10-15"
+    },
+    {
+      id: "3",
+      title: "SOC 2 Report",
+      type: "report", 
+      description: "Latest SOC 2 Type II examination report",
+      lastUpdated: "2024-11-15",
+      downloadUrl: "#"
+    },
+    {
+      id: "4",
+      title: "ISO 27001 Certificate",
+      type: "certificate",
+      description: "Official ISO 27001 certification document",
+      lastUpdated: "2024-10-20",
+      downloadUrl: "#"
+    }
+  ];
 
   const getStatusColor = (status: ComplianceItem["status"]) => {
     switch (status) {
@@ -68,7 +195,18 @@ export function HomePage() {
     }
   };
 
-  
+  const getDocumentIcon = (type: Document["type"]) => {
+    switch (type) {
+      case "policy":
+        return <FileText className="h-5 w-5 text-blue-600" />;
+      case "report":
+        return <Shield className="h-5 w-5 text-green-600" />;
+      case "certificate":
+        return <Award className="h-5 w-5 text-purple-600" />;
+      default:
+        return <FileText className="h-5 w-5 text-gray-600" />;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -121,7 +259,45 @@ export function HomePage() {
         </section>
 
         <section className="mb-12">
-          <DocumentLibrary />
+          <h3 className="text-2xl font-semibold text-gray-900 mb-6">Security Documents</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {documents.map((doc) => (
+              <Card key={doc.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start space-x-3">
+                    {getDocumentIcon(doc.type)}
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{doc.title}</CardTitle>
+                      <CardDescription className="mt-2">{doc.description}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-500">
+                      Updated: {new Date(doc.lastUpdated).toLocaleDateString()}
+                    </p>
+                    <div className="flex space-x-2">
+                      {doc.downloadUrl && (
+                        <Button variant="outline" size="sm">
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
+                      )}
+                      <Button variant="outline" size="sm">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <SubprocessorsTable subprocessors={subprocessors} />
         </section>
 
         <section className="mb-12">
