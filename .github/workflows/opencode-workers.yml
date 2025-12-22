@@ -4,6 +4,15 @@ on:
   repository_dispatch:
     types: [opencode-batch]
   workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number'
+        required: true
+        type: number
+      branch:
+        description: 'Feature branch name'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -12,11 +21,8 @@ permissions:
   id-token: write
 
 jobs:
-  get-ready-tasks:
+  coordinator:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.ready.outputs.matrix }}
-      has_tasks: ${{ steps.ready.outputs.has_tasks }}
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -25,66 +31,21 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - name: Checkout feature branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.client_payload.branch }}
-          token: ${{ steps.app-token.outputs.token }}
-          fetch-depth: 0
-
-      - name: Setup beads
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      - name: Set payload variables
+        id: payload
         run: |
-          mkdir -p "$HOME/.local/bin"
-          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
-          tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
-          "$HOME/.local/bin/bd" init
-
-      - name: Sync beads state
-        run: |
-          bd sync
-
-      - name: Get ready tasks
-        id: ready
-        run: |
-          READY=$(bd ready --json 2>/dev/null || echo "[]")
-          echo "Raw ready output: $READY"
-
-          if [ "$READY" = "[]" ] || [ -z "$READY" ]; then
-            echo "has_tasks=false" >> $GITHUB_OUTPUT
-            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "issue_number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ inputs.branch }}" >> $GITHUB_OUTPUT
           else
-            # Transform to GitHub Actions matrix format
-            MATRIX=$(echo "$READY" | jq -c '{include: .}')
-            echo "has_tasks=true" >> $GITHUB_OUTPUT
-            echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+            echo "issue_number=${{ github.event.client_payload.issue_number }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.event.client_payload.branch }}" >> $GITHUB_OUTPUT
           fi
 
-  worker:
-    needs: get-ready-tasks
-    if: needs.get-ready-tasks.outputs.has_tasks == 'true'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      max-parallel: 5
-      matrix: ${{ fromJson(needs.get-ready-tasks.outputs.matrix) }}
-    steps:
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Checkout feature branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.client_payload.branch }}
+          ref: ${{ steps.payload.outputs.branch }}
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
@@ -93,193 +54,209 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
+          
+          # Install beads
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          
+          # Install bun
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          
+          # Install opencode
           curl -fsSL https://opencode.ai/install | bash
           echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          
+          # Install bun dependencies
+          $HOME/.bun/bin/bun install
+
+      - name: Setup git and beads
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Configure beads sync branch
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
+          
+          # Initialize and sync beads
           "$HOME/.local/bin/bd" init
+          "$HOME/.local/bin/bd" sync
 
-      - name: Sync beads state
-        run: |
-          bd sync
+      - name: Post batch started comment
+        id: comment
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const { data: comment } = await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
+              body: '### 🔄 Batch Processing Started\n\nSisyphus coordinator is processing tasks...'
+            });
+            return comment.id;
+          result-encoding: string
 
-      - name: Create task sub-branch
-        id: branch
-        run: |
-          TASK_ID="${{ matrix.id }}"
-          FEATURE_BRANCH="${{ github.event.client_payload.branch }}"
-          SUB_BRANCH="${FEATURE_BRANCH}-task-${TASK_ID}"
-          git checkout -b "$SUB_BRANCH"
-          echo "sub_branch=$SUB_BRANCH" >> $GITHUB_OUTPUT
-          echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
-
-      - name: Update task status to in-progress
-        run: |
-          bd update "${{ matrix.id }}" --status in_progress
-          for i in 1 2 3; do
-            if bd sync -m "chore: start task ${{ matrix.id }}"; then
-              break
-            fi
-            echo "Sync failed, retrying in $((i * 2))s..."
-            sleep $((i * 2))
-          done
-
-      - name: Run OpenCode Sisyphus Agent
+      - name: Run Sisyphus Coordinator
+        id: sisyphus
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          opencode run \
-            --model "opencode/big-pickle" \
-            "Implement task: ${{ matrix.title || matrix.summary }}
+          # Create a comprehensive prompt for Sisyphus
+          cat > /tmp/coordinator-prompt.md << 'PROMPT_EOF'
+          # BATCH COORDINATOR - Process All Tasks Until Epic Complete
 
-          Task ID: ${{ matrix.id }}
+          You are the BATCH COORDINATOR. Your job is to process ALL tasks in the beads database
+          until the epic is complete. You will work in waves, spawning parallel subagents for
+          each batch of ready tasks.
 
+          ## Environment
+          - Feature branch: $FEATURE_BRANCH
+          - Issue number: $ISSUE_NUMBER
+          - All tools are available: bd, bun, git
+
+          ## Your Workflow (LOOP until done)
+
+          ### Step 1: Check Ready Tasks
+          ```bash
+          bd ready --json
+          ```
+          This returns tasks with NO blockers (dependencies satisfied).
+
+          ### Step 2: If Tasks Ready → Spawn Parallel Subagents
+          For EACH ready task, spawn a subagent using the Task tool with subagent_type="general".
+          
+          **CRITICAL**: Spawn ALL ready tasks in a SINGLE message with MULTIPLE Task tool calls.
+          This ensures true parallel execution.
+
+          Each subagent prompt MUST include:
+          ```
+          Implement this task:
+          
+          Task ID: <id>
+          Task Title: <title>
+          
           ## Instructions
-          1. Implement only this specific task
-          2. Follow existing code patterns
-          3. Run 'bun run build' to verify no errors
-          4. Make focused, atomic changes
+          1. Create task branch: git checkout -b "$FEATURE_BRANCH-task-<id>"
+          2. Mark task in progress: bd update <id> --status in_progress && bd sync -m "start <id>"
+          3. Implement the task following existing code patterns
+          4. Run: bun run build (must pass)
+          5. Commit changes: git add -A && git commit -m "feat(<id>): <title>"
+          6. Push branch: git push -u origin "$FEATURE_BRANCH-task-<id>"
+          7. Close task: bd close <id> && bd sync -m "complete <id>"
+          8. Return to feature branch: git checkout $FEATURE_BRANCH
+          
+          Report what was implemented when done.
+          ```
 
-          When complete, summarize what was implemented."
+          ### Step 3: Wait for All Subagents
+          After spawning, wait for all subagents to complete and collect their results.
 
-      - name: Close task
-        run: |
-          bd close "${{ matrix.id }}"
-          for i in 1 2 3; do
-            if bd sync -m "chore: complete task ${{ matrix.id }}"; then
-              break
-            fi
-            echo "Sync failed, retrying in $((i * 2))s..."
-            sleep $((i * 2))
-          done
+          ### Step 4: Sync and Check for More
+          ```bash
+          bd sync  # Get latest task states
+          bd ready --json  # Check if more tasks are now unblocked
+          ```
 
-      - name: Commit and push changes
-        run: |
-          git add -A
-          if ! git diff --staged --quiet; then
-            git commit -m "feat(${{ matrix.id }}): ${{ matrix.title || matrix.summary }}"
-            git push -u origin "${{ steps.branch.outputs.sub_branch }}"
-          fi
+          If more tasks are ready → Go to Step 2
+          If no more tasks ready → Check if epic is complete
 
-  check-next:
-    needs: [get-ready-tasks, worker]
-    if: always() && needs.get-ready-tasks.outputs.has_tasks == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          ### Step 5: Verify Epic Complete
+          ```bash
+          bd list --json
+          ```
+          Check if ALL tasks have status "closed". If yes, you're done!
+          If some tasks are still open but none are ready, there may be a dependency issue.
 
-      - name: Checkout feature branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.client_payload.branch }}
-          token: ${{ steps.app-token.outputs.token }}
-          fetch-depth: 0
+          ## Completion Criteria
+          - ALL tasks in beads have status "closed"
+          - All task branches pushed to remote
+          - bd sync completed (beads state saved)
 
-      - name: Setup beads
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
-          tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          "$HOME/.local/bin/bd" init
-          sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
+          ## Output When Done
+          When all tasks are complete, output EXACTLY this line (for parsing):
+          ```
+          EPIC_COMPLETE: true
+          ```
 
-      - name: Sync beads state
-        run: |
-          bd sync
+          If there's an error or tasks are stuck:
+          ```
+          EPIC_COMPLETE: false
+          ERROR: <description of what went wrong>
+          ```
 
-      - name: Check for more ready tasks
-        id: check
-        run: |
-          READY=$(bd ready --json 2>/dev/null || echo "[]")
-          READY_COUNT=$(echo "$READY" | jq 'length')
+          ## Important Rules
+          1. NEVER modify the feature branch directly - only task sub-branches
+          2. Each subagent works on its OWN branch (no conflicts)
+          3. Use bd sync after EVERY status change
+          4. If a subagent fails, note it but continue with others
+          5. Keep going until ALL tasks are closed or you hit an unrecoverable error
+          PROMPT_EOF
 
-          # Get all tasks to collect IDs for merge
-          ALL_TASKS=$(bd list --json 2>/dev/null || echo "[]")
-          TASK_IDS=$(echo "$ALL_TASKS" | jq -c '[.[].id]')
+          # Replace variables in prompt
+          sed -i "s|\$FEATURE_BRANCH|${{ steps.payload.outputs.branch }}|g" /tmp/coordinator-prompt.md
+          sed -i "s|\$ISSUE_NUMBER|${{ steps.payload.outputs.issue_number }}|g" /tmp/coordinator-prompt.md
 
-          echo "ready_count=$READY_COUNT" >> $GITHUB_OUTPUT
-          echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
-
-          if [ "$READY_COUNT" -gt 0 ]; then
-            echo "action=next_batch" >> $GITHUB_OUTPUT
+          # Run Sisyphus with the coordinator prompt
+          RESULT=$(opencode run \
+            --model "opencode/big-pickle" \
+            --print-only \
+            "$(cat /tmp/coordinator-prompt.md)")
+          
+          echo "$RESULT"
+          
+          # Check if epic complete
+          if echo "$RESULT" | grep -q "EPIC_COMPLETE: true"; then
+            echo "epic_complete=true" >> $GITHUB_OUTPUT
           else
-            echo "action=merge" >> $GITHUB_OUTPUT
+            echo "epic_complete=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Post batch progress comment
+      - name: Update comment with result
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const payload = context.payload.client_payload;
-            const nextAction = '${{ steps.check.outputs.action }}';
-            const readyCount = parseInt('${{ steps.check.outputs.ready_count }}');
-
-            let body = '';
-            if (nextAction === 'next_batch') {
-              body = `### ✅ Batch Complete\n\n${readyCount} more task(s) ready. Starting next batch...`;
+            const epicComplete = '${{ steps.sisyphus.outputs.epic_complete }}' === 'true';
+            const commentId = parseInt('${{ steps.comment.outputs.result }}');
+            
+            let body;
+            if (epicComplete) {
+              body = '### ✅ All Tasks Complete\n\nAll tasks have been implemented. Dispatching merge workflow...';
             } else {
-              body = `### ✅ All Tasks Complete\n\nMerging task branches and creating PR...`;
+              body = '### ⚠️ Batch Processing Finished\n\nSome tasks may have failed. Check workflow logs for details.';
             }
-
-            await github.rest.issues.createComment({
+            
+            await github.rest.issues.updateComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: payload.issue_number,
+              comment_id: commentId,
               body: body
             });
 
-      - name: Dispatch next batch
-        if: steps.check.outputs.action == 'next_batch'
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ steps.app-token.outputs.token }}
-          script: |
-            const payload = context.payload.client_payload;
-
-            await github.rest.repos.createDispatchEvent({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              event_type: 'opencode-batch',
-              client_payload: {
-                issue_number: payload.issue_number,
-                branch: payload.branch
-              }
-            });
-
       - name: Dispatch merge
-        if: steps.check.outputs.action == 'merge'
+        if: steps.sisyphus.outputs.epic_complete == 'true'
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const payload = context.payload.client_payload;
-            const taskIds = JSON.parse('${{ steps.check.outputs.task_ids }}');
-
+            // Get all task IDs for merge workflow
+            const { execSync } = require('child_process');
+            const tasksJson = execSync('bd list --json 2>/dev/null || echo "[]"').toString();
+            const tasks = JSON.parse(tasksJson);
+            const taskIds = tasks.map(t => t.id);
+            
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,
               event_type: 'opencode-merge',
               client_payload: {
-                issue_number: payload.issue_number,
-                branch: payload.branch,
+                issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
+                branch: '${{ steps.payload.outputs.branch }}',
                 task_ids: taskIds
               }
             });
+            
+            console.log('Dispatched merge workflow with task IDs:', taskIds);
