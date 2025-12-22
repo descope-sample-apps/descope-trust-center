@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { VisualRegressionHelper } from './visual-regression-helper';
 
 test.describe('Enhanced Visual Tests', () => {
