@@ -122,7 +122,13 @@ jobs:
       - name: Update task status to in-progress
         run: |
           bd update "${{ matrix.id }}" --status in_progress
-          bd sync -m "chore: start task ${{ matrix.id }}"
+          for i in 1 2 3; do
+            if bd sync -m "chore: start task ${{ matrix.id }}"; then
+              break
+            fi
+            echo "Sync failed, retrying in $((i * 2))s..."
+            sleep $((i * 2))
+          done
 
       - name: Run OpenCode Sisyphus Agent
         env:
@@ -146,7 +152,13 @@ jobs:
       - name: Close task
         run: |
           bd close "${{ matrix.id }}"
-          bd sync -m "chore: complete task ${{ matrix.id }}"
+          for i in 1 2 3; do
+            if bd sync -m "chore: complete task ${{ matrix.id }}"; then
+              break
+            fi
+            echo "Sync failed, retrying in $((i * 2))s..."
+            sleep $((i * 2))
+          done
 
       - name: Commit and push changes
         run: |
