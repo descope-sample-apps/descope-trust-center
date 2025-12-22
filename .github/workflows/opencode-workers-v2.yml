@@ -91,7 +91,7 @@ jobs:
           echo "DEBUG: task_count output is: '$TASK_COUNT'"
 
       - name: Post wave start comment
-        if: fromJson(needs.get-ready-tasks.outputs.task_count) > 0
+        if: needs.get-ready-tasks.outputs.task_count != '0'
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
