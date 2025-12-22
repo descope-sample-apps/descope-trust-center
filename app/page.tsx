@@ -2,6 +2,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./com
 import { Button } from "./components/ui/button";
 import { FAQSection } from "./components/ui/faq-section";
 import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink } from "lucide-react";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Security & Compliance Overview',
+  description: 'View Descope\'s comprehensive security and compliance status including SOC 2 Type II, ISO 27001, GDPR, and HIPAA certifications. Access security policies, audit reports, and documentation.',
+  keywords: [
+    'SOC 2 Type II',
+    'ISO 27001', 
+    'GDPR compliance',
+    'HIPAA compliance',
+    'security audit',
+    'penetration testing',
+    'vulnerability scanning',
+    'data encryption',
+    'access control',
+    'security monitoring'
+  ],
+  openGraph: {
+    title: 'Descope Security & Compliance - Trust Center',
+    description: 'Explore Descope\'s security posture, compliance certifications, and access to security documentation including SOC 2, ISO 27001, and more.',
+    images: [
+      {
+        url: '/og-security.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Descope Security & Compliance Overview',
+      },
+    ],
+  },
+  twitter: {
+    title: 'Descope Security & Compliance',
+    description: 'View our comprehensive security and compliance status including SOC 2, ISO 27001, GDPR, and HIPAA certifications.',
+    images: ['/twitter-security.jpg'],
+  },
+}
 
 interface ComplianceItem {
   name: string;
@@ -179,7 +214,14 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
+      {/* Skip navigation link for accessibility */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-md z-50"
+      >
+        Skip to main content
+      </a>
+      <header className="bg-white border-b border-gray-200" role="banner">
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center space-x-3">
@@ -191,10 +233,10 @@ export default function Page() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <section className="mb-8 sm:mb-12">
+      <main id="main-content" className="container mx-auto px-4 sm:px-6 py-6 sm:py-8" role="main">
+        <section className="mb-8 sm:mb-12" aria-labelledby="overview-heading">
           <div className="text-center mb-6 sm:mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Security & Compliance Overview</h2>
+            <h2 id="overview-heading" className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Security & Compliance Overview</h2>
             <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto px-4">
               We're committed to maintaining the highest standards of security and compliance. 
               Our comprehensive security program protects your data and ensures regulatory compliance.
@@ -202,15 +244,18 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="mb-8 sm:mb-12">
-          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Compliance Status</h3>
+        <section className="mb-8 sm:mb-12" aria-labelledby="compliance-heading">
+          <h3 id="compliance-heading" className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Compliance Status</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
             {complianceItems.map((item, index) => (
               <Card key={index} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <CardTitle className="text-base sm:text-lg">{item.name}</CardTitle>
-                    <div className={`flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(item.status)}`}>
+                    <div 
+                      className={`flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(item.status)}`}
+                      aria-label={`Compliance status: ${item.status.replace('-', ' ')}`}
+                    >
                       {getStatusIcon(item.status)}
                       <span className="capitalize hidden sm:inline">{item.status.replace('-', ' ')}</span>
                       <span className="capitalize sm:hidden">{item.status === 'in-progress' ? 'In Progress' : item.status}</span>
@@ -228,8 +273,8 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="mb-8 sm:mb-12">
-          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Security Documents</h3>
+        <section className="mb-8 sm:mb-12" aria-labelledby="documents-heading">
+          <h3 id="documents-heading" className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Security Documents</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
             {documents.map((doc) => (
               <Card key={doc.id} className="hover:shadow-md transition-shadow">
@@ -268,8 +313,8 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="mb-8 sm:mb-12">
-          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Security Highlights</h3>
+        <section className="mb-8 sm:mb-12" aria-labelledby="highlights-heading">
+          <h3 id="highlights-heading" className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Security Highlights</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 <Card className="text-center">
                <CardHeader>
@@ -328,7 +373,7 @@ export default function Page() {
         </section>
       </main>
 
-      <footer className="bg-white border-t border-gray-200 mt-12 sm:mt-16">
+      <footer className="bg-white border-t border-gray-200 mt-12 sm:mt-16" role="contentinfo">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="text-center text-gray-600">
             <p className="text-sm sm:text-base">&copy; 2024 Descope. All rights reserved.</p>
