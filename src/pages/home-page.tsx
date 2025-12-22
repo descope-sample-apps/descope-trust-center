@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { FAQSection } from "@/components/ui/faq-section";
 import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink } from "lucide-react";
 
 interface ComplianceItem {
@@ -16,6 +17,13 @@ interface Document {
   description: string;
   lastUpdated: string;
   downloadUrl?: string;
+}
+
+interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
 }
 
 export function HomePage() {
@@ -76,6 +84,57 @@ export function HomePage() {
       description: "Official ISO 27001 certification document",
       lastUpdated: "2024-10-20",
       downloadUrl: "#"
+    }
+  ];
+
+  const faqItems: FAQItem[] = [
+    {
+      id: "faq-1",
+      question: "What compliance standards does Descope meet?",
+      answer: "Descope maintains compliance with multiple industry standards including SOC 2 Type II, ISO 27001, GDPR, and is currently working toward HIPAA compliance. We undergo regular third-party audits to validate our security controls and compliance posture.",
+      category: "Compliance"
+    },
+    {
+      id: "faq-2", 
+      question: "How is customer data protected?",
+      answer: "We implement comprehensive security measures including end-to-end encryption for data in transit and at rest, regular security monitoring, access controls, and follow the principle of least privilege. All data is encrypted using AES-256 encryption standards.",
+      category: "Security"
+    },
+    {
+      id: "faq-3",
+      question: "Can I request a copy of your security audit reports?",
+      answer: "Yes, qualified customers and prospects can request access to our SOC 2 Type II reports, ISO 27001 certificates, and other compliance documentation. Please use the 'Request Audit Report' button or contact our security team directly.",
+      category: "Documentation"
+    },
+    {
+      id: "faq-4",
+      question: "How often do you conduct security assessments?",
+      answer: "We conduct continuous security monitoring and perform formal assessments on a regular basis. This includes annual SOC 2 Type II audits, quarterly penetration testing, monthly vulnerability scans, and regular internal security reviews.",
+      category: "Security"
+    },
+    {
+      id: "faq-5",
+      question: "What happens in case of a security incident?",
+      answer: "We have a comprehensive incident response program that includes immediate detection and investigation, customer notification within required timeframes, remediation activities, and post-incident reviews to improve our security posture. All incidents are handled according to our documented incident response procedures.",
+      category: "Security"
+    },
+    {
+      id: "faq-6",
+      question: "Do you offer Business Associate Agreements (BAAs)?",
+      answer: "Yes, we offer Business Associate Agreements for customers handling protected health information (PHI) as part of our HIPAA compliance efforts. Please contact our sales or security team to discuss your specific BAA requirements.",
+      category: "Compliance"
+    },
+    {
+      id: "faq-7",
+      question: "Where is customer data stored?",
+      answer: "Customer data is stored in secure, SOC 2-compliant data centers with geographic redundancy. We maintain data residency options and can provide specific information about data storage locations based on your requirements and compliance needs.",
+      category: "Data Management"
+    },
+    {
+      id: "faq-8",
+      question: "How can I report a security vulnerability?",
+      answer: "We take security vulnerabilities seriously and encourage responsible disclosure. Please report any security concerns to our security team at security@descope.com. We'll acknowledge receipt within 24 hours and provide regular updates on our remediation progress.",
+      category: "Security"
     }
   ];
 
@@ -246,6 +305,8 @@ export function HomePage() {
             </Card>
           </div>
         </section>
+
+        <FAQSection items={faqItems} />
 
         <section className="bg-blue-50 rounded-lg p-8 text-center">
           <h3 className="text-2xl font-semibold text-gray-900 mb-4">Have Questions?</h3>
