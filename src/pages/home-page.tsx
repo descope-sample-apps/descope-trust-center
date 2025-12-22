@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink, Users, Globe, Clock, TrendingUp } from "lucide-react";
+import { SecurityOverview } from "@/components/security-overview";
+import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink } from "lucide-react";
 
 interface ComplianceItem {
   name: string;
@@ -18,41 +19,7 @@ interface Document {
   downloadUrl?: string;
 }
 
-interface TrustStat {
-  value: string;
-  label: string;
-  description: string;
-  icon: React.ReactNode;
-}
-
 export function HomePage() {
-  const trustStats: TrustStat[] = [
-    {
-      value: "99.9%",
-      label: "Uptime",
-      description: "Service availability over the last 12 months",
-      icon: <TrendingUp className="h-6 w-6 text-green-600" />
-    },
-    {
-      value: "10M+",
-      label: "Users",
-      description: "Active users trusting Descope worldwide",
-      icon: <Users className="h-6 w-6 text-blue-600" />
-    },
-    {
-      value: "150+",
-      label: "Countries",
-      description: "Global presence with data centers worldwide",
-      icon: <Globe className="h-6 w-6 text-purple-600" />
-    },
-    {
-      value: "24/7",
-      label: "Monitoring",
-      description: "Continuous security monitoring and support",
-      icon: <Clock className="h-6 w-6 text-orange-600" />
-    }
-  ];
-
   const complianceItems: ComplianceItem[] = [
     {
       name: "SOC 2 Type II",
@@ -167,49 +134,6 @@ export function HomePage() {
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        {/* Hero Section with Trust Stats */}
-        <section className="mb-16">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 md:p-12 text-white">
-            <div className="max-w-4xl mx-auto text-center mb-12">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                Enterprise-Grade Security You Can Trust
-              </h1>
-              <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
-                Protecting millions of users worldwide with industry-leading security, 
-                compliance, and reliability standards.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 font-semibold">
-                  View Security Report
-                </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 font-semibold">
-                  Contact Security Team
-                </Button>
-              </div>
-            </div>
-            
-            {/* Trust Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
-              {trustStats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="flex justify-center mb-4">
-                    {stat.icon}
-                  </div>
-                  <div className="text-3xl md:text-4xl font-bold mb-2">
-                    {stat.value}
-                  </div>
-                  <div className="text-lg font-semibold mb-2">
-                    {stat.label}
-                  </div>
-                  <div className="text-sm text-blue-100">
-                    {stat.description}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         <section className="mb-12">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Security & Compliance Overview</h2>
@@ -283,46 +207,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="mb-12">
-          <h3 className="text-2xl font-semibold text-gray-900 mb-6">Security Highlights</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="text-center">
-              <CardHeader>
-                <Lock className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>End-to-End Encryption</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  All data is encrypted in transit and at rest using industry-standard encryption protocols.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center">
-              <CardHeader>
-                <Shield className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                <CardTitle>24/7 Monitoring</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Continuous security monitoring and threat detection to keep your data safe.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center">
-              <CardHeader>
-                <CheckCircle className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-                <CardTitle>Regular Audits</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Third-party security audits and penetration testing to validate our security controls.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
+        <SecurityOverview />
 
         <section className="bg-blue-50 rounded-lg p-8 text-center">
           <h3 className="text-2xl font-semibold text-gray-900 mb-4">Have Questions?</h3>
