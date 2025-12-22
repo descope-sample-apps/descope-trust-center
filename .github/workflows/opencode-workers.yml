@@ -45,7 +45,7 @@ jobs:
 
       - name: Sync beads state
         run: |
-          bd sync
+          bd sync --no-push
 
       - name: Get ready tasks
         id: ready
