@@ -53,11 +53,16 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
-      - name: Setup Beads
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+
+      - name: Setup tools
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
+          
+          # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
           echo "$HOME/.local/bin" >> $GITHUB_PATH
@@ -143,27 +148,22 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+
       - name: Setup tools
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-
-          # Install beads
+          
+          # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-          # Install bun
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-
-          # Install opencode
-          curl -fsSL https://opencode.ai/install | bash
-          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
-
           # Install bun dependencies
-          $HOME/.bun/bin/bun install
+          bun install
 
       - name: Setup git
         run: |
@@ -268,7 +268,7 @@ jobs:
       - name: Verify build
         run: |
           echo "Verifying build passes..."
-          $HOME/.bun/bin/bun run build
+          bun run build
 
       - name: Push task branch
         run: |
@@ -320,17 +320,21 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+
       - name: Setup tools
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
+          
+          # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          $HOME/.bun/bin/bun install
+          
+          bun install
 
       - name: Setup git
         run: |
@@ -415,13 +419,17 @@ jobs:
       - name: Final build verification
         run: |
           echo "Running final build verification..."
-          $HOME/.bun/bin/bun run build
+          bun run build
 
       - name: Create pull request
         id: pr
+        if: steps.next-wave.outputs.ready_count == '0' || steps.next-wave.outputs.ready_count == ''
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          # Only create PR when ALL waves are complete (no more ready tasks)
+          echo "All waves complete - creating Pull Request..."
+          
           # Check if PR already exists
           EXISTING_PR=$(gh pr list --head ${{ steps.payload.outputs.branch }} --json number --jq '.[0].number')
 
@@ -437,7 +445,7 @@ jobs:
               --head ${{ steps.payload.outputs.branch }} \
               --title "🤖 Implement Issue #${{ steps.payload.outputs.issue_number }}" \
               --body "## Summary
-            
+              
             Automated implementation of issue #${{ steps.payload.outputs.issue_number }}.
             
             **Tasks Completed:** $COMPLETED
@@ -468,6 +476,21 @@ jobs:
             git push origin --delete "$TASK_BRANCH" || echo "Branch $TASK_BRANCH already deleted"
           done
 
+      - name: Check for next wave
+        id: next-wave
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # After closing tasks, check if more are ready
+          READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
+          TASK_COUNT=$(echo "$READY_TASKS" | jq 'length')
+          
+          echo "ready_count=$TASK_COUNT" >> $GITHUB_OUTPUT
+          echo "Next wave ready: $TASK_COUNT tasks"
+          
+          # Sync status first
+          "$HOME/.local/bin/bd" sync -m "ci: wave completed - checking for next wave"
+
       - name: Post completion comment
         uses: actions/github-script@v8
         with:
@@ -476,10 +499,37 @@ jobs:
             const prNumber = '${{ steps.pr.outputs.pr_number }}';
             const merged = '${{ steps.merge.outputs.merged_count }}';
             const conflicts = '${{ steps.merge.outputs.conflict_count }}';
-
+            const nextWaveCount = parseInt('${{ steps.next-wave.outputs.ready_count }}') || 0;
+            
+            let body = `### 🎉 Wave Complete!\n\n**Tasks Completed:** ${merged}\n**Conflicts Auto-Resolved:** ${conflicts}\n**Pull Request:** #${prNumber}\n**Build:** ✅ Passed\n\n`;
+            
+            if (nextWaveCount > 0) {
+              body += `🚀 **Next Wave Starting:** ${nextWaveCount} tasks ready\n\n_Staying in execution mode..._`;
+            } else {
+              body += `✅ **All Tasks Complete!**\n\nReady for review!`;
+            }
+            
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
-              body: `### 🎉 Wave Complete!\n\n**Tasks Completed:** ${merged}\n**Conflicts Auto-Resolved:** ${conflicts}\n**Pull Request:** #${prNumber}\n**Build:** ✅ Passed\n\nReady for review!`
+              body: body
             });
+
+      - name: Dispatch next wave
+        if: steps.next-wave.outputs.ready_count != '0'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            console.log('Dispatching next wave...');
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'opencode-batch',
+              client_payload: {
+                issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
+                branch: '${{ steps.payload.outputs.branch }}'
+              }
+            });
+            console.log('Next wave dispatched');
