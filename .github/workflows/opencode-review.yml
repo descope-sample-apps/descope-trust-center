@@ -62,9 +62,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Setup mise
-        uses: jdx/mise-action@v2
-
       - name: Get diff for review
         id: diff
         run: |
@@ -84,8 +81,8 @@ jobs:
 
           opencode run \
             --model "opencode/big-pickle" \
-            --agent "Sisyphus" \
-            "@oracle Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
+            --agent "Reviewer" \
+            "Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
 
           ## PR Title
           ${{ github.event.pull_request.title }}
@@ -106,11 +103,16 @@ jobs:
           4. Ensure all tasks work together cohesively
           5. Run 'bun run build' to verify the build passes
 
-          Respond with one of:
-          - APPROVE: if changes look good
-          - REQUEST_CHANGES: if fixes are needed (list specific issues)" 2>&1 | tee /tmp/review_output.txt
+          Respond with:
+          - APPROVE or LGTM if changes look good
+          - REQUEST_CHANGES if fixes are needed (list specific issues)
 
-          if grep -qi "APPROVE" /tmp/review_output.txt; then
+          Your review should include:
+          1. Overall assessment (APPROVE/REQUEST_CHANGES)
+          2. Specific issues found (if any)
+          3. Suggestions for improvement" 2>&1 | tee /tmp/review_output.txt
+
+          if grep -qi "APPROVE\|LGTM" /tmp/review_output.txt; then
             echo "decision=approve" >> $GITHUB_OUTPUT
           else
             echo "decision=request_changes" >> $GITHUB_OUTPUT
@@ -206,13 +208,13 @@ jobs:
             const feedback = reviewComments.length > 0 ? reviewComments[0].body : '';
             core.setOutput('feedback', feedback);
 
-      - name: Run OpenCode Sisyphus Agent (Rework)
+      - name: Run OpenCode Rework Agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           opencode run \
-            --agent "Sisyphus" \
+            --agent "OpenCoder" \
             --model "opencode/big-pickle" \
             "Fix the issues identified in the review.
 
@@ -222,9 +224,14 @@ jobs:
           ## Instructions
           1. Address each issue mentioned in the review
           2. Keep changes minimal and focused
-          3. Run 'bun run build' to verify no errors
+          3. Follow code patterns from the repository
+          4. Run 'bun run build' to verify no errors
+          5. Test your changes thoroughly
 
-          When complete, summarize the fixes made."
+          When complete, summarize:
+          - What issues were fixed
+          - How they were addressed
+          - Any additional improvements made
 
       - name: Commit fixes
         run: |
