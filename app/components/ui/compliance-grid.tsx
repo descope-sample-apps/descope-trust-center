@@ -1,6 +1,6 @@
-import * as React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink } from "lucide-react";
 
 export interface ComplianceItem {
@@ -26,16 +26,16 @@ export interface ComplianceGridProps {
   className?: string;
 }
 
-const getStatusColor = (status: ComplianceItem["status"]) => {
+const getStatusVariant = (status: ComplianceItem["status"]) => {
   switch (status) {
     case "compliant":
-      return "text-green-600 bg-green-100";
+      return "success";
     case "pending":
-      return "text-yellow-600 bg-yellow-100";
+      return "warning";
     case "in-progress":
-      return "text-blue-600 bg-blue-100";
+      return "info";
     default:
-      return "text-gray-600 bg-gray-100";
+      return "secondary";
   }
 };
 
@@ -68,55 +68,77 @@ const getDocumentIcon = (type: Document["type"]) => {
 const ComplianceCard = ({ item }: { item: ComplianceItem }) => (
   <Card className="hover:shadow-md transition-shadow">
     <CardHeader>
-      <div className="flex items-center justify-between">
-        <CardTitle className="text-lg">{item.name}</CardTitle>
-        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(item.status)}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <CardTitle className="text-base sm:text-lg">{item.name}</CardTitle>
+        <Badge variant={getStatusVariant(item.status)} className="flex items-center space-x-1.5">
           {getStatusIcon(item.status)}
           <span className="capitalize">{item.status.replace('-', ' ')}</span>
-        </div>
+        </Badge>
       </div>
       <CardDescription>{item.description}</CardDescription>
     </CardHeader>
     <CardContent>
-      <p className="text-sm text-gray-500">
+      <p className="text-xs sm:text-sm text-muted-foreground">
         Last updated: {new Date(item.lastUpdated).toLocaleDateString()}
       </p>
     </CardContent>
   </Card>
 );
 
-const DocumentCard = ({ doc }: { doc: Document }) => (
-  <Card className="hover:shadow-md transition-shadow">
-    <CardHeader>
-      <div className="flex items-start space-x-3">
-        {getDocumentIcon(doc.type)}
-        <div className="flex-1">
-          <CardTitle className="text-lg">{doc.title}</CardTitle>
-          <CardDescription className="mt-2">{doc.description}</CardDescription>
+const DocumentCard = ({ doc }: { doc: Document }) => {
+  const getTypeVariant = (type: Document["type"]) => {
+    switch (type) {
+      case "policy":
+        return "default";
+      case "report":
+        return "success";
+      case "certificate":
+        return "secondary";
+      default:
+        return "outline";
+    }
+  };
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader>
+        <div className="flex items-start space-x-3">
+          {getDocumentIcon(doc.type)}
+          <div className="flex-1">
+            <div className="flex items-center space-x-2 mb-2">
+              <CardTitle className="text-base sm:text-lg">{doc.title}</CardTitle>
+              <Badge variant={getTypeVariant(doc.type)} size="sm">
+                {doc.type}
+              </Badge>
+            </div>
+            <CardDescription>{doc.description}</CardDescription>
+          </div>
         </div>
-      </div>
-    </CardHeader>
-    <CardContent>
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
-          Updated: {new Date(doc.lastUpdated).toLocaleDateString()}
-        </p>
-        <div className="flex space-x-2">
-          {doc.downloadUrl && (
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Updated: {new Date(doc.lastUpdated).toLocaleDateString()}
+          </p>
+          <div className="flex space-x-2">
+            {doc.downloadUrl && (
+              <Button variant="outline" size="sm">
+                <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                <span className="hidden sm:inline">Download</span>
+                <span className="sm:hidden">DL</span>
+              </Button>
+            )}
             <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Download
+              <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+              <span className="hidden sm:inline">View</span>
+              <span className="sm:hidden">View</span>
             </Button>
-          )}
-          <Button variant="outline" size="sm">
-            <ExternalLink className="h-4 w-4 mr-2" />
-            View
-          </Button>
+          </div>
         </div>
-      </div>
-    </CardContent>
-  </Card>
-);
+      </CardContent>
+    </Card>
+  );
+};
 
 export function ComplianceGrid({ 
   complianceItems = [], 
