@@ -40,6 +40,8 @@ jobs:
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
           "$HOME/.local/bin/bd" init
 
@@ -98,17 +100,14 @@ jobs:
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
           curl -fsSL https://opencode.ai/install | bash
           echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
           "$HOME/.local/bin/bd" init
 
       - name: Sync beads state
         run: |
           bd sync
-
-      - name: Setup git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Create task sub-branch
         id: branch
@@ -186,6 +185,8 @@ jobs:
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
 
