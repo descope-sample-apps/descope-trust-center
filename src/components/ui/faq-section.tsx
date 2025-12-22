@@ -28,16 +28,16 @@ export function FAQSection({ items }: FAQSectionProps) {
   const categories = Array.from(new Set(items.map(item => item.category)));
 
   return (
-    <section className="mb-12">
-      <h3 className="text-2xl font-semibold text-gray-900 mb-6">Frequently Asked Questions</h3>
+    <section className="mb-8 sm:mb-12">
+      <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Frequently Asked Questions</h3>
       
       {categories.map((category) => {
         const categoryItems = items.filter(item => item.category === category);
         
         return (
-          <div key={category} className="mb-8">
-            <h4 className="text-lg font-medium text-gray-800 mb-4">{category}</h4>
-            <div className="space-y-4">
+          <div key={category} className="mb-6 sm:mb-8">
+            <h4 className="text-base sm:text-lg font-medium text-gray-800 mb-3 sm:mb-4">{category}</h4>
+            <div className="space-y-3 sm:space-y-4">
               {categoryItems.map((item) => (
                 <div 
                   key={item.id} 
@@ -45,19 +45,19 @@ export function FAQSection({ items }: FAQSectionProps) {
                 >
                   <button
                     onClick={() => toggleExpanded(item.id)}
-                    className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                    className="w-full px-4 sm:px-6 py-3 sm:py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
                     aria-expanded={expandedItems.has(item.id)}
                     aria-controls={`faq-answer-${item.id}`}
                   >
-                    <span className="font-medium text-gray-900">{item.question}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
+                    <span className="font-medium text-gray-900 text-sm sm:text-base pr-2">{item.question}</span>
+                    <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                      <span className="text-xs sm:text-sm text-gray-500 hidden sm:inline">
                         {expandedItems.has(item.id) ? 'Show less' : 'Show more'}
                       </span>
                       {expandedItems.has(item.id) ? (
-                        <ChevronUp className="h-5 w-5 text-gray-500" />
+                        <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
                       ) : (
-                        <ChevronDown className="h-5 w-5 text-gray-500" />
+                        <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
                       )}
                     </div>
                   </button>
@@ -68,7 +68,7 @@ export function FAQSection({ items }: FAQSectionProps) {
                       expandedItems.has(item.id) ? 'max-h-96' : 'max-h-0'
                     }`}
                   >
-                    <div className="px-6 pb-4 text-gray-600 leading-relaxed">
+                    <div className="px-4 sm:px-6 pb-3 sm:pb-4 text-gray-600 leading-relaxed text-sm sm:text-base">
                       {item.answer}
                     </div>
                   </div>
