@@ -62,42 +62,22 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Setup mise
-        uses: jdx/mise-action@v2
-
-      - name: Get diff for review
-        id: diff
-        run: |
-          DIFF=$(git diff origin/main...HEAD)
-          COMMIT_COUNT=$(git rev-list --count origin/main...HEAD)
-          echo "commit_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
-          # Store diff in a file to avoid shell escaping issues
-          echo "$DIFF" > /tmp/pr_diff.txt
-
       - name: Run OpenCode Review Agent
         id: review
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          DIFF_SNIPPET=$(head -500 /tmp/pr_diff.txt)
-
           opencode run \
             --model "opencode/big-pickle" \
-            --agent "Sisyphus" \
-            "@oracle Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
+            --agent "Reviewer" \
+            "Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
 
           ## PR Title
           ${{ github.event.pull_request.title }}
 
           ## PR Description
           ${{ github.event.pull_request.body }}
-
-          ## Statistics
-          - Commits: ${{ steps.diff.outputs.commit_count }}
-
-          ## Diff (first 500 lines)
-          ${DIFF_SNIPPET}
 
           ## Instructions
           1. Check code quality, patterns, and potential issues
@@ -106,14 +86,45 @@ jobs:
           4. Ensure all tasks work together cohesively
           5. Run 'bun run build' to verify the build passes
 
-          Respond with one of:
-          - APPROVE: if changes look good
-          - REQUEST_CHANGES: if fixes are needed (list specific issues)" 2>&1 | tee /tmp/review_output.txt
+          IMPORTANT: Your response format determines next workflow steps!
 
-          if grep -qi "APPROVE" /tmp/review_output.txt; then
+          Start your review with EXACTLY one of these formats:
+
+          **APPROVE** (if changes look good):
+          APPROVE
+
+          **REQUEST_CHANGES** (if fixes needed):
+          REQUEST_CHANGES
+
+          Example good review:
+          APPROVE
+
+          The code quality is excellent and no changes are needed.
+
+          Example review with changes:
+          REQUEST_CHANGES
+
+          1. Import statements missing in component.ts
+          2. Add error handling for API calls
+          3. Update tests to cover new functionality
+
+          This format is critical for triggering the correct workflow step." 2>&1 | tee /tmp/review_output.txt
+
+          # Parse decision with fallback patterns
+          if grep -qi "APPROVE\|LGTM" /tmp/review_output.txt; then
             echo "decision=approve" >> $GITHUB_OUTPUT
-          else
+            echo "✅ Review parsed as APPROVE"
+          elif grep -qi "REQUEST_CHANGES" /tmp/review_output.txt; then
             echo "decision=request_changes" >> $GITHUB_OUTPUT
+            echo "🔄 Review parsed as REQUEST_CHANGES"
+          else
+            echo "⚠️ REVIEW OUTPUT FORMAT WARNING" >> $GITHUB_OUTPUT
+            echo "Expected: APPROVE or REQUEST_CHANGES" >> $GITHUB_OUTPUT
+            echo "First 3 lines of actual output:" >> $GITHUB_OUTPUT
+            head -3 /tmp/review_output.txt | sed 's/^/  /' >> $GITHUB_OUTPUT
+            # Default to request changes to be safe
+            echo "decision=request_changes" >> $GITHUB_OUTPUT
+            echo "🔄 Defaulting to REQUEST_CHANGES due to format issue"
           fi
 
       - name: Post review comment
@@ -162,7 +173,7 @@ jobs:
 
   rework:
     needs: review
-    if: needs.review.outputs.decision == 'request_changes' && needs.review.outputs.cycle_count < 3
+    if: needs.review.outputs.decision == 'request_changes'
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
@@ -206,13 +217,13 @@ jobs:
             const feedback = reviewComments.length > 0 ? reviewComments[0].body : '';
             core.setOutput('feedback', feedback);
 
-      - name: Run OpenCode Sisyphus Agent (Rework)
+      - name: Run OpenCode Rework Agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           opencode run \
-            --agent "Sisyphus" \
+            --agent "OpenCoder" \
             --model "opencode/big-pickle" \
             "Fix the issues identified in the review.
 
@@ -222,9 +233,14 @@ jobs:
           ## Instructions
           1. Address each issue mentioned in the review
           2. Keep changes minimal and focused
-          3. Run 'bun run build' to verify no errors
+          3. Follow code patterns from the repository
+          4. Run 'bun run build' to verify no errors
+          5. Test your changes thoroughly
 
-          When complete, summarize the fixes made."
+          When complete, summarize:
+          - What issues were fixed
+          - How they were addressed
+          - Any additional improvements made
 
       - name: Commit fixes
         run: |

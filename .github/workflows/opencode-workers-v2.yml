@@ -13,6 +13,10 @@ on:
         description: "Feature branch name"
         required: true
         type: string
+      epic_id:
+        description: "Epic ID in Beads"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -26,7 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       task_ids: ${{ steps.get-ready-tasks.outputs.task_ids }}
+      task_titles: ${{ steps.get-ready-tasks.outputs.task_titles }}
       task_count: ${{ steps.get-ready-tasks.outputs.task_count }}
+      epic_id: ${{ steps.payload.outputs.epic_id }}
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -61,7 +67,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          
+
           # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
@@ -82,18 +88,33 @@ jobs:
           # Pull from beads-sync but don't sync (avoid conflicts with parallel workers)
           git fetch origin beads-sync:beads-sync || echo "beads-sync branch not found"
 
-          # Get ready tasks (no dependencies blocking them)
-          READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
+          # Get ready tasks that are children of the specific epic
+          EPIC_ID="${{ steps.payload.outputs.epic_id }}"
 
-          # Extract just the IDs as a JSON array
+          if [ -n "$EPIC_ID" ]; then
+            # Get all tasks and filter for children of this epic that are ready
+            ALL_TASKS=$("$HOME/.local/bin/bd" list --json)
+            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id)]')
+          else
+            # Fallback if no epic_id provided (shouldn't happen in normal flow)
+            READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
+            echo "WARNING: No epic_id provided, getting all ready tasks" >&2
+          fi
+
+          # Extract IDs and titles as JSON arrays
           TASK_IDS=$(echo "$READY_TASKS" | jq -c '[.[].id]')
+          TASK_TITLES=$(echo "$READY_TASKS" | jq -c '[.[].title]')
           TASK_COUNT=$(echo "$TASK_IDS" | jq 'length')
 
+          echo "epic_id=${{ steps.payload.outputs.epic_id }}" >> $GITHUB_OUTPUT
           echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
+          echo "task_titles=$TASK_TITLES" >> $GITHUB_OUTPUT
           echo "task_count=$TASK_COUNT" >> $GITHUB_OUTPUT
 
-          echo "Found $TASK_COUNT ready tasks: $TASK_IDS"
+          echo "Found $TASK_COUNT ready tasks for epic ${{ steps.payload.outputs.epic_id }}: $TASK_IDS"
+          echo "DEBUG: epic_id is: '${{ steps.payload.outputs.epic_id }}'"
           echo "DEBUG: task_ids output is: '$TASK_IDS'"
+          echo "DEBUG: task_titles output is: '$TASK_TITLES'"
           echo "DEBUG: task_count output is: '$TASK_COUNT'"
 
       - name: Post wave start comment
@@ -103,13 +124,20 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const taskIds = JSON.parse('${{ steps.get-ready-tasks.outputs.task_ids }}');
+            const taskTitles = JSON.parse('${{ steps.get-ready-tasks.outputs.task_titles }}');
             const count = taskIds.length;
+
+            // Create list items with ID and title
+            const taskList = taskIds.map((id, index) => {
+              const title = taskTitles[index] || 'Unknown task';
+              return `- \`${id}\`: ${title}`;
+            }).join('\n');
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
-              body: `### 🚀 Wave Execution Started\n\nExecuting **${count}** tasks in parallel:\n${taskIds.map(id => `- \`${id}\``).join('\n')}\n\n_Workers running concurrently..._`
+              body: `### 🚀 Wave Execution Started\n\nExecuting **${count}** tasks in parallel:\n${taskList}\n\n_Workers running concurrently..._`
             });
 
   # Job 2: Execute tasks in parallel (matrix strategy)
@@ -156,7 +184,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          
+
           # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
@@ -186,9 +214,18 @@ jobs:
           TASK_JSON=$("$HOME/.local/bin/bd" show ${{ matrix.task_id }} --json)
           TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.[0].title')
           TASK_DESC=$(echo "$TASK_JSON" | jq -r '.[0].description // ""')
+          TASK_PARENT=$(echo "$TASK_JSON" | jq -r '.[0].parent // ""')
+          EPIC_ID="${{ steps.payload.outputs.epic_id }}"
+
+          # Validate that this task belongs to the correct epic
+          if [ -n "$EPIC_ID" ] && [ "$TASK_PARENT" != "$EPIC_ID" ]; then
+            echo "❌ ERROR: Task ${{ matrix.task_id }} belongs to epic $TASK_PARENT, but should belong to epic $EPIC_ID"
+            echo "This indicates a workflow configuration error - aborting execution."
+            exit 1
+          fi
 
           echo "title=$TASK_TITLE" >> $GITHUB_OUTPUT
-          echo "Task: $TASK_TITLE"
+          echo "Task: $TASK_TITLE (parent: $TASK_PARENT)"
 
           # Save full spec to file for agent
           echo "$TASK_DESC" > /tmp/task-spec.txt
@@ -197,13 +234,13 @@ jobs:
         id: branch
         run: |
           TASK_BRANCH="${{ steps.payload.outputs.branch }}-task-${{ matrix.task_id }}"
-          
+
           # Check if branch exists remotely and delete it first
           if git ls-remote --heads origin "$TASK_BRANCH" | grep -q "$TASK_BRANCH"; then
             echo "Branch $TASK_BRANCH already exists, deleting it first..."
             git push origin --delete "$TASK_BRANCH" || echo "Failed to delete remote branch (may not exist)"
           fi
-          
+
           # Create new branch
           git checkout -b "$TASK_BRANCH"
           echo "task_branch=$TASK_BRANCH" >> $GITHUB_OUTPUT
@@ -308,9 +345,11 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "issue_number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
             echo "branch=${{ inputs.branch }}" >> $GITHUB_OUTPUT
+            echo "epic_id=${{ inputs.epic_id }}" >> $GITHUB_OUTPUT
           else
             echo "issue_number=${{ github.event.client_payload.issue_number }}" >> $GITHUB_OUTPUT
             echo "branch=${{ github.event.client_payload.branch }}" >> $GITHUB_OUTPUT
+            echo "epic_id=${{ github.event.client_payload.epic_id }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Checkout feature branch
@@ -328,12 +367,12 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          
+
           # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          
+
           bun install
 
       - name: Setup git
@@ -401,7 +440,25 @@ jobs:
 
           echo "merged_count=$MERGED_COUNT" >> $GITHUB_OUTPUT
           echo "conflict_count=$CONFLICT_COUNT" >> $GITHUB_OUTPUT
+          echo "completed_task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
           echo "Merged $MERGED_COUNT tasks ($CONFLICT_COUNT with conflicts)"
+
+      - name: Get completed task titles
+        id: completed-tasks
+        run: |
+          TASK_IDS='${{ steps.merge.outputs.completed_task_ids }}'
+
+          # Get task details for completed tasks
+          TASK_DETAILS=""
+          for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
+            TASK_JSON=$("$HOME/.local/bin/bd" show "$TASK_ID" --json 2>/dev/null || echo '[]')
+            TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.[0].title // "Unknown task"')
+            TASK_DETAILS="${TASK_DETAILS}- \`${TASK_ID}\`: ${TASK_TITLE}\n"
+          done
+
+          echo "completed_tasks_details<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$TASK_DETAILS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Batch update Beads
         run: |
@@ -409,7 +466,10 @@ jobs:
 
           # Close all successfully merged tasks
           for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
-            echo "Closing task $TASK_ID..."
+            # Get task title for logging
+            TASK_JSON=$("$HOME/.local/bin/bd" show "$TASK_ID" --json 2>/dev/null || echo '[]')
+            TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.[0].title // "Unknown task"')
+            echo "Closing task $TASK_ID: $TASK_TITLE..."
             "$HOME/.local/bin/bd" close "$TASK_ID" || echo "Failed to close $TASK_ID"
           done
 
@@ -419,6 +479,7 @@ jobs:
       - name: Final build verification
         run: |
           echo "Running final build verification..."
+          bun install
           bun run build
 
       - name: Create pull request
@@ -429,7 +490,7 @@ jobs:
         run: |
           # Only create PR when ALL waves are complete (no more ready tasks)
           echo "All waves complete - creating Pull Request..."
-          
+
           # Check if PR already exists
           EXISTING_PR=$(gh pr list --head ${{ steps.payload.outputs.branch }} --json number --jq '.[0].number')
 
@@ -465,6 +526,85 @@ jobs:
             echo "Created PR #$PR_NUMBER"
           fi
 
+      - name: Update PR with task status
+        if: steps.pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          EPIC_ID: ${{ steps.payload.outputs.epic_id }}
+          ISSUE_NUMBER: ${{ steps.payload.outputs.issue_number }}
+          MERGED_COUNT: ${{ steps.merge.outputs.merged_count }}
+          CONFLICT_COUNT: ${{ steps.merge.outputs.conflict_count }}
+        run: |
+          # Get all tasks for this epic
+          ALL_TASKS=$("$HOME/.local/bin/bd" list --json 2>/dev/null || echo '[]')
+          EPIC_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select((.parent // empty) == $epic_id)]')
+          
+          # Count tasks by status
+          TOTAL=$(echo "$EPIC_TASKS" | jq 'length')
+          COMPLETED=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "closed")] | length')
+          IN_PROGRESS=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "in_progress")] | length')
+          READY=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "open" and (.dependencies // [] | length == 0) and (.blocked_by // [] | length == 0)] | length')
+          BLOCKED=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "blocked")] | length')
+          PENDING=$(echo "$EPIC_TASKS" | jq '[.[] | select(.status == "open" and ((.dependencies // [] | length > 0) or (.blocked_by // [] | length > 0))] | length')
+          
+          # Generate task checklist
+          TASK_CHECKLIST=$(echo "$EPIC_TASKS" | jq -r '.[] | if .status == "closed" then "- [x] \(.title)" else "- [ ] \(.title)" end')
+          
+          echo "Task counts: Total=$TOTAL, Completed=$COMPLETED, In Progress=$IN_PROGRESS, Ready=$READY, Blocked=$BLOCKED, Pending=$PENDING"
+          
+          # Update PR with task status
+          gh pr edit "$PR_NUMBER" --body "$(cat << 'EOF'
+          ## Summary
+
+          Automated implementation of issue #$ISSUE_NUMBER.
+
+          **Tasks Completed:** $MERGED_COUNT
+          **Merge Conflicts:** $CONFLICT_COUNT (auto-resolved)
+          **Build Status:** ✅ Passed
+
+          ---
+
+          ## Task Progress
+
+          **Total Tasks:** $TOTAL
+          **Completed:** $COMPLETED ✅
+          **In Progress:** $IN_PROGRESS 🔄
+          **Ready:** $READY 🚀
+          **Blocked:** $BLOCKED 🚫
+          **Pending:** $PENDING ⏳
+
+          ### Task Progress
+
+          **Total Tasks:** $TOTAL
+          **Completed:** $COMPLETED ✅
+          **In Progress:** $IN_PROGRESS 🔄
+          **Ready:** $READY 🚀
+          **Blocked:** $BLOCKED 🚫
+          **Pending:** $PENDING ⏳
+
+          ### Task Checklist
+
+          $TASK_CHECKLIST
+
+          ### Next Steps
+
+          Current wave complete. Next wave will process remaining ready tasks.
+
+          ---
+
+          ### Changes
+
+          $(git log --oneline main..${{ steps.payload.outputs.branch }} | head -20)
+
+          ---
+
+          Closes #$ISSUE_NUMBER
+          EOF
+          )"
+          
+          echo "Updated PR #$PR_NUMBER with task status"
+
       - name: Cleanup task branches
         if: success()
         run: |
@@ -481,15 +621,26 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          # After closing tasks, check if more are ready
-          READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
-          TASK_COUNT=$(echo "$READY_TASKS" | jq 'length')
-          
+          # After closing tasks, check if more children of this epic are ready
+          EPIC_ID="${{ steps.payload.outputs.epic_id }}"
+
+          if [ -n "$EPIC_ID" ]; then
+            # Get all tasks and filter for children of this epic that are ready
+            ALL_TASKS=$("$HOME/.local/bin/bd" list --json)
+            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id)]')
+            TASK_COUNT=$(echo "$READY_TASKS" | jq 'length')
+          else
+            # Fallback if no epic_id provided
+            READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
+            TASK_COUNT=$(echo "$READY_TASKS" | jq 'length')
+            echo "WARNING: No epic_id provided for next wave check" >&2
+          fi
+
           echo "ready_count=$TASK_COUNT" >> $GITHUB_OUTPUT
-          echo "Next wave ready: $TASK_COUNT tasks"
-          
+          echo "Next wave ready: $TASK_COUNT tasks for epic $EPIC_ID"
+
           # Sync status first
-          "$HOME/.local/bin/bd" sync -m "ci: wave completed - checking for next wave"
+          "$HOME/.local/bin/bd" sync -m "ci: wave completed - checking for next wave for epic $EPIC_ID"
 
       - name: Post completion comment
         uses: actions/github-script@v8
@@ -500,15 +651,22 @@ jobs:
             const merged = '${{ steps.merge.outputs.merged_count }}';
             const conflicts = '${{ steps.merge.outputs.conflict_count }}';
             const nextWaveCount = parseInt('${{ steps.next-wave.outputs.ready_count }}') || 0;
-            
+            const completedTasks = `${{ steps.completed-tasks.outputs.completed_tasks_details }}`;
+
             let body = `### 🎉 Wave Complete!\n\n**Tasks Completed:** ${merged}\n**Conflicts Auto-Resolved:** ${conflicts}\n**Pull Request:** #${prNumber}\n**Build:** ✅ Passed\n\n`;
+            
+            if (completedTasks && completedTasks.trim()) {
+              body += `**Completed Tasks:**\n${completedTasks}\n\n`;
+            }
+            
+            body += `📝 **PR Updated:** Task status has been updated in the PR description\n\n`;
             
             if (nextWaveCount > 0) {
               body += `🚀 **Next Wave Starting:** ${nextWaveCount} tasks ready\n\n_Staying in execution mode..._`;
             } else {
               body += `✅ **All Tasks Complete!**\n\nReady for review!`;
             }
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -529,7 +687,8 @@ jobs:
               event_type: 'opencode-batch',
               client_payload: {
                 issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
-                branch: '${{ steps.payload.outputs.branch }}'
+                branch: '${{ steps.payload.outputs.branch }}',
+                epic_id: '${{ steps.payload.outputs.epic_id }}'
               }
             });
-            console.log('Next wave dispatched');
+            console.log('Next wave dispatched for epic: ${{ steps.payload.outputs.epic_id }}');

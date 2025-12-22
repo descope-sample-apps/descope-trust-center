@@ -152,11 +152,12 @@ jobs:
 
           1. Analyze the issue and break it into atomic tasks
           2. Create epic in Beads: bd create \"Issue #${{ github.event.issue.number }}: $ISSUE_TITLE\"
-          3. Create child tasks with detailed descriptions using bd note
-          4. Map dependencies between tasks using bd dep add
-          5. Sync to beads-sync branch
-          6. Post planning summary to GitHub issue
-          7. Output task counts for workflow to capture
+          3. Create child tasks with detailed descriptions using bd note AND set the epic as parent using: bd dep add <task_id> <epic_id>
+          4. Map dependencies between tasks using bd dep add  
+          5. IMPORTANT: Ensure all child tasks have the epic as their parent dependency for isolation
+          6. Sync to beads-sync branch
+          7. Post planning summary to GitHub issue
+          8. Output task counts for workflow to capture
 
           Store detailed task specifications in Beads notes using this format:
 
@@ -186,12 +187,32 @@ jobs:
         id: tasks
         run: |
           TOTAL=$(bd list --json 2>/dev/null | jq 'length' || echo '0')
-          READY=$(bd ready --json 2>/dev/null | jq 'length' || echo '0')
-          echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          echo "ready=$READY" >> $GITHUB_OUTPUT
-          # Also output ready tasks as JSON for workers
-          TASK_IDS=$(bd ready --json 2>/dev/null | jq -c '[.[].id]' || echo '[]')
-          echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
+          
+          # Find the epic ID for this issue (matches "Issue #<number>: <title>" pattern)
+          EPIC_ID=$(bd list --json 2>/dev/null | jq --arg issue_pattern "Issue #${{ github.event.issue.number }}:" '[.[] | select(.title | startswith($issue_pattern))] | .[0].id // empty')
+          
+          if [ -n "$EPIC_ID" ]; then
+            # Get ready tasks that are children of this epic
+            READY=$(bd list --json 2>/dev/null | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0)] | length' || echo '0')
+            
+            # Get the actual ready tasks (children of this epic)
+            ALL_TASKS=$(bd list --json 2>/dev/null)
+            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id)]')
+            TASK_IDS=$(echo "$READY_TASKS" | jq -c '[.[].id]' || echo '[]')
+            TASK_TITLES=$(echo "$READY_TASKS" | jq -c '[.[].title]' || echo '[]')
+            
+            echo "epic_id=$EPIC_ID" >> $GITHUB_OUTPUT
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "ready=$READY" >> $GITHUB_OUTPUT
+            echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
+            echo "task_titles=$TASK_TITLES" >> $GITHUB_OUTPUT
+          else
+            echo "epic_id=" >> $GITHUB_OUTPUT
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "ready=0" >> $GITHUB_OUTPUT
+            echo "task_ids=[]" >> $GITHUB_OUTPUT
+            echo "task_titles=[]" >> $GITHUB_OUTPUT
+          fi
 
       - name: Post plan summary
         uses: actions/github-script@v8
@@ -200,6 +221,17 @@ jobs:
           script: |
             const total = parseInt('${{ steps.tasks.outputs.total }}') || 0;
             const ready = parseInt('${{ steps.tasks.outputs.ready }}') || 0;
+            const taskIds = JSON.parse('${{ steps.tasks.outputs.task_ids }}') || [];
+            const taskTitles = JSON.parse('${{ steps.tasks.outputs.task_titles }}') || [];
+
+            let tasksSection = '';
+            if (ready > 0 && taskIds.length > 0) {
+              const taskList = taskIds.map((id, index) => {
+                const title = taskTitles[index] || 'Unknown task';
+                return `- \`${id}\`: ${title}`;
+              }).join('\n');
+              tasksSection = `\n**First Wave Tasks:**\n${taskList}\n`;
+            }
 
             const body = `## 📋 Plan Complete
 
@@ -210,6 +242,7 @@ jobs:
             - When complete, newly unblocked tasks run
             - Repeat until all done
 
+            ${tasksSection}
             ---
             🚀 Starting first wave with ${ready} task(s)...
 
@@ -238,10 +271,11 @@ jobs:
               event_type: 'opencode-batch',
               client_payload: {
                 issue_number: context.payload.issue.number,
-                branch: '${{ steps.branch.outputs.branch }}'
+                branch: '${{ steps.branch.outputs.branch }}',
+                epic_id: '${{ steps.tasks.outputs.epic_id }}'
               }
             });
-            console.log('Dispatched batch workers');
+            console.log('Dispatched batch workers for epic: ${{ steps.tasks.outputs.epic_id }}');
 
   work:
     needs: [parse-command, acknowledge]
