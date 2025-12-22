@@ -1,0 +1,318 @@
+{
+  "name": "Descope Trust Center Visual Regression Suite",
+  "version": "2.0.0",
+  "description": "Comprehensive visual regression testing configuration for Descope Trust Center",
+  "testConfig": {
+    "retries": {
+      "local": 0,
+      "ci": 2
+    },
+    "timeout": {
+      "default": 60000,
+      "navigation": 30000,
+      "action": 15000
+    },
+    "viewports": [
+      {
+        "name": "Desktop Full HD",
+        "width": 1920,
+        "height": 1080,
+        "deviceScaleFactor": 1,
+        "hasTouch": false,
+        "isMobile": false
+      },
+      {
+        "name": "Desktop Laptop",
+        "width": 1366,
+        "height": 768,
+        "deviceScaleFactor": 1,
+        "hasTouch": false,
+        "isMobile": false
+      },
+      {
+        "name": "Tablet iPad",
+        "width": 1024,
+        "height": 768,
+        "deviceScaleFactor": 2,
+        "hasTouch": true,
+        "isMobile": true
+      },
+      {
+        "name": "Tablet Portrait",
+        "width": 768,
+        "height": 1024,
+        "deviceScaleFactor": 2,
+        "hasTouch": true,
+        "isMobile": true
+      },
+      {
+        "name": "Mobile Large",
+        "width": 414,
+        "height": 896,
+        "deviceScaleFactor": 3,
+        "hasTouch": true,
+        "isMobile": true
+      },
+      {
+        "name": "Mobile Small",
+        "width": 375,
+        "height": 667,
+        "deviceScaleFactor": 2,
+        "hasTouch": true,
+        "isMobile": true
+      }
+    ],
+    "browsers": [
+      {
+        "name": "chromium",
+        "version": "latest",
+        "platform": "desktop"
+      },
+      {
+        "name": "firefox",
+        "version": "latest",
+        "platform": "desktop"
+      },
+      {
+        "name": "webkit",
+        "version": "latest",
+        "platform": "desktop"
+      }
+    ],
+    "screenshotOptions": {
+      "fullPage": false,
+      "animations": "disabled",
+      "clip": null,
+      "threshold": 0.2,
+      "maxDiffPixels": 1000,
+      "maxDiffPixelRatio": 0.01
+    },
+    "visualRegression": {
+      "threshold": 0.2,
+      "pixelmatch": {
+        "threshold": 0.1,
+        "aa": true,
+        "diffMask": true
+      }
+    }
+  },
+  "testSuites": [
+    {
+      "name": "Visual Regression Suite",
+      "file": "visual-regression-suite.spec.ts",
+      "description": "Comprehensive visual regression tests for all components and layouts",
+      "tags": ["visual", "regression", "comprehensive"],
+      "priority": "high"
+    },
+    {
+      "name": "Basic Visual Tests",
+      "file": "visual.spec.ts",
+      "description": "Basic page load and navigation visual tests",
+      "tags": ["visual", "basic"],
+      "priority": "medium"
+    },
+    {
+      "name": "Component Tests",
+      "file": "components.spec.ts", 
+      "description": "Visual tests for individual components",
+      "tags": ["visual", "components"],
+      "priority": "medium"
+    },
+    {
+      "name": "Accessibility Tests",
+      "file": "accessibility.spec.ts",
+      "description": "Accessibility and visual regression tests",
+      "tags": ["visual", "accessibility", "a11y"],
+      "priority": "high"
+    },
+    {
+      "name": "Comprehensive Visual Tests",
+      "file": "comprehensive-visual.spec.ts",
+      "description": "Advanced visual testing with comprehensive coverage",
+      "tags": ["visual", "comprehensive", "advanced"],
+      "priority": "high"
+    },
+    {
+      "name": "Cross-browser Visual Tests",
+      "file": "cross-browser-visual.spec.ts",
+      "description": "Cross-browser visual consistency tests",
+      "tags": ["visual", "cross-browser", "consistency"],
+      "priority": "medium"
+    },
+    {
+      "name": "Enhanced Visual Tests",
+      "file": "enhanced-visual.spec.ts",
+      "description": "Enhanced visual tests with advanced features",
+      "tags": ["visual", "enhanced", "advanced"],
+      "priority": "medium"
+    }
+  ],
+  "testProjects": [
+    {
+      "name": "chromium-desktop",
+      "description": "Chrome desktop browser tests",
+      "viewport": "Desktop Full HD",
+      "browser": "chromium",
+      "platform": "desktop"
+    },
+    {
+      "name": "firefox-desktop",
+      "description": "Firefox desktop browser tests",
+      "viewport": "Desktop Full HD",
+      "browser": "firefox",
+      "platform": "desktop"
+    },
+    {
+      "name": "webkit-desktop",
+      "description": "Safari desktop browser tests",
+      "viewport": "Desktop Full HD",
+      "browser": "webkit",
+      "platform": "desktop"
+    },
+    {
+      "name": "chromium-tablet",
+      "description": "Chrome tablet browser tests",
+      "viewport": "Tablet iPad",
+      "browser": "chromium",
+      "platform": "tablet"
+    },
+    {
+      "name": "chromium-mobile",
+      "description": "Chrome mobile browser tests",
+      "viewport": "Mobile Large",
+      "browser": "chromium",
+      "platform": "mobile"
+    },
+    {
+      "name": "webkit-mobile",
+      "description": "Safari mobile browser tests",
+      "viewport": "Mobile Large",
+      "browser": "webkit",
+      "platform": "mobile"
+    },
+    {
+      "name": "dark-mode",
+      "description": "Dark mode visual tests",
+      "viewport": "Desktop Full HD",
+      "browser": "chromium",
+      "platform": "desktop",
+      "colorScheme": "dark"
+    },
+    {
+      "name": "high-contrast",
+      "description": "High contrast mode tests",
+      "viewport": "Desktop Full HD",
+      "browser": "chromium",
+      "platform": "desktop",
+      "forcedColors": "active"
+    }
+  ],
+  "componentSelectors": {
+    "header": "header",
+    "navigation": "nav",
+    "main": "main",
+    "footer": "footer",
+    "complianceCards": "[aria-labelledby='compliance-heading'] .card",
+    "documentCards": "[aria-labelledby='documents-heading'] .card",
+    "highlightCards": "[aria-labelledby='highlights-heading'] .card",
+    "faqSection": ".faq-section, [data-testid='faq-section']",
+    "contactSection": "section:has-text('Have Questions')",
+    "buttons": "button",
+    "badges": ".badge, [data-testid*='badge']",
+    "cards": ".card",
+    "headings": "h1, h2, h3, h4, h5, h6",
+    "links": "a[href]",
+    "forms": "form",
+    "inputs": "input, textarea, select"
+  },
+  "testScenarios": [
+    {
+      "name": "Page Load",
+      "description": "Test complete page rendering on load",
+      "screenshots": ["homepage-desktop-full", "homepage-mobile-full"]
+    },
+    {
+      "name": "Responsive Design",
+      "description": "Test layout across different viewports",
+      "screenshots": ["responsive-desktop", "responsive-tablet", "responsive-mobile"]
+    },
+    {
+      "name": "Component States",
+      "description": "Test hover, focus, and active states",
+      "screenshots": ["button-hover", "button-focus", "card-hover"]
+    },
+    {
+      "name": "Navigation",
+      "description": "Test navigation and routing",
+      "screenshots": ["header-navigation", "header-navigation-mobile"]
+    },
+    {
+      "name": "Interactive Elements",
+      "description": "Test all interactive components",
+      "screenshots": ["compliance-cards", "document-cards", "contact-buttons"]
+    },
+    {
+      "name": "Accessibility",
+      "description": "Test accessibility features",
+      "screenshots": ["skip-link-focused", "aria-elements"]
+    },
+    {
+      "name": "Theme Testing",
+      "description": "Test light and dark themes",
+      "screenshots": ["light-mode-full", "dark-mode-full"]
+    },
+    {
+      "name": "Scroll Behavior",
+      "description": "Test scroll and layout stability",
+      "screenshots": ["scroll-initial", "scroll-middle", "scroll-bottom"]
+    }
+  ],
+  "ignorePatterns": [
+    "*.spec.ts.skip",
+    "*.spec.ts.temp",
+    "*.spec.ts.wip",
+    "node_modules/**",
+    ".next/**",
+    "test-results/**"
+  ],
+  "reporting": {
+    "type": "html",
+    "outputDir": "playwright-report",
+    "open": "never",
+    "reports": [
+      {
+        "name": "HTML Report",
+        "type": "html",
+        "outputFile": "index.html"
+      },
+      {
+        "name": "JSON Report",
+        "type": "json",
+        "outputFile": "results.json"
+      },
+      {
+        "name": "JUnit Report",
+        "type": "junit",
+        "outputFile": "results.xml"
+      }
+    ]
+  },
+  "ci": {
+    "enabled": true,
+    "retries": 2,
+    "workers": 1,
+    "timeout": 120000,
+    "failOnSnapshotDiff": true,
+    "updateSnapshots": false
+  },
+  "development": {
+    "enabled": true,
+    "headed": false,
+    "debug": false,
+    "retries": 0,
+    "workers": undefined,
+    "timeout": 60000,
+    "failOnSnapshotDiff": false,
+    "updateSnapshots": true
+  }
+}

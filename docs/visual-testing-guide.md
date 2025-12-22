@@ -6,6 +6,36 @@ This document provides comprehensive information about the visual regression tes
 
 The visual regression test suite ensures visual consistency across different browsers, devices, and screen sizes. It includes multiple test files covering different aspects of the application's visual appearance and user experience.
 
+## New Visual Regression Suite (v2.0)
+
+We've introduced a comprehensive visual regression test suite with enhanced capabilities:
+
+### Key Features
+- **Comprehensive Coverage**: Tests all major components and layouts
+- **Cross-browser Testing**: Chrome, Firefox, Safari support
+- **Responsive Design**: Multiple viewport testing
+- **Interactive States**: Hover, focus, and active states
+- **Theme Testing**: Light and dark mode support
+- **Accessibility Testing**: ARIA compliance and keyboard navigation
+- **Performance Testing**: Loading states and layout stability
+
+### New Test Files
+- **`visual-regression-suite.spec.ts`** - Main comprehensive test suite
+- **`playwright.config.visual.ts`** - Visual testing specific configuration
+- **`scripts/visual-test-runner.ts`** - Enhanced test runner with multiple commands
+- **`tests/visual-test-config.json`** - Comprehensive test configuration
+
+### New NPM Scripts
+```bash
+bun run test:visual-regression      # Full visual regression suite
+bun run test:visual-basic          # Basic visual tests
+bun run test:visual-cross-browser  # Cross-browser tests
+bun run test:visual-responsive     # Responsive design tests
+bun run test:visual-mobile         # Mobile-specific tests
+bun run test:visual-dark           # Dark mode tests
+bun run test:visual-update         # Update screenshots
+```
+
 ## Test Files
 
 ### 1. `visual.spec.ts` - Basic Visual Tests

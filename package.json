@@ -17,7 +17,14 @@
     "test:debug": "playwright test --debug",
     "test:report": "playwright show-report",
     "test:codegen": "playwright codegen",
-    "test:visual": "bun scripts/visual-test.ts"
+    "test:visual": "bun scripts/visual-test.ts",
+    "test:visual-regression": "bun scripts/visual-test-runner.ts full",
+    "test:visual-basic": "bun scripts/visual-test-runner.ts basic",
+    "test:visual-cross-browser": "bun scripts/visual-test-runner.ts cross-browser",
+    "test:visual-responsive": "bun scripts/visual-test-runner.ts responsive",
+    "test:visual-mobile": "bun scripts/visual-test-runner.ts mobile",
+    "test:visual-dark": "bun scripts/visual-test-runner.ts dark-mode",
+    "test:visual-update": "bun scripts/visual-test-runner.ts update"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
