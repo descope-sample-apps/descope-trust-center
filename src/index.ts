@@ -36,6 +36,7 @@ const server = serve({
     // Echo console logs from the browser to the server
     console: true,
   },
+  port: process.env.PORT ? Number(process.env.PORT) : 3333,
 });
 
 console.log(`🚀 Server running at ${server.url}`);
