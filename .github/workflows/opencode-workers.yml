@@ -42,10 +42,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
-
-      - name: Sync beads state
-        run: |
-          bd sync --no-push
+          bd init
 
       - name: Get ready tasks
         id: ready
@@ -100,6 +97,7 @@ jobs:
           echo "$HOME/.opencode/bin" >> $GITHUB_PATH
           "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
+          bd init
 
       - name: Setup git identity
         run: |

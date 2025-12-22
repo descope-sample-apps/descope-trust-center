@@ -92,6 +92,7 @@ jobs:
           echo "$HOME/.opencode/bin" >> $GITHUB_PATH
           "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
+          bd init
 
       - name: Setup git identity
         run: |
