@@ -114,7 +114,7 @@ jobs:
 
       - name: Update task status to in-progress
         run: |
-          bd update "${{ matrix.id }}" --status in-progress
+          bd update "${{ matrix.id }}" --status in_progress
 
       - name: Run OpenCode Sisyphus Agent
         env:
@@ -135,9 +135,9 @@ jobs:
 
           When complete, summarize what was implemented."
 
-      - name: Update task status to done
+      - name: Close task
         run: |
-          bd update "${{ matrix.id }}" --status done
+          bd close "${{ matrix.id }}"
 
       - name: Commit and push changes
         run: |
