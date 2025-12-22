@@ -259,14 +259,20 @@ tags:
          - Request human intervention
          - STOP workflow
       
-      4. If ready tasks exist, announce wave start:
-         ```bash
-         gh issue comment $ISSUE_NUMBER --body "### 🔄 Wave Starting
-         
-         Executing $READY_COUNT tasks in parallel..."
-         
-         bd sync -m "ci: start wave with $READY_COUNT tasks"
-         ```
+       4. If ready tasks exist, update status:
+          ```bash
+          update_status "### 🔄 Wave $WAVE_NUM Starting
+          
+          Executing $READY_COUNT tasks in parallel...
+          
+          **Ready Tasks:**
+          $(bd ready --json | jq -r '.[].id' | head -5 | sed 's/^/- `/' | sed 's/$/`/')
+          $([ $READY_COUNT -gt 5 ] && echo "- ... and $((READY_COUNT - 5)) more")
+          
+          _Spawning workers..._"
+          
+          bd sync -m "ci: start wave with $READY_COUNT tasks"
+          ```
       
       5. Spawn Coder Agent for EACH task in parallel:
          
@@ -392,37 +398,33 @@ tags:
              git checkout $FEATURE_BRANCH
              git pull origin $FEATURE_BRANCH  # Get any prior merges
              
-             # Fetch and merge task branch
-             git fetch origin $TASK_BRANCH
-             if git merge origin/$TASK_BRANCH --no-ff -m "merge: task $TASK_ID"; then
-               echo "✓ Merged $TASK_ID successfully"
-               
-               # Push merge immediately so other tasks see it
-               git push origin $FEATURE_BRANCH
-               
-               # Mark as merged
-               bd note $TASK_ID "merged=true"
-               MERGED_TASKS="$MERGED_TASKS $TASK_ID"
-               
-               gh issue comment $ISSUE_NUMBER --body "✅ Task $TASK_ID merged successfully"
-             else
-               # Conflict detected - resolve intelligently
-               echo "⚠️ Conflict in $TASK_ID - resolving..."
-               
-               CONFLICTS=$(git diff --name-only --diff-filter=U)
-               for FILE in $CONFLICTS; do
-                 # Strategy: Prefer incoming changes (task implementation)
-                 git checkout --theirs $FILE
-                 git add $FILE
-               done
-               
-               git commit -m "merge: task $TASK_ID (auto-resolved conflicts)"
-               git push origin $FEATURE_BRANCH
-               
-               MERGED_TASKS="$MERGED_TASKS $TASK_ID"
-               
-               gh issue comment $ISSUE_NUMBER --body "⚠️ Task $TASK_ID merged with auto-resolved conflicts in: $CONFLICTS"
-             fi
+              # Fetch and merge task branch
+              git fetch origin $TASK_BRANCH
+              if git merge origin/$TASK_BRANCH --no-ff -m "merge: task $TASK_ID"; then
+                echo "✓ Merged $TASK_ID successfully"
+                
+                # Push merge immediately so other tasks see it
+                git push origin $FEATURE_BRANCH
+                
+                # Mark as merged
+                bd note $TASK_ID "merged=true"
+                MERGED_TASKS="$MERGED_TASKS $TASK_ID"
+              else
+                # Conflict detected - resolve intelligently
+                echo "⚠️ Conflict in $TASK_ID - resolving..."
+                
+                CONFLICTS=$(git diff --name-only --diff-filter=U)
+                for FILE in $CONFLICTS; do
+                  # Strategy: Prefer incoming changes (task implementation)
+                  git checkout --theirs $FILE
+                  git add $FILE
+                done
+                
+                git commit -m "merge: task $TASK_ID (auto-resolved conflicts)"
+                git push origin $FEATURE_BRANCH
+                
+                MERGED_TASKS="$MERGED_TASKS $TASK_ID"
+              fi
              
              bd sync -m "ci: merged task $TASK_ID"
            done
@@ -445,28 +447,27 @@ tags:
          done
          ```
       
-      7. Post wave summary:
-         ```bash
-         MERGED_COUNT=$(echo "$MERGED_TASKS" | wc -w)
-         
-         gh issue comment $ISSUE_NUMBER --body "### ✅ Wave Complete
-         
-         Merged: $MERGED_COUNT tasks
-         All changes integrated into $FEATURE_BRANCH
-         
-         $(bd list --json | jq -r '.[] | "- [\(.status)] \(.id): \(.title)"')"
-         
-         bd sync -m "ci: wave complete - $MERGED_COUNT tasks merged"
-         ```
-      
-      8. Check for failed tasks:
-         ```bash
-         FAILED=$(bd list --json | jq '[.[] | select(.status == "blocked" or .status == "failed")] | length')
-         if [ $FAILED -gt 0 ]; then
-           gh issue comment $ISSUE_NUMBER --body "⚠️ $FAILED task(s) failed - review logs"
-           # Continue anyway with successful tasks
-         fi
-         ```
+       7. Update status with wave summary:
+          ```bash
+          MERGED_COUNT=$(echo "$MERGED_TASKS" | wc -w)
+          TOTAL_CLOSED=$(bd list --json | jq '[.[] | select(.status == "closed")] | length')
+          TOTAL_TASKS=$(bd list --json | jq 'length')
+          
+          update_status "### 🔄 Wave $WAVE_NUM Complete
+          
+          **Progress:** $TOTAL_CLOSED / $TOTAL_TASKS tasks complete
+          
+          _Checking for next wave..._"
+          
+          bd sync -m "ci: wave complete - $MERGED_COUNT tasks merged"
+          ```
+       
+       8. Check for failed tasks (don't spam comments):
+          ```bash
+          FAILED=$(bd list --json | jq '[.[] | select(.status == "blocked" or .status == "failed")] | length')
+          # Just log failures, update_status will show overall progress
+          [ $FAILED -gt 0 ] && echo "Warning: $FAILED task(s) failed"
+          ```
       
       9. Repeat loop (next wave will now have new ready tasks)
       
@@ -503,42 +504,44 @@ tags:
          git pull origin $FEATURE_BRANCH  # Should be up to date already
          ```
       
-      3. Post final verification start:
-         ```bash
-         gh issue comment $ISSUE_NUMBER --body "### 🔍 Final Verification
-         
-         All tasks merged incrementally.
-         Running final build verification..."
-         ```
-      
-      4. Run final build verification:
-         ```bash
-         bun install  # Ensure deps are up to date
-         bun run build
-         ```
-      
-      5. If build fails:
-         ```bash
-         gh issue comment $ISSUE_NUMBER --body "❌ Final build failed!
-         
-         \`\`\`
-         $(bun run build 2>&1 | tail -20)
-         \`\`\`
-         
-         Review errors and fix manually."
-         
-         bd sync -m "ci: final build failed"
-         # STOP workflow
-         exit 1
-         ```
-      
-      6. If build succeeds:
-         ```bash
-         gh issue comment $ISSUE_NUMBER --body "✅ Final build passed!
-         
-         All tasks integrated successfully.
-         Creating pull request..."
-         ```
+       3. Update status for final verification:
+          ```bash
+          update_status "### 🔍 Final Verification
+          
+          All tasks merged incrementally.
+          Running final build verification..."
+          ```
+       
+       4. Run final build verification:
+          ```bash
+          bun install  # Ensure deps are up to date
+          bun run build
+          ```
+       
+       5. If build fails:
+          ```bash
+          update_status "### ❌ Final Build Failed
+          
+          All tasks merged but final build has errors.
+          
+          \`\`\`
+          $(bun run build 2>&1 | tail -20)
+          \`\`\`
+          
+          Review errors in workflow logs."
+          
+          bd sync -m "ci: final build failed"
+          # STOP workflow
+          exit 1
+          ```
+       
+       6. If build succeeds:
+          ```bash
+          update_status "### ✅ Final Build Passed
+          
+          All tasks integrated successfully.
+          Creating pull request..."
+          ```
       
       7. Sync success state:
          ```bash
@@ -614,17 +617,18 @@ tags:
          bd sync -m "ci: PR #$PR_NUMBER created"
          ```
       
-      6. Post PR link to issue:
-         ```bash
-         gh issue comment $ISSUE_NUMBER --body "### 🎉 Implementation Complete
-         
-         **Pull Request**: #$PR_NUMBER
-         **Tasks Completed**: $COMPLETED/$TOTAL_TASKS
-         
-         All tasks have been implemented, merged, and verified.
-         
-         Ready for automated review."
-         ```
+       6. Update final status with PR link:
+          ```bash
+          update_status "### 🎉 Implementation Complete
+          
+          **Pull Request:** #$PR_NUMBER
+          **Tasks Completed:** $COMPLETED / $TOTAL_TASKS
+          
+          All tasks have been implemented, merged, and verified.
+          Build passes ✅
+          
+          Ready for automated review."
+          ```
       
       7. Output completion status:
          ```
@@ -657,20 +661,13 @@ tags:
          done
          ```
       
-      2. Sync Beads with cleanup status:
-         ```bash
-         bd sync -m "ci: cleanup complete - deleted $DELETED task branches"
-         ```
-      
-      3. Post cleanup summary:
-         ```bash
-         gh issue comment $ISSUE_NUMBER --body "### 🧹 Cleanup Complete
-         
-         Deleted $DELETED task branches from origin.
-         
-         All work consolidated in feature branch: $FEATURE_BRANCH"
-         ```
-    </process>
+       2. Sync Beads with cleanup status:
+          ```bash
+          bd sync -m "ci: cleanup complete - deleted $DELETED task branches"
+          ```
+       
+       3. Cleanup is done silently (no comment spam)
+     </process>
     <outputs>
       <cleanup_status>Task branches removed from origin</cleanup_status>
       <final_sync>Beads state synced with cleanup complete</final_sync>
@@ -841,6 +838,7 @@ tags:
   When invoked in GitHub Actions, you will receive:
   - ISSUE_NUMBER: GitHub issue number
   - FEATURE_BRANCH: Branch name (e.g., opencode/issue-123)
+  - STATUS_COMMENT_ID: Comment ID to update (DO NOT create new comments!)
   - MODE: "plan" or "work"
   
   Your job is to execute the workflow from start to finish:
@@ -851,7 +849,38 @@ tags:
   5. Create pull request
   6. Clean up (optional)
   
-  Report progress to GitHub issue throughout workflow.
+  **CRITICAL: Use STATUS_COMMENT_ID to UPDATE progress, not create new comments!**
+  
+  Helper function for updating status:
+  ```bash
+  update_status() {
+    local MESSAGE="$1"
+    gh api -X PATCH "/repos/{owner}/{repo}/issues/comments/$STATUS_COMMENT_ID" \
+      -f body="$MESSAGE"
+  }
+  ```
+  
+  Instead of:
+  ```bash
+  # ❌ DON'T DO THIS:
+  gh issue comment $ISSUE_NUMBER --body "Status update"
+  ```
+  
+  Do this:
+  ```bash
+  # ✅ DO THIS:
+  update_status "### 🔄 Wave 1 Starting
+  
+  Executing 5 tasks in parallel...
+  
+  **Progress:**
+  - Task 1: In Progress
+  - Task 2: In Progress
+  - ..."
+  ```
+  
+  Update the SAME comment throughout workflow execution with current status.
+  Keep it concise - show overall progress, not every detail.
   
   On completion, output:
   ```

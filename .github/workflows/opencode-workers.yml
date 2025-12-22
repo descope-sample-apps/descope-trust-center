@@ -105,6 +105,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FEATURE_BRANCH: ${{ steps.payload.outputs.branch }}
           ISSUE_NUMBER: ${{ steps.payload.outputs.issue_number }}
+          STATUS_COMMENT_ID: ${{ steps.comment.outputs.result }}
         run: |
           # Run CI Orchestrator agent
           # Note: Use the exact "name" from agent frontmatter, not "id"
@@ -116,6 +117,7 @@ jobs:
           ## Environment Variables
           - ISSUE_NUMBER: $ISSUE_NUMBER
           - FEATURE_BRANCH: $FEATURE_BRANCH
+          - STATUS_COMMENT_ID: $STATUS_COMMENT_ID (update this comment, don't create new ones!)
           - MODE: execute (tasks already created from planning stage)
           
           ## Your Mission
