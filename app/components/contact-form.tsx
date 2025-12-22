@@ -115,7 +115,7 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
   return (
     <Card className={className} role="article">
       <CardHeader>
-        <CardTitle as="h2">Contact Us</CardTitle>
+        <CardTitle className="text-2xl font-semibold">Contact Us</CardTitle>
         <CardDescription>
           Send us a message and we'll get back to you as soon as possible.
         </CardDescription>
