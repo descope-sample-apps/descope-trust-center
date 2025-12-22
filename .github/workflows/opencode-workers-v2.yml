@@ -558,43 +558,43 @@ jobs:
           CHANGES=$(git log --oneline main.."$BRANCH" | head -20)
           
           gh pr edit "$PR_NUMBER" --body "$(cat << EOF
-## Summary
-
-Automated implementation of issue #$ISSUE_NUMBER.
-
-**Tasks Completed:** $MERGED_COUNT
-**Merge Conflicts:** $CONFLICT_COUNT (auto-resolved)
-**Build Status:** ✅ Passed
-
----
-
-## Task Progress
-
-**Total Tasks:** $TOTAL
-**Completed:** $COMPLETED ✅
-**In Progress:** $IN_PROGRESS 🔄
-**Ready:** $READY 🚀
-**Blocked:** $BLOCKED 🚫
-**Pending:** $PENDING ⏳
-
-### Task Checklist
-
-$TASK_CHECKLIST
-
-### Next Steps
-
-Current wave complete. Next wave will process remaining ready tasks.
-
----
-
-### Changes
-
-$CHANGES
-
----
-
-Closes #$ISSUE_NUMBER
-EOF
+          ## Summary
+          
+          Automated implementation of issue #$ISSUE_NUMBER.
+          
+          **Tasks Completed:** $MERGED_COUNT
+          **Merge Conflicts:** $CONFLICT_COUNT (auto-resolved)
+          **Build Status:** ✅ Passed
+          
+          ---
+          
+          ## Task Progress
+          
+          **Total Tasks:** $TOTAL
+          **Completed:** $COMPLETED ✅
+          **In Progress:** $IN_PROGRESS 🔄
+          **Ready:** $READY 🚀
+          **Blocked:** $BLOCKED 🚫
+          **Pending:** $PENDING ⏳
+          
+          ### Task Checklist
+          
+          $TASK_CHECKLIST
+          
+          ### Next Steps
+          
+          Current wave complete. Next wave will process remaining ready tasks.
+          
+          ---
+          
+          ### Changes
+          
+          $CHANGES
+          
+          ---
+          
+          Closes #$ISSUE_NUMBER
+          EOF
           )"
           
           echo "Updated PR #$PR_NUMBER with task status"
