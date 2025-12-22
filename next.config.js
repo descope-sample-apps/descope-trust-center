@@ -50,7 +50,7 @@ const nextConfig = {
     ]
   },
   // Static file configuration (migrated from Bun serve.static)
-  output: 'export',
+  // Note: output: 'export' removed to allow API routes to function
   trailingSlash: true,
   // Environment variables support (migrated from Bun env configuration)
   env: {
