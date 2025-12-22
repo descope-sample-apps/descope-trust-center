@@ -173,7 +173,7 @@ jobs:
 
   rework:
     needs: review
-    if: needs.review.outputs.decision == 'request_changes' && needs.review.outputs.cycle_count < 3
+    if: needs.review.outputs.decision == 'request_changes'
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
