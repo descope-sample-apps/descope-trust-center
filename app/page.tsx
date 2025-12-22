@@ -180,39 +180,40 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center space-x-3">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Descope Trust Center</h1>
+              <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Descope Trust Center</h1>
             </div>
-            <p className="text-gray-600">Security, compliance, and transparency</p>
+            <p className="text-sm sm:text-base text-gray-600 text-center sm:text-right">Security, compliance, and transparency</p>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
-        <section className="mb-12">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Security & Compliance Overview</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <section className="mb-8 sm:mb-12">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Security & Compliance Overview</h2>
+            <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto px-4">
               We're committed to maintaining the highest standards of security and compliance. 
               Our comprehensive security program protects your data and ensures regulatory compliance.
             </p>
           </div>
         </section>
 
-        <section className="mb-12">
-          <h3 className="text-2xl font-semibold text-gray-900 mb-6">Compliance Status</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section className="mb-8 sm:mb-12">
+          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Compliance Status</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
             {complianceItems.map((item, index) => (
               <Card key={index} className="hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{item.name}</CardTitle>
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(item.status)}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <CardTitle className="text-base sm:text-lg">{item.name}</CardTitle>
+                    <div className={`flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(item.status)}`}>
                       {getStatusIcon(item.status)}
-                      <span className="capitalize">{item.status.replace('-', ' ')}</span>
+                      <span className="capitalize hidden sm:inline">{item.status.replace('-', ' ')}</span>
+                      <span className="capitalize sm:hidden">{item.status === 'in-progress' ? 'In Progress' : item.status}</span>
                     </div>
                   </div>
                   <CardDescription>{item.description}</CardDescription>
@@ -227,9 +228,9 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="mb-12">
-          <h3 className="text-2xl font-semibold text-gray-900 mb-6">Security Documents</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section className="mb-8 sm:mb-12">
+          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Security Documents</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
             {documents.map((doc) => (
               <Card key={doc.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
@@ -242,94 +243,96 @@ export default function Page() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-500">
-                      Updated: {new Date(doc.lastUpdated).toLocaleDateString()}
-                    </p>
-                    <div className="flex space-x-2">
-                      {doc.downloadUrl && (
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
-                        </Button>
-                      )}
-                      <Button variant="outline" size="sm">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                    </div>
-                  </div>
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                     <p className="text-xs sm:text-sm text-gray-500">
+                       Updated: {new Date(doc.lastUpdated).toLocaleDateString()}
+                     </p>
+                     <div className="flex space-x-2">
+                       {doc.downloadUrl && (
+                         <Button variant="outline" size="sm">
+                           <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                           <span className="hidden sm:inline">Download</span>
+                           <span className="sm:hidden">DL</span>
+                         </Button>
+                       )}
+                       <Button variant="outline" size="sm">
+                         <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                         <span className="hidden sm:inline">View</span>
+                         <span className="sm:hidden">View</span>
+                       </Button>
+                     </div>
+                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
-        <section className="mb-12">
-          <h3 className="text-2xl font-semibold text-gray-900 mb-6">Security Highlights</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="text-center">
-              <CardHeader>
-                <Lock className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>End-to-End Encryption</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  All data is encrypted in transit and at rest using industry-standard encryption protocols.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center">
-              <CardHeader>
-                <Shield className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                <CardTitle>24/7 Monitoring</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Continuous security monitoring and threat detection to keep your data safe.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center">
-              <CardHeader>
-                <CheckCircle className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-                <CardTitle>Regular Audits</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Third-party security audits and penetration testing to validate our security controls.
-                </p>
-              </CardContent>
-            </Card>
+        <section className="mb-8 sm:mb-12">
+          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Security Highlights</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+<Card className="text-center">
+               <CardHeader>
+                 <Lock className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-3 sm:mb-4" />
+                 <CardTitle className="text-base sm:text-lg">End-to-End Encryption</CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <p className="text-gray-600 text-sm sm:text-base">
+                   All data is encrypted in transit and at rest using industry-standard encryption protocols.
+                 </p>
+               </CardContent>
+             </Card>
+             
+             <Card className="text-center">
+               <CardHeader>
+                 <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-green-600 mx-auto mb-3 sm:mb-4" />
+                 <CardTitle className="text-base sm:text-lg">24/7 Monitoring</CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <p className="text-gray-600 text-sm sm:text-base">
+                   Continuous security monitoring and threat detection to keep your data safe.
+                 </p>
+               </CardContent>
+             </Card>
+             
+             <Card className="text-center">
+               <CardHeader>
+                 <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-purple-600 mx-auto mb-3 sm:mb-4" />
+                 <CardTitle className="text-base sm:text-lg">Regular Audits</CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <p className="text-gray-600 text-sm sm:text-base">
+                   Third-party security audits and penetration testing to validate our security controls.
+                 </p>
+               </CardContent>
+             </Card>
           </div>
         </section>
 
         <FAQSection items={faqItems} />
 
-        <section className="bg-blue-50 rounded-lg p-8 text-center">
-          <h3 className="text-2xl font-semibold text-gray-900 mb-4">Have Questions?</h3>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+        <section className="bg-blue-50 rounded-lg p-6 sm:p-8 text-center">
+          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4">Have Questions?</h3>
+          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 max-w-2xl mx-auto px-4">
             Our security team is here to help. If you have questions about our security practices, 
             compliance status, or need access to additional documentation, please don't hesitate to reach out.
           </p>
-          <div className="flex justify-center space-x-4">
-            <Button className="bg-blue-600 hover:bg-blue-700">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4">
+            <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
               Contact Security Team
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               Request Audit Report
             </Button>
           </div>
         </section>
       </main>
 
-      <footer className="bg-white border-t border-gray-200 mt-16">
-        <div className="container mx-auto px-6 py-8">
+      <footer className="bg-white border-t border-gray-200 mt-12 sm:mt-16">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="text-center text-gray-600">
-            <p>&copy; 2024 Descope. All rights reserved.</p>
-            <p className="mt-2 text-sm">
+            <p className="text-sm sm:text-base">&copy; 2024 Descope. All rights reserved.</p>
+            <p className="mt-1 sm:mt-2 text-xs sm:text-sm">
               Trust Center last updated: {new Date().toLocaleDateString()}
             </p>
           </div>
