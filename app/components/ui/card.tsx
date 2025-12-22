@@ -1,7 +1,6 @@
 // Re-export from shadcn/ui location
 export {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
