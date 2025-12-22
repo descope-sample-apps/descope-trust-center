@@ -67,17 +67,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          opencode run \
-            --model "opencode/big-pickle" \
-            --agent "Reviewer" \
-            "Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
+          PROMPT=$(cat << 'EOF'
+          Review this Pull Request. This is a consolidated PR that may contain multiple task implementations.
 
           ## PR Title
-          ${{ github.event.pull_request.title }}
+          $PR_TITLE
 
           ## PR Description
-          ${{ github.event.pull_request.body }}
+          $PR_BODY
 
           ## Instructions
           1. Check code quality, patterns, and potential issues
@@ -108,7 +108,14 @@ jobs:
           2. Add error handling for API calls
           3. Update tests to cover new functionality
 
-          This format is critical for triggering the correct workflow step." 2>&1 | tee /tmp/review_output.txt
+          This format is critical for triggering the correct workflow step.
+          EOF
+          )
+          
+          opencode run \
+            --model "opencode/big-pickle" \
+            --agent "Reviewer" \
+            "$PROMPT" 2>&1 | tee /tmp/review_output.txt
 
           # Parse decision with fallback patterns
           if grep -qi "APPROVE\|LGTM" /tmp/review_output.txt; then
@@ -221,14 +228,13 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          REVIEW_FEEDBACK: ${{ steps.feedback.outputs.feedback }}
         run: |
-          opencode run \
-            --agent "OpenCoder" \
-            --model "opencode/big-pickle" \
-            "Fix the issues identified in the review.
+          PROMPT=$(cat << 'EOF'
+          Fix the issues identified in the review.
 
           ## Review Feedback
-          ${{ steps.feedback.outputs.feedback }}
+          $REVIEW_FEEDBACK
 
           ## Instructions
           1. Address each issue mentioned in the review
@@ -241,6 +247,13 @@ jobs:
           - What issues were fixed
           - How they were addressed
           - Any additional improvements made
+          EOF
+          )
+          
+          opencode run \
+            --agent "OpenCoder" \
+            --model "opencode/big-pickle" \
+            "$PROMPT"
 
       - name: Commit fixes
         run: |
