@@ -2,6 +2,84 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ComplianceDisplay } from "@/components/ui/compliance-display";
 
+const sampleComplianceData = [
+  {
+    id: "soc2",
+    name: "SOC 2 Type II",
+    status: "compliant" as const,
+    description: "Security, Availability, Processing Integrity, Confidentiality, and Privacy controls",
+    lastChecked: new Date("2024-12-01"),
+    score: 98,
+    details: [
+      "Security controls implemented and tested",
+      "Availability metrics met SLA requirements",
+      "Processing integrity controls validated",
+      "Confidentiality measures in place",
+      "Privacy controls comply with criteria"
+    ]
+  },
+  {
+    id: "iso27001",
+    name: "ISO 27001:2022",
+    status: "compliant" as const,
+    description: "Information Security Management System certification",
+    lastChecked: new Date("2024-11-15"),
+    score: 95,
+    details: [
+      "ISMS implemented and maintained",
+      "Risk assessment and treatment processes",
+      "Statement of Applicability (SoA) complete",
+      "Internal audit program established",
+      "Management review processes in place"
+    ]
+  },
+  {
+    id: "gdpr",
+    name: "GDPR Compliance",
+    status: "compliant" as const,
+    description: "General Data Protection Regulation compliance",
+    lastChecked: new Date("2024-11-20"),
+    score: 92,
+    details: [
+      "Data processing agreements in place",
+      "Data subject rights procedures implemented",
+      "Privacy policy updated and compliant",
+      "Data breach notification process established",
+      "Data protection impact assessments conducted"
+    ]
+  },
+  {
+    id: "hipaa",
+    name: "HIPAA Compliance",
+    status: "partial" as const,
+    description: "Health Insurance Portability and Accountability Act",
+    lastChecked: new Date("2024-10-30"),
+    score: 78,
+    details: [
+      "Administrative safeguards implemented",
+      "Physical safeguards in place",
+      "Technical safeguards partially implemented",
+      "Business associate agreements updated",
+      "Risk analysis completed - remediation in progress"
+    ]
+  },
+  {
+    id: "ccpa",
+    name: "CCPA Compliance",
+    status: "compliant" as const,
+    description: "California Consumer Privacy Act compliance",
+    lastChecked: new Date("2024-11-10"),
+    score: 90,
+    details: [
+      "Consumer rights disclosure implemented",
+      "Data collection transparency maintained",
+      "Opt-out mechanisms available",
+      "Data deletion processes operational",
+      "Non-discrimination policies in place"
+    ]
+  }
+];
+
 export function CompliancePage() {
   return (
     <div className="space-y-8">
@@ -24,7 +102,13 @@ export function CompliancePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ComplianceDisplay />
+            <ComplianceDisplay 
+              title="Active Compliance Status"
+              description="Real-time monitoring of our compliance posture across all frameworks"
+              items={sampleComplianceData}
+              overallScore={91}
+              lastUpdated={new Date("2024-12-15")}
+            />
           </CardContent>
         </Card>
 
