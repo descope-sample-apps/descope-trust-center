@@ -199,12 +199,12 @@ jobs:
           TOTAL=$(bd list --json 2>/dev/null | jq 'length' || echo '0')
           
           # Find epic ID for this issue (matches "Issue #<number>: <title>" pattern)
-          EPIC_ID=$(bd list --json 2>/dev/null | jq -r --arg issue_pattern "Issue #${{ github.event.issue.number }}:" '[.[] | select(.title | startswith($issue_pattern))] | .[0].id // empty')
+          EPIC_ID=$(bd list --json 2>/dev/null | jq -r --arg issue_pattern "Issue #${{ github.event.issue.number }}:" '[.[] | select(.title | startswith($issue_pattern))] | .[0].id // empty'])
           
           if [ -n "$EPIC_ID" ]; then
             # Get ready tasks that are children of this epic
             ALL_TASKS=$(bd list --json 2>/dev/null)
-            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id))]')
+            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id))]'])
             READY=$(echo "$READY_TASKS" | jq 'length' || echo '0')
             TASK_IDS=$(echo "$READY_TASKS" | jq -c '[.[].id]' || echo '[]')
             TASK_TITLES=$(echo "$READY_TASKS" | jq -c '[.[].title]' || echo '[]')
