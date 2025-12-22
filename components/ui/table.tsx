@@ -4,7 +4,11 @@ import { cn } from "@/lib/utils";
 
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
+  React.HTMLAttributes<HTMLTableElement> & {
+    "aria-label"?: string;
+    "aria-labelledby"?: string;
+    "aria-describedby"?: string;
+  }
 >(({ className, ...props }, ref) => (
   <div className="relative w-full overflow-auto">
     <table
@@ -68,10 +72,14 @@ TableRow.displayName = "TableRow";
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+  React.ThHTMLAttributes<HTMLTableCellElement> & {
+    scope?: "col" | "row" | "colgroup" | "rowgroup";
+    "aria-sort"?: "none" | "ascending" | "descending" | "other";
+  }
+>(({ className, scope = "col", ...props }, ref) => (
   <th
     ref={ref}
+    scope={scope}
     className={cn(
       "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
       className

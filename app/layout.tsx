@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { baseMetadata, generateStructuredData } from '@/lib/metadata'
+import { SkipLink } from './components/ui/skip-link'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -47,7 +48,14 @@ export default function RootLayout({
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#2563eb" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <SkipLink href="#main-content">
+          Skip to main content
+        </SkipLink>
+        <div id="main-content">
+          {children}
+        </div>
+      </body>
     </html>
   )
 }

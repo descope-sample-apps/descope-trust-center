@@ -39,14 +39,33 @@ function Button({
   variant,
   size,
   asChild = false,
+  disabled,
+  loading,
+  "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedBy,
+  "aria-pressed": ariaPressed,
+  "aria-expanded": ariaExpanded,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    loading?: boolean;
   }) {
   const Comp = asChild ? Slot : "button";
 
-  return <Comp data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props} />;
+  return (
+    <Comp 
+      data-slot="button" 
+      className={cn(buttonVariants({ variant, size, className }))} 
+      disabled={disabled || loading}
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+      aria-pressed={ariaPressed}
+      aria-expanded={ariaExpanded}
+      aria-busy={loading}
+      {...props} 
+    />
+  );
 }
 
 export { Button, buttonVariants };
