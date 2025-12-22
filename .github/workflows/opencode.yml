@@ -199,21 +199,28 @@ jobs:
           TOTAL=$(bd list --json 2>/dev/null | jq 'length' || echo '0')
           
           # Find epic ID for this issue (matches "Issue #<number>: <title>" pattern)
-          EPIC_ID=$(bd list --json 2>/dev/null | jq --arg issue_pattern "Issue #${{ github.event.issue.number }}:" '[.[] | select(.title | startswith($issue_pattern))] | .[0].id // empty')
+          EPIC_ID=$(bd list --json 2>/dev/null | jq -r --arg issue_pattern "Issue #${{ github.event.issue.number }}:" '[.[] | select(.title | startswith($issue_pattern))] | .[0].id // empty')
           
           if [ -n "$EPIC_ID" ]; then
             # Get ready tasks that are children of this epic
             ALL_TASKS=$(bd list --json 2>/dev/null)
-            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id)]')
+            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id))]')
+            READY=$(echo "$READY_TASKS" | jq 'length' || echo '0')
             TASK_IDS=$(echo "$READY_TASKS" | jq -c '[.[].id]' || echo '[]')
             TASK_TITLES=$(echo "$READY_TASKS" | jq -c '[.[].title]' || echo '[]')
+            echo "epic_id=$EPIC_ID" >> $GITHUB_OUTPUT
           else
-            TOTAL=$(bd list --json 2>/dev/null | jq 'length' || echo '0')
             READY=$(bd ready --json 2>/dev/null | jq 'length' || echo '0')
             # Also output ready tasks as JSON for workers  
             TASK_IDS=$(bd ready --json 2>/dev/null | jq -c '[.[].id]' || echo '[]')
             TASK_TITLES=$(bd ready --json 2>/dev/null | jq -c '[.[].title]' || echo '[]')
           fi
+          
+          # Write outputs
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "ready=$READY" >> $GITHUB_OUTPUT
+          echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
+          echo "task_titles=$TASK_TITLES" >> $GITHUB_OUTPUT
 
       - name: Post plan summary
         uses: actions/github-script@v8
