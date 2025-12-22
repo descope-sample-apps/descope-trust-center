@@ -54,34 +54,16 @@ jobs:
             core.setOutput('count', count);
             console.log(`Current review cycle: ${count}`);
 
-      - name: Setup tools
-        run: |
-          # Install mise
-          curl -fsSL https://mise.run | sh
-          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
-          
-          # Install tools with mise
-          "$HOME/.local/share/mise/bin/mise" install
-          
-          # Add mise shims to PATH
-          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
+      - name: Setup mise
+        uses: jdx/mise-action@v2
 
       - name: Setup git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Setup tools
-        run: |
-          # Install mise
-          curl -fsSL https://mise.run | sh
-          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
-          
-          # Install tools with mise
-          "$HOME/.local/share/mise/bin/mise" install
-          
-          # Add mise shims to PATH
-          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
+      - name: Setup mise
+        uses: jdx/mise-action@v2
 
       - name: Get diff for review
         id: diff
@@ -197,17 +179,8 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
-      - name: Setup tools
-        run: |
-          # Install mise
-          curl -fsSL https://mise.run | sh
-          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
-          
-          # Install tools with mise
-          "$HOME/.local/share/mise/bin/mise" install
-          
-          # Add mise shims to PATH
-          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
+      - name: Setup mise
+        uses: jdx/mise-action@v2
 
       - name: Setup git identity
         run: |
