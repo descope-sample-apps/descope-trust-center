@@ -127,7 +127,7 @@ jobs:
           ISSUE_JSON=$(gh issue view ${{ github.event.issue.number }} --json title,body)
           ISSUE_TITLE=$(echo "$ISSUE_JSON" | jq -r '.title')
           ISSUE_BODY=$(echo "$ISSUE_JSON" | jq -r '.body')
-          
+
           # Run CI Orchestrator in planning mode
           # Note: Use the exact "name" from agent frontmatter, not "id"
           opencode run \
@@ -147,7 +147,7 @@ jobs:
 
           ## Your Mission
           Execute Stage 1 (Planning) of your workflow:
-          
+
           1. Analyze the issue and break it into atomic tasks
           2. Create epic in Beads: bd create \"Issue #${{ github.event.issue.number }}: $ISSUE_TITLE\"
           3. Create child tasks with detailed descriptions using bd note
@@ -155,32 +155,32 @@ jobs:
           5. Sync to beads-sync branch
           6. Post planning summary to GitHub issue
           7. Output task counts for workflow to capture
-          
+
           Store detailed task specifications in Beads notes using this format:
-          
+
           ## Objective
           [What this task accomplishes]
-          
+
           ## Deliverables
           - File: path/to/file.ts
           - Function: functionName
-          
+
           ## Steps
           1. [Implementation step 1]
           2. [Implementation step 2]
-          
+
           ## Acceptance Criteria
           - [ ] Criteria 1
           - [ ] Criteria 2
-          
+
           ## Validation
           \`\`\`bash
           bun run build
           \`\`\`
-          
+
           CI Workers will read these Beads notes for implementation guidance."
 
-       - name: Get task summary
+      - name: Get task summary
         id: tasks
         run: |
           TOTAL=$(bd list --json 2>/dev/null | jq 'length' || echo '0')
