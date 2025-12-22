@@ -40,8 +40,14 @@ jobs:
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
           "$HOME/.local/bin/bd" init
+
+      - name: Sync beads state
+        run: |
+          bd sync
 
       - name: Get ready tasks
         id: ready
@@ -94,13 +100,14 @@ jobs:
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
           curl -fsSL https://opencode.ai/install | bash
           echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
           "$HOME/.local/bin/bd" init
 
-      - name: Setup git identity
+      - name: Sync beads state
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          bd sync
 
       - name: Create task sub-branch
         id: branch
@@ -114,7 +121,8 @@ jobs:
 
       - name: Update task status to in-progress
         run: |
-          bd update "${{ matrix.id }}" --status in-progress
+          bd update "${{ matrix.id }}" --status in_progress
+          bd sync -m "chore: start task ${{ matrix.id }}"
 
       - name: Run OpenCode Sisyphus Agent
         env:
@@ -135,9 +143,10 @@ jobs:
 
           When complete, summarize what was implemented."
 
-      - name: Update task status to done
+      - name: Close task
         run: |
-          bd update "${{ matrix.id }}" --status done
+          bd close "${{ matrix.id }}"
+          bd sync -m "chore: complete task ${{ matrix.id }}"
 
       - name: Commit and push changes
         run: |
@@ -146,10 +155,6 @@ jobs:
             git commit -m "feat(${{ matrix.id }}): ${{ matrix.title || matrix.summary }}"
             git push -u origin "${{ steps.branch.outputs.sub_branch }}"
           fi
-
-      - name: Commit beads changes to beads-sync branch
-        run: |
-          bd sync -m "chore: update task ${{ matrix.id }} status"
 
   check-next:
     needs: [get-ready-tasks, worker]
@@ -178,8 +183,14 @@ jobs:
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           "$HOME/.local/bin/bd" init
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
+
+      - name: Sync beads state
+        run: |
+          bd sync
 
       - name: Check for more ready tasks
         id: check
