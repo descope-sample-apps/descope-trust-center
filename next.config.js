@@ -4,10 +4,27 @@ const nextConfig = {
   // SEO and performance optimizations
   compress: true,
   poweredByHeader: false,
+  // Build optimizations
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-select', '@radix-ui/react-label'],
+  },
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
-    domains: ['trust.descope.com', 'www.descope.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'trust.descope.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.descope.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
   // Security headers
   async headers() {
