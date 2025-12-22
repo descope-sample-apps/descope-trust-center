@@ -3,6 +3,7 @@ name: OpenCode Batch Workers
 on:
   repository_dispatch:
     types: [opencode-batch]
+  workflow_dispatch:
 
 permissions:
   contents: write
