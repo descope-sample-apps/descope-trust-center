@@ -49,6 +49,14 @@ const nextConfig = {
       },
     ]
   },
+  // Static file configuration (migrated from Bun serve.static)
+  output: 'export',
+  trailingSlash: true,
+  // Environment variables support (migrated from Bun env configuration)
+  env: {
+    // Support for BUN_PUBLIC_* environment variables
+    // These will be available as NEXT_PUBLIC_* in Next.js
+  },
 }
 
 export default nextConfig
