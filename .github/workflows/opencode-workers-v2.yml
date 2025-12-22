@@ -13,6 +13,10 @@ on:
         description: "Feature branch name"
         required: true
         type: string
+      epic_id:
+        description: "Epic ID in Beads"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -26,7 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       task_ids: ${{ steps.get-ready-tasks.outputs.task_ids }}
+      task_titles: ${{ steps.get-ready-tasks.outputs.task_titles }}
       task_count: ${{ steps.get-ready-tasks.outputs.task_count }}
+      epic_id: ${{ steps.payload.outputs.epic_id }}
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -82,19 +88,31 @@ jobs:
           # Pull from beads-sync but don't sync (avoid conflicts with parallel workers)
           git fetch origin beads-sync:beads-sync || echo "beads-sync branch not found"
 
-          # Get ready tasks (no dependencies blocking them)
-          READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
+          # Get ready tasks that are children of the specific epic
+          EPIC_ID="${{ steps.payload.outputs.epic_id }}"
+          
+          if [ -n "$EPIC_ID" ]; then
+            # Get all tasks and filter for children of this epic that are ready
+            ALL_TASKS=$("$HOME/.local/bin/bd" list --json)
+            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id)]')
+          else
+            # Fallback if no epic_id provided (shouldn't happen in normal flow)
+            READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
+            echo "WARNING: No epic_id provided, getting all ready tasks" >&2
+          fi
 
           # Extract IDs and titles as JSON arrays
           TASK_IDS=$(echo "$READY_TASKS" | jq -c '[.[].id]')
           TASK_TITLES=$(echo "$READY_TASKS" | jq -c '[.[].title]')
           TASK_COUNT=$(echo "$TASK_IDS" | jq 'length')
 
+          echo "epic_id=${{ steps.payload.outputs.epic_id }}" >> $GITHUB_OUTPUT
           echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
           echo "task_titles=$TASK_TITLES" >> $GITHUB_OUTPUT
           echo "task_count=$TASK_COUNT" >> $GITHUB_OUTPUT
 
-          echo "Found $TASK_COUNT ready tasks: $TASK_IDS"
+          echo "Found $TASK_COUNT ready tasks for epic ${{ steps.payload.outputs.epic_id }}: $TASK_IDS"
+          echo "DEBUG: epic_id is: '${{ steps.payload.outputs.epic_id }}'"
           echo "DEBUG: task_ids output is: '$TASK_IDS'"
           echo "DEBUG: task_titles output is: '$TASK_TITLES'"
           echo "DEBUG: task_count output is: '$TASK_COUNT'"
@@ -196,9 +214,18 @@ jobs:
           TASK_JSON=$("$HOME/.local/bin/bd" show ${{ matrix.task_id }} --json)
           TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.[0].title')
           TASK_DESC=$(echo "$TASK_JSON" | jq -r '.[0].description // ""')
+          TASK_PARENT=$(echo "$TASK_JSON" | jq -r '.[0].parent // ""')
+          EPIC_ID="${{ steps.payload.outputs.epic_id }}"
+
+          # Validate that this task belongs to the correct epic
+          if [ -n "$EPIC_ID" ] && [ "$TASK_PARENT" != "$EPIC_ID" ]; then
+            echo "❌ ERROR: Task ${{ matrix.task_id }} belongs to epic $TASK_PARENT, but should belong to epic $EPIC_ID"
+            echo "This indicates a workflow configuration error - aborting execution."
+            exit 1
+          fi
 
           echo "title=$TASK_TITLE" >> $GITHUB_OUTPUT
-          echo "Task: $TASK_TITLE"
+          echo "Task: $TASK_TITLE (parent: $TASK_PARENT)"
 
           # Save full spec to file for agent
           echo "$TASK_DESC" > /tmp/task-spec.txt
@@ -318,9 +345,11 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "issue_number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
             echo "branch=${{ inputs.branch }}" >> $GITHUB_OUTPUT
+            echo "epic_id=${{ inputs.epic_id }}" >> $GITHUB_OUTPUT
           else
             echo "issue_number=${{ github.event.client_payload.issue_number }}" >> $GITHUB_OUTPUT
             echo "branch=${{ github.event.client_payload.branch }}" >> $GITHUB_OUTPUT
+            echo "epic_id=${{ github.event.client_payload.epic_id }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Checkout feature branch
@@ -512,15 +541,26 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          # After closing tasks, check if more are ready
-          READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
-          TASK_COUNT=$(echo "$READY_TASKS" | jq 'length')
+          # After closing tasks, check if more children of this epic are ready
+          EPIC_ID="${{ steps.payload.outputs.epic_id }}"
+          
+          if [ -n "$EPIC_ID" ]; then
+            # Get all tasks and filter for children of this epic that are ready
+            ALL_TASKS=$("$HOME/.local/bin/bd" list --json)
+            READY_TASKS=$(echo "$ALL_TASKS" | jq --arg epic_id "$EPIC_ID" '[.[] | select(.status == "open" and (.dependencies // [] | contains([$epic_id]) | not) and (.blocked_by // [] | length == 0) and ((.parent // empty) == $epic_id)]')
+            TASK_COUNT=$(echo "$READY_TASKS" | jq 'length')
+          else
+            # Fallback if no epic_id provided
+            READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
+            TASK_COUNT=$(echo "$READY_TASKS" | jq 'length')
+            echo "WARNING: No epic_id provided for next wave check" >&2
+          fi
           
           echo "ready_count=$TASK_COUNT" >> $GITHUB_OUTPUT
-          echo "Next wave ready: $TASK_COUNT tasks"
+          echo "Next wave ready: $TASK_COUNT tasks for epic $EPIC_ID"
           
           # Sync status first
-          "$HOME/.local/bin/bd" sync -m "ci: wave completed - checking for next wave"
+          "$HOME/.local/bin/bd" sync -m "ci: wave completed - checking for next wave for epic $EPIC_ID"
 
       - name: Post completion comment
         uses: actions/github-script@v8
@@ -565,7 +605,8 @@ jobs:
               event_type: 'opencode-batch',
               client_payload: {
                 issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
-                branch: '${{ steps.payload.outputs.branch }}'
+                branch: '${{ steps.payload.outputs.branch }}',
+                epic_id: '${{ steps.payload.outputs.epic_id }}'
               }
             });
-            console.log('Next wave dispatched');
+            console.log('Next wave dispatched for epic: ${{ steps.payload.outputs.epic_id }}');
