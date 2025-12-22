@@ -651,7 +651,7 @@ jobs:
             const merged = '${{ steps.merge.outputs.merged_count }}';
             const conflicts = '${{ steps.merge.outputs.conflict_count }}';
             const nextWaveCount = parseInt('${{ steps.next-wave.outputs.ready_count }}') || 0;
-            const completedTasks = `${{ steps.completed-tasks.outputs.completed_tasks_details }}`;
+            const completedTasks = '${{ steps.completed-tasks.outputs.completed_tasks_details }}';
 
             let body = `### 🎉 Wave Complete!\n\n**Tasks Completed:** ${merged}\n**Conflicts Auto-Resolved:** ${conflicts}\n**Pull Request:** #${prNumber}\n**Build:** ✅ Passed\n\n`;
             
