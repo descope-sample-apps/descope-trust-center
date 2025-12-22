@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DocumentLibrary } from "@/components/document-library";
 import { Shield, FileText, CheckCircle, Lock, Award, Download, ExternalLink } from "lucide-react";
 
 interface ComplianceItem {
@@ -9,14 +10,7 @@ interface ComplianceItem {
   lastUpdated: string;
 }
 
-interface Document {
-  id: string;
-  title: string;
-  type: "policy" | "report" | "certificate";
-  description: string;
-  lastUpdated: string;
-  downloadUrl?: string;
-}
+
 
 export function HomePage() {
   const complianceItems: ComplianceItem[] = [
@@ -46,38 +40,7 @@ export function HomePage() {
     }
   ];
 
-  const documents: Document[] = [
-    {
-      id: "1",
-      title: "Security Policy",
-      type: "policy",
-      description: "Comprehensive security policies and procedures",
-      lastUpdated: "2024-11-01"
-    },
-    {
-      id: "2", 
-      title: "Privacy Policy",
-      type: "policy",
-      description: "How we collect, use, and protect customer data",
-      lastUpdated: "2024-10-15"
-    },
-    {
-      id: "3",
-      title: "SOC 2 Report",
-      type: "report", 
-      description: "Latest SOC 2 Type II examination report",
-      lastUpdated: "2024-11-15",
-      downloadUrl: "#"
-    },
-    {
-      id: "4",
-      title: "ISO 27001 Certificate",
-      type: "certificate",
-      description: "Official ISO 27001 certification document",
-      lastUpdated: "2024-10-20",
-      downloadUrl: "#"
-    }
-  ];
+  
 
   const getStatusColor = (status: ComplianceItem["status"]) => {
     switch (status) {
@@ -105,18 +68,7 @@ export function HomePage() {
     }
   };
 
-  const getDocumentIcon = (type: Document["type"]) => {
-    switch (type) {
-      case "policy":
-        return <FileText className="h-5 w-5 text-blue-600" />;
-      case "report":
-        return <Shield className="h-5 w-5 text-green-600" />;
-      case "certificate":
-        return <Award className="h-5 w-5 text-purple-600" />;
-      default:
-        return <FileText className="h-5 w-5 text-gray-600" />;
-    }
-  };
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -169,41 +121,7 @@ export function HomePage() {
         </section>
 
         <section className="mb-12">
-          <h3 className="text-2xl font-semibold text-gray-900 mb-6">Security Documents</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {documents.map((doc) => (
-              <Card key={doc.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start space-x-3">
-                    {getDocumentIcon(doc.type)}
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{doc.title}</CardTitle>
-                      <CardDescription className="mt-2">{doc.description}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-500">
-                      Updated: {new Date(doc.lastUpdated).toLocaleDateString()}
-                    </p>
-                    <div className="flex space-x-2">
-                      {doc.downloadUrl && (
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
-                        </Button>
-                      )}
-                      <Button variant="outline" size="sm">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <DocumentLibrary />
         </section>
 
         <section className="mb-12">
