@@ -40,7 +40,9 @@
       }
     ],
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    // Build performance optimizations
+    "assumeChangesOnlyAffectDirectDependencies": true
   },
   "include": [
     "next-env.d.ts",

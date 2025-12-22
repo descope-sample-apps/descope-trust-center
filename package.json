@@ -2,11 +2,15 @@
   "name": "descope-trust-center",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "build:analyze": "ANALYZE=true next build",
+    "build:production": "next build && next export"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
