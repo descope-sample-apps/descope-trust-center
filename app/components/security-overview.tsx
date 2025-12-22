@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Lock, CheckCircle, AlertTriangle, Users, Key, Eye, Cloud, Server } from "lucide-react";
 
 interface SecurityMetric {
