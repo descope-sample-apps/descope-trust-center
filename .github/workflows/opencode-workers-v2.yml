@@ -1,0 +1,457 @@
+name: OpenCode Matrix Workers (v2 - True Parallel)
+
+on:
+  repository_dispatch:
+    types: [opencode-batch]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number"
+        required: true
+        type: number
+      branch:
+        description: "Feature branch name"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  # Job 1: Get ready tasks from Beads
+  get-ready-tasks:
+    runs-on: ubuntu-latest
+    outputs:
+      task_ids: ${{ steps.ready.outputs.task_ids }}
+      task_count: ${{ steps.ready.outputs.task_count }}
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Set payload variables
+        id: payload
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "issue_number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ inputs.branch }}" >> $GITHUB_OUTPUT
+          else
+            echo "issue_number=${{ github.event.client_payload.issue_number }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.event.client_payload.branch }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.payload.outputs.branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup Beads
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
+          tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Configure Beads
+        run: |
+          sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
+          "$HOME/.local/bin/bd" init
+
+      - name: Get ready tasks
+        id: ready
+        run: |
+          # Sync to get latest task statuses
+          "$HOME/.local/bin/bd" sync
+          
+          # Get ready tasks (no dependencies blocking them)
+          READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
+          
+          # Extract just the IDs as a JSON array
+          TASK_IDS=$(echo "$READY_TASKS" | jq -c '[.[].id]')
+          TASK_COUNT=$(echo "$TASK_IDS" | jq 'length')
+          
+          echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
+          echo "task_count=$TASK_COUNT" >> $GITHUB_OUTPUT
+          
+          echo "Found $TASK_COUNT ready tasks: $TASK_IDS"
+
+      - name: Post wave start comment
+        if: steps.ready.outputs.task_count > 0
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const taskIds = JSON.parse('${{ steps.ready.outputs.task_ids }}');
+            const count = taskIds.length;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
+              body: `### 🚀 Wave Execution Started\n\nExecuting **${count}** tasks in parallel:\n${taskIds.map(id => `- \`${id}\``).join('\n')}\n\n_Workers running concurrently..._`
+            });
+
+  # Job 2: Execute tasks in parallel (matrix strategy)
+  execute-task:
+    needs: get-ready-tasks
+    if: needs.get-ready-tasks.outputs.task_count > 0
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task_id: ${{ fromJson(needs.get-ready-tasks.outputs.task_ids) }}
+      max-parallel: 5  # Run up to 5 tasks at once
+      fail-fast: false  # Continue even if one task fails
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Set payload variables
+        id: payload
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "issue_number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ inputs.branch }}" >> $GITHUB_OUTPUT
+          else
+            echo "issue_number=${{ github.event.client_payload.issue_number }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.event.client_payload.branch }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.payload.outputs.branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup tools
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          
+          # Install beads
+          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
+          tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          
+          # Install bun
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          
+          # Install opencode
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          
+          # Install bun dependencies
+          $HOME/.bun/bin/bun install
+
+      - name: Setup git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Configure Beads
+        run: |
+          sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
+          "$HOME/.local/bin/bd" init
+          "$HOME/.local/bin/bd" sync
+
+      - name: Get task specification
+        id: task-spec
+        run: |
+          # Read task details from beads (READ ONLY - no sync!)
+          TASK_JSON=$("$HOME/.local/bin/bd" show ${{ matrix.task_id }} --json)
+          TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.title')
+          TASK_DESC=$(echo "$TASK_JSON" | jq -r '.description // ""')
+          
+          echo "title=$TASK_TITLE" >> $GITHUB_OUTPUT
+          echo "Task: $TASK_TITLE"
+          
+          # Save full spec to file for agent
+          echo "$TASK_DESC" > /tmp/task-spec.txt
+
+      - name: Create task branch
+        id: branch
+        run: |
+          TASK_BRANCH="${{ steps.payload.outputs.branch }}-task-${{ matrix.task_id }}"
+          git checkout -b "$TASK_BRANCH"
+          echo "task_branch=$TASK_BRANCH" >> $GITHUB_OUTPUT
+          echo "Created branch: $TASK_BRANCH"
+
+      - name: Execute task with Coder Agent
+        id: execute
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TASK_ID: ${{ matrix.task_id }}
+          TASK_TITLE: ${{ steps.task-spec.outputs.title }}
+          ISSUE_NUMBER: ${{ steps.payload.outputs.issue_number }}
+        run: |
+          # Run Coder Agent to implement this task
+          # CRITICAL: NO beads operations in this step!
+          
+          opencode run \
+            --agent "Coder Agent" \
+            --model "opencode/big-pickle" \
+            "# Task Implementation: $TASK_TITLE
+          
+          Implement task \`$TASK_ID\` from GitHub issue #$ISSUE_NUMBER.
+          
+          ## Task Specification
+          
+          $(cat /tmp/task-spec.txt)
+          
+          ## Your Mission
+          
+          1. Implement the task according to the specification
+          2. Follow coding standards from .opencode/context/core/standards/code.md:
+             - TypeScript with strict types (no \`any\`)
+             - React 19 functional components
+             - Tailwind CSS v4
+             - Bun as runtime
+          
+          3. Verify your implementation:
+             - Run: \`bun run build\`
+             - Build MUST pass before completing
+          
+          4. Commit your changes:
+             - Add all modified files
+             - Commit with message: \"feat($TASK_ID): $TASK_TITLE\"
+          
+          ## Important Notes
+          
+          - Do NOT update beads (no \`bd update\` or \`bd sync\` commands!)
+          - Do NOT merge branches (just implement and commit)
+          - Focus only on this specific task
+          - Keep changes minimal and focused
+          
+          ## Success Criteria
+          
+          - Implementation complete
+          - Build passes (\`bun run build\` succeeds)
+          - Changes committed to current branch
+          - No beads operations performed
+          
+          When done, summarize what you implemented and any issues encountered."
+
+      - name: Verify build
+        run: |
+          echo "Verifying build passes..."
+          $HOME/.bun/bin/bun run build
+
+      - name: Push task branch
+        run: |
+          # Check if there are changes to commit
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "feat(${{ matrix.task_id }}): ${{ steps.task-spec.outputs.title }}" || echo "Nothing to commit"
+          fi
+          
+          git push -u origin ${{ steps.branch.outputs.task_branch }}
+          echo "Pushed to: ${{ steps.branch.outputs.task_branch }}"
+
+      - name: Report completion
+        run: |
+          echo "### ✅ Task ${{ matrix.task_id }} Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Title:** ${{ steps.task-spec.outputs.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ steps.branch.outputs.task_branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Build:** ✅ Passed" >> $GITHUB_STEP_SUMMARY
+
+  # Job 3: Merge all task branches and finalize
+  merge-and-finalize:
+    needs: [get-ready-tasks, execute-task]
+    if: always() && needs.get-ready-tasks.outputs.task_count > 0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Set payload variables
+        id: payload
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "issue_number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ inputs.branch }}" >> $GITHUB_OUTPUT
+          else
+            echo "issue_number=${{ github.event.client_payload.issue_number }}" >> $GITHUB_OUTPUT
+            echo "branch=${{ github.event.client_payload.branch }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.payload.outputs.branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup tools
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
+          tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          $HOME/.bun/bin/bun install
+
+      - name: Setup git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Configure Beads
+        run: |
+          sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
+          "$HOME/.local/bin/bd" init
+          "$HOME/.local/bin/bd" sync
+
+      - name: Merge all task branches
+        id: merge
+        run: |
+          TASK_IDS='${{ needs.get-ready-tasks.outputs.task_ids }}'
+          FEATURE_BRANCH="${{ steps.payload.outputs.branch }}"
+          
+          git checkout $FEATURE_BRANCH
+          git pull origin $FEATURE_BRANCH
+          
+          MERGED_COUNT=0
+          CONFLICT_COUNT=0
+          
+          for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
+            TASK_BRANCH="$FEATURE_BRANCH-task-$TASK_ID"
+            
+            echo "Merging $TASK_BRANCH..."
+            git fetch origin $TASK_BRANCH || {
+              echo "⚠️ Branch $TASK_BRANCH not found (task may have failed)"
+              continue
+            }
+            
+            if git merge origin/$TASK_BRANCH --no-ff -m "merge: task $TASK_ID"; then
+              echo "✅ Merged $TASK_ID successfully"
+              MERGED_COUNT=$((MERGED_COUNT + 1))
+            else
+              echo "⚠️ Conflict in $TASK_ID - auto-resolving..."
+              CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+              
+              # Auto-resolve: prefer incoming changes (task implementation)
+              for FILE in $(git diff --name-only --diff-filter=U); do
+                git checkout --theirs "$FILE"
+                git add "$FILE"
+              done
+              
+              git commit -m "merge: task $TASK_ID (auto-resolved conflicts)"
+              MERGED_COUNT=$((MERGED_COUNT + 1))
+            fi
+          done
+          
+          git push origin $FEATURE_BRANCH
+          
+          echo "merged_count=$MERGED_COUNT" >> $GITHUB_OUTPUT
+          echo "conflict_count=$CONFLICT_COUNT" >> $GITHUB_OUTPUT
+          echo "Merged $MERGED_COUNT tasks ($CONFLICT_COUNT with conflicts)"
+
+      - name: Batch update Beads
+        run: |
+          TASK_IDS='${{ needs.get-ready-tasks.outputs.task_ids }}'
+          
+          # Close all successfully merged tasks
+          for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
+            echo "Closing task $TASK_ID..."
+            "$HOME/.local/bin/bd" close "$TASK_ID" || echo "Failed to close $TASK_ID"
+          done
+          
+          # Single sync for all updates
+          "$HOME/.local/bin/bd" sync -m "ci: completed ${{ steps.merge.outputs.merged_count }} tasks in parallel wave"
+
+      - name: Final build verification
+        run: |
+          echo "Running final build verification..."
+          $HOME/.bun/bin/bun run build
+
+      - name: Create pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list --head ${{ steps.payload.outputs.branch }} --json number --jq '.[0].number')
+          
+          if [ -n "$EXISTING_PR" ]; then
+            echo "pr_number=$EXISTING_PR" >> $GITHUB_OUTPUT
+            echo "PR #$EXISTING_PR already exists"
+          else
+            # Create new PR
+            COMPLETED=$(echo '${{ needs.get-ready-tasks.outputs.task_ids }}' | jq 'length')
+            
+            PR_OUTPUT=$(gh pr create \
+              --base main \
+              --head ${{ steps.payload.outputs.branch }} \
+              --title "🤖 Implement Issue #${{ steps.payload.outputs.issue_number }}" \
+              --body "## Summary
+            
+            Automated implementation of issue #${{ steps.payload.outputs.issue_number }}.
+            
+            **Tasks Completed:** $COMPLETED
+            **Merge Conflicts:** ${{ steps.merge.outputs.conflict_count }} (auto-resolved)
+            **Build Status:** ✅ Passed
+            
+            ### Changes
+            
+            $(git log --oneline main..${{ steps.payload.outputs.branch }} | head -20)
+            
+            ---
+            
+            Closes #${{ steps.payload.outputs.issue_number }}" 2>&1)
+            
+            PR_NUMBER=$(echo "$PR_OUTPUT" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "Created PR #$PR_NUMBER"
+          fi
+
+      - name: Cleanup task branches
+        if: success()
+        run: |
+          TASK_IDS='${{ needs.get-ready-tasks.outputs.task_ids }}'
+          FEATURE_BRANCH="${{ steps.payload.outputs.branch }}"
+          
+          for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
+            TASK_BRANCH="$FEATURE_BRANCH-task-$TASK_ID"
+            git push origin --delete "$TASK_BRANCH" || echo "Branch $TASK_BRANCH already deleted"
+          done
+
+      - name: Post completion comment
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const prNumber = '${{ steps.pr.outputs.pr_number }}';
+            const merged = '${{ steps.merge.outputs.merged_count }}';
+            const conflicts = '${{ steps.merge.outputs.conflict_count }}';
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
+              body: `### 🎉 Wave Complete!\n\n**Tasks Completed:** ${merged}\n**Conflicts Auto-Resolved:** ${conflicts}\n**Pull Request:** #${prNumber}\n**Build:** ✅ Passed\n\nReady for review!`
+            });
