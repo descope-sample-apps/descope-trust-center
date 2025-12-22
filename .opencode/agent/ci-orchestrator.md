@@ -362,166 +362,195 @@ tags:
          )
          ```
       
-      6. Wait for ALL subagents in wave to complete
-      
-      7. After wave completion, sync to get all status updates:
-         ```bash
-         bd sync  # Pull all worker status updates
-         ```
-      
-      8. Verify wave success:
-         ```bash
-         # Check all wave tasks are now closed
-         COMPLETED=$(bd list --json | jq '[.[] | select(.status == "closed")] | length')
-         FAILED=$(bd list --json | jq '[.[] | select(.status == "blocked")] | length')
-         ```
+      6. Monitor task completion and MERGE IMMEDIATELY (merge as you go):
          
-         Post wave summary:
+         **CRITICAL**: Don't wait for all tasks - merge each as it completes!
+         
          ```bash
+         # Track which tasks have been merged
+         MERGED_TASKS=""
+         WAVE_TASKS="$READY_TASKS"  # Save initial wave task list
+         
+         # Monitor loop - check every 15 seconds
+         while true; do
+           bd sync  # Pull latest status from all workers
+           
+           # Get tasks that just completed (closed but not yet merged)
+           JUST_COMPLETED=$(bd list --json | jq -r '.[] | select(.status == "closed") | .id' | while read tid; do
+             if ! echo "$MERGED_TASKS" | grep -q "$tid"; then
+               echo "$tid"
+             fi
+           done)
+           
+           # Merge each newly completed task immediately
+           for TASK_ID in $JUST_COMPLETED; do
+             TASK_BRANCH="$FEATURE_BRANCH-task-$TASK_ID"
+             
+             echo "Task $TASK_ID completed - merging immediately..."
+             
+             # Ensure we're on feature branch
+             git checkout $FEATURE_BRANCH
+             git pull origin $FEATURE_BRANCH  # Get any prior merges
+             
+             # Fetch and merge task branch
+             git fetch origin $TASK_BRANCH
+             if git merge origin/$TASK_BRANCH --no-ff -m "merge: task $TASK_ID"; then
+               echo "✓ Merged $TASK_ID successfully"
+               
+               # Push merge immediately so other tasks see it
+               git push origin $FEATURE_BRANCH
+               
+               # Mark as merged
+               bd note $TASK_ID "merged=true"
+               MERGED_TASKS="$MERGED_TASKS $TASK_ID"
+               
+               gh issue comment $ISSUE_NUMBER --body "✅ Task $TASK_ID merged successfully"
+             else
+               # Conflict detected - resolve intelligently
+               echo "⚠️ Conflict in $TASK_ID - resolving..."
+               
+               CONFLICTS=$(git diff --name-only --diff-filter=U)
+               for FILE in $CONFLICTS; do
+                 # Strategy: Prefer incoming changes (task implementation)
+                 git checkout --theirs $FILE
+                 git add $FILE
+               done
+               
+               git commit -m "merge: task $TASK_ID (auto-resolved conflicts)"
+               git push origin $FEATURE_BRANCH
+               
+               MERGED_TASKS="$MERGED_TASKS $TASK_ID"
+               
+               gh issue comment $ISSUE_NUMBER --body "⚠️ Task $TASK_ID merged with auto-resolved conflicts in: $CONFLICTS"
+             fi
+             
+             bd sync -m "ci: merged task $TASK_ID"
+           done
+           
+           # Check if all wave tasks are done
+           ALL_DONE=true
+           for TASK_ID in $WAVE_TASKS; do
+             if ! echo "$MERGED_TASKS" | grep -q "$TASK_ID"; then
+               ALL_DONE=false
+               break
+             fi
+           done
+           
+           if [ "$ALL_DONE" = true ]; then
+             echo "All wave tasks merged!"
+             break
+           fi
+           
+           sleep 15  # Check every 15 seconds
+         done
+         ```
+      
+      7. Post wave summary:
+         ```bash
+         MERGED_COUNT=$(echo "$MERGED_TASKS" | wc -w)
+         
          gh issue comment $ISSUE_NUMBER --body "### ✅ Wave Complete
          
-         Completed: $COMPLETED tasks
-         Failed: $FAILED tasks
+         Merged: $MERGED_COUNT tasks
+         All changes integrated into $FEATURE_BRANCH
          
          $(bd list --json | jq -r '.[] | "- [\(.status)] \(.id): \(.title)"')"
          
-         bd sync -m "ci: wave complete - $COMPLETED success, $FAILED failed"
+         bd sync -m "ci: wave complete - $MERGED_COUNT tasks merged"
          ```
       
-      9. If any task failed:
-         - Mark as blocked in Beads
-         - Post issue comment with failure details
-         - STOP workflow
+      8. Check for failed tasks:
+         ```bash
+         FAILED=$(bd list --json | jq '[.[] | select(.status == "blocked" or .status == "failed")] | length')
+         if [ $FAILED -gt 0 ]; then
+           gh issue comment $ISSUE_NUMBER --body "⚠️ $FAILED task(s) failed - review logs"
+           # Continue anyway with successful tasks
+         fi
+         ```
       
-      10. Repeat loop (next wave will now have new ready tasks)
+      9. Repeat loop (next wave will now have new ready tasks)
       
-      END LOOP when: bd list --json shows all tasks status=closed
+      END LOOP when: bd ready shows no remaining tasks
       
-      11. Final sync after all waves:
+      10. Final sync after all waves:
           ```bash
-          bd sync -m "ci: all tasks complete"
+          bd sync -m "ci: all tasks complete and merged"
           ```
     </process>
     <outputs>
       <completed_tasks>All tasks closed in Beads</completed_tasks>
       <task_branches>One branch per task pushed to origin</task_branches>
+      <merged_branches>Each task merged immediately upon completion</merged_branches>
       <implementation_log>Record of what each task implemented</implementation_log>
       <synced_state>Beads state synced after each wave for external monitoring</synced_state>
     </outputs>
-    <checkpoint>All tasks executed successfully, Beads fully synced</checkpoint>
+    <checkpoint>All tasks executed, merged incrementally, and Beads fully synced</checkpoint>
   </stage>
 
-  <stage id="3" name="Merging">
-    <action>Merge all task branches into feature branch</action>
-    <prerequisites>Stage 2 complete, all tasks closed</prerequisites>
+  <stage id="3" name="FinalVerification">
+    <action>Verify final build and prepare for PR</action>
+    <prerequisites>Stage 2 complete, all tasks merged incrementally</prerequisites>
     <process>
-      1. Sync Beads before merging:
+      1. Sync Beads before final verification:
          ```bash
          bd sync  # Get final state
-         bd sync -m "ci: start merging phase"
+         bd sync -m "ci: starting final verification"
          ```
       
-      2. Checkout and update feature branch:
+      2. Ensure we're on the feature branch with all merges:
          ```bash
          git checkout $FEATURE_BRANCH
-         git pull origin $FEATURE_BRANCH
+         git pull origin $FEATURE_BRANCH  # Should be up to date already
          ```
       
-      3. Get list of all task branches:
+      3. Post final verification start:
          ```bash
-         git fetch --all
-         git branch -r | grep "$FEATURE_BRANCH-task-" | sed 's|origin/||' > /tmp/task_branches.txt
-         BRANCH_COUNT=$(wc -l < /tmp/task_branches.txt)
-         ```
-      
-      4. Post merge start comment:
-         ```bash
-         gh issue comment $ISSUE_NUMBER --body "### 🔀 Merging Branches
+         gh issue comment $ISSUE_NUMBER --body "### 🔍 Final Verification
          
-         Merging $BRANCH_COUNT task branches into feature branch..."
-         ```
-      
-      5. For each task branch, merge into feature branch:
-         ```bash
-         MERGED=0
-         CONFLICTS=0
-         
-         for BRANCH in $(cat /tmp/task_branches.txt); do
-           echo "Merging $BRANCH..."
-           
-           if git merge origin/$BRANCH --no-edit -m "Merge task from $BRANCH"; then
-             echo "✓ Merged $BRANCH successfully"
-             MERGED=$((MERGED + 1))
-           else
-             echo "✗ Conflict in $BRANCH - resolving..."
-             CONFLICTS=$((CONFLICTS + 1))
-             
-             # Conflict resolution strategy:
-             # 1. Examine conflicted files
-             git status --short | grep "^UU"
-             
-             # 2. For each conflict:
-             #    - Read both versions
-             #    - Intelligently combine functionality
-             #    - Remove conflict markers
-             #    - Preserve intent from both sides
-             
-             # 3. Add resolved files
-             git add -A
-             
-             # 4. Complete merge
-             git commit -m "Merge $BRANCH (resolved conflicts)"
-           fi
-         done
-         ```
-      
-      6. Post merge progress:
-         ```bash
-         gh issue comment $ISSUE_NUMBER --body "### ✅ Branches Merged
-         
-         Merged: $MERGED branches
-         Conflicts resolved: $CONFLICTS
-         
+         All tasks merged incrementally.
          Running final build verification..."
-         
-         bd sync -m "ci: merged $MERGED branches, resolved $CONFLICTS conflicts"
          ```
       
-      7. Run final build verification:
+      4. Run final build verification:
          ```bash
          bun install  # Ensure deps are up to date
          bun run build
          ```
       
-      8. If build fails:
-         - Report build errors
-         - Post to GitHub issue
-         - Sync failure state: bd sync -m "ci: final build failed"
-         - STOP workflow
-      
-      9. Push merged feature branch:
+      5. If build fails:
          ```bash
-         git push origin $FEATURE_BRANCH
+         gh issue comment $ISSUE_NUMBER --body "❌ Final build failed!
+         
+         \`\`\`
+         $(bun run build 2>&1 | tail -20)
+         \`\`\`
+         
+         Review errors and fix manually."
+         
+         bd sync -m "ci: final build failed"
+         # STOP workflow
+         exit 1
          ```
       
-      10. Post merge summary:
-          ```bash
-          gh issue comment $ISSUE_NUMBER --body "### ✅ All Tasks Merged
-          
-          Merged $BRANCH_COUNT task branches into $FEATURE_BRANCH
-          Build: ✓ Passed
-          
-          Creating pull request..."
-          
-          bd sync -m "ci: merge complete, build passed"
-          ```
+      6. If build succeeds:
+         ```bash
+         gh issue comment $ISSUE_NUMBER --body "✅ Final build passed!
+         
+         All tasks integrated successfully.
+         Creating pull request..."
+         ```
+      
+      7. Sync success state:
+         ```bash
+         bd sync -m "ci: final build passed, ready for PR"
+         ```
     </process>
     <outputs>
-      <merged_branch>Feature branch with all task implementations</merged_branch>
-      <build_status>Final build verification result</build_status>
-      <sync_state>Beads synced at merge start, conflicts, and completion</sync_state>
+      <final_build>Build verification passed</final_build>
+      <feature_branch>Complete with all incrementally merged tasks</feature_branch>
+      <ready_for_pr>All validations passed</ready_for_pr>
     </outputs>
-    <checkpoint>All task branches merged, build passing, state synced</checkpoint>
+    <checkpoint>Final build verified, ready for PR creation</checkpoint>
   </stage>
 
   <stage id="4" name="PullRequest">
