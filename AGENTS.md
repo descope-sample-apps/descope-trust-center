@@ -28,51 +28,34 @@ Comment on a GitHub Issue with:
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │ 1. Create feature branch: opencode/issue-123                        │    │
 │  │ 2. Planner-Sisyphus creates epic + tasks with dependencies          │    │
-│  │ 3. Compute dependency batches (topological sort)                    │    │
-│  │ 4. Dispatch opencode-batch event (batch 0)                          │    │
+│  │ 3. Dispatch opencode-batch event                                    │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────┬───────────────────────────────────────────┘
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  opencode-workers.yml (batch processing)                                    │
+│  opencode-workers.yml (single coordinator)                                  │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                        BATCH 1 (parallel)                           │    │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐                          │    │
-│  │  │ Task A   │  │ Task B   │  │ Task C   │  (no dependencies)       │    │
-│  │  │ Sisyphus │  │ Sisyphus │  │ Sisyphus │                          │    │
-│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘                          │    │
-│  │       │             │             │                                 │    │
-│  │       ▼             ▼             ▼                                 │    │
-│  │  Push to:      Push to:      Push to:                              │    │
-│  │  .../bd-abc.1  .../bd-abc.2  .../bd-abc.3                          │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                  │                                          │
-│                                  ▼                                          │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ batch-complete job: More batches? → dispatch next : dispatch merge  │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                  │                                          │
-│                                  ▼                                          │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                        BATCH 2 (parallel)                           │    │
-│  │  ┌──────────┐  ┌──────────┐                                        │    │
-│  │  │ Task D   │  │ Task E   │  (depend on batch 1)                   │    │
-│  │  │ Sisyphus │  │ Sisyphus │                                        │    │
-│  │  └──────────┘  └──────────┘                                        │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                  │                                          │
-│                          (repeat until done)                                │
-└─────────────────────────────────┬───────────────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  opencode-merge.yml                                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ 1. Merge all task sub-branches into opencode/issue-123              │    │
-│  │ 2. If conflicts → Sisyphus resolves                                 │    │
-│  │ 3. Create SINGLE PR closing #123                                    │    │
-│  │ 4. Delete task sub-branches                                         │    │
+│  │                     Sisyphus Coordinator                            │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │ PHASE 1: Implement Tasks in Waves                            │   │    │
+│  │  │                                                              │   │    │
+│  │  │   bd ready → spawn parallel subagents → wait → repeat        │   │    │
+│  │  │                                                              │   │    │
+│  │  │   Wave 1: [Task A] [Task B] [Task C] (parallel subagents)    │   │    │
+│  │  │   Wave 2: [Task D] [Task E] (after deps satisfied)           │   │    │
+│  │  │   ...until all tasks closed                                  │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │ PHASE 2: Merge All Task Branches                             │   │    │
+│  │  │                                                              │   │    │
+│  │  │   git merge task branches → resolve conflicts if any         │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │ PHASE 3: Create Pull Request                                 │   │    │
+│  │  │                                                              │   │    │
+│  │  │   gh pr create → cleanup task branches                       │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────┬───────────────────────────────────────────┘
                                   │
@@ -115,7 +98,7 @@ main                                      # Production code
 ├── opencode/issue-123-task-bd-abc.1      # Task sub-branch (temporary)
 ├── opencode/issue-123-task-bd-abc.2      # Task sub-branch (temporary)
 ├── opencode/issue-123-task-bd-abc.3      # Task sub-branch (temporary)
-└── beads-sync                              # Task database (isolated)
+└── beads-sync                            # Task database (isolated)
 ```
 
 > **Note**: Task sub-branches use `-task-` suffix instead of `/` to avoid git ref conflicts
@@ -143,10 +126,19 @@ This project uses [Beads](https://github.com/steveyegge/beads) for task tracking
 bd ready                      # List ready tasks (no blockers)
 bd create "Task title" -p 1   # Create a new task
 bd show <task-id>             # Show task details
-bd update <task-id> --status done  # Update task status
+bd update <task-id> --status in_progress  # Mark in progress
+bd close <task-id>            # Mark complete (status=closed)
 bd dep add <task> <depends-on>     # Add dependency
 bd list --json                # Export tasks as JSON
+bd sync                       # Sync with remote beads-sync branch
 ```
+
+### Valid Task Statuses
+
+- `open` - Not started
+- `in_progress` - Currently being worked on
+- `blocked` - Waiting on something
+- `closed` - Complete
 
 ### Task Hierarchy
 
@@ -176,8 +168,7 @@ bd-abc.5 "Integration"           # Deps: .3, .4 → Batch 3
 .github/
 ├── workflows/
 │   ├── opencode.yml          # Entry point: /oc plan, /oc work
-│   ├── opencode-workers.yml  # Batch processing with parallel workers
-│   ├── opencode-merge.yml    # Merge sub-branches, create PR
+│   ├── opencode-workers.yml  # Sisyphus coordinator (implements, merges, creates PR)
 │   └── opencode-review.yml   # Oracle review + Sisyphus rework cycle
 ├── CODEOWNERS                # Human reviewers
 

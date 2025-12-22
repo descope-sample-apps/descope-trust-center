@@ -83,7 +83,7 @@ jobs:
           "$HOME/.local/bin/bd" init
           "$HOME/.local/bin/bd" sync
 
-      - name: Post batch started comment
+      - name: Post started comment
         id: comment
         uses: actions/github-script@v8
         with:
@@ -93,7 +93,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
-              body: '### 🔄 Batch Processing Started\n\nSisyphus coordinator is processing tasks...'
+              body: '### 🔄 Implementation Started\n\nSisyphus is implementing all tasks, merging branches, and will create a PR when complete...'
             });
             return comment.id;
           result-encoding: string
@@ -103,113 +103,164 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FEATURE_BRANCH: ${{ steps.payload.outputs.branch }}
+          ISSUE_NUMBER: ${{ steps.payload.outputs.issue_number }}
         run: |
-          # Create a comprehensive prompt for Sisyphus
-          cat > /tmp/coordinator-prompt.md << 'PROMPT_EOF'
-          # BATCH COORDINATOR - Process All Tasks Until Epic Complete
+          # Run Sisyphus with the coordinator prompt
+          opencode run \
+            --model "opencode/big-pickle" \
+            "# EPIC COORDINATOR - Implement All Tasks, Merge, and Create PR
 
-          You are the BATCH COORDINATOR. Your job is to process ALL tasks in the beads database
-          until the epic is complete. You will work in waves, spawning parallel subagents for
-          each batch of ready tasks.
+          You are the EPIC COORDINATOR. Your job is to:
+          1. Implement ALL tasks in waves (parallel subagents per batch)
+          2. Merge all task branches into the feature branch
+          3. Create a Pull Request
+          4. Clean up task branches
 
           ## Environment
           - Feature branch: $FEATURE_BRANCH
           - Issue number: $ISSUE_NUMBER
-          - All tools are available: bd, bun, git
+          - Tools available: bd, bun, git, gh
 
-          ## Your Workflow (LOOP until done)
+          ---
 
-          ### Step 1: Check Ready Tasks
-          ```bash
+          # PHASE 1: IMPLEMENT ALL TASKS
+
+          ## Step 1: Check Ready Tasks
+          \`\`\`bash
           bd ready --json
-          ```
-          This returns tasks with NO blockers (dependencies satisfied).
+          \`\`\`
 
-          ### Step 2: If Tasks Ready → Spawn Parallel Subagents
-          For EACH ready task, spawn a subagent using the Task tool with subagent_type="general".
+          ## Step 2: Spawn Parallel Subagents for Ready Tasks
+          For EACH ready task, spawn a subagent using Task tool with subagent_type=\"general\".
           
-          **CRITICAL**: Spawn ALL ready tasks in a SINGLE message with MULTIPLE Task tool calls.
-          This ensures true parallel execution.
+          **CRITICAL**: Spawn ALL ready tasks in ONE message with MULTIPLE Task calls for parallelism.
 
-          Each subagent prompt MUST include:
-          ```
-          Implement this task:
-          
+          Each subagent prompt:
+          \`\`\`
+          Implement this task on branch $FEATURE_BRANCH:
+
           Task ID: <id>
           Task Title: <title>
-          
+
           ## Instructions
-          1. Create task branch: git checkout -b "$FEATURE_BRANCH-task-<id>"
-          2. Mark task in progress: bd update <id> --status in_progress && bd sync -m "start <id>"
-          3. Implement the task following existing code patterns
-          4. Run: bun run build (must pass)
-          5. Commit changes: git add -A && git commit -m "feat(<id>): <title>"
-          6. Push branch: git push -u origin "$FEATURE_BRANCH-task-<id>"
-          7. Close task: bd close <id> && bd sync -m "complete <id>"
-          8. Return to feature branch: git checkout $FEATURE_BRANCH
-          
-          Report what was implemented when done.
-          ```
+          1. git checkout $FEATURE_BRANCH && git pull origin $FEATURE_BRANCH
+          2. git checkout -b \"$FEATURE_BRANCH-task-<id>\"
+          3. bd update <id> --status in_progress && bd sync -m \"start <id>\"
+          4. Implement the task following existing code patterns
+          5. bun run build (must pass)
+          6. git add -A && git commit -m \"feat(<id>): <title>\"
+          7. git push -u origin \"$FEATURE_BRANCH-task-<id>\"
+          8. bd close <id> && bd sync -m \"complete <id>\"
+          9. git checkout $FEATURE_BRANCH
 
-          ### Step 3: Wait for All Subagents
-          After spawning, wait for all subagents to complete and collect their results.
+          Report what was implemented.
+          \`\`\`
 
-          ### Step 4: Sync and Check for More
-          ```bash
-          bd sync  # Get latest task states
-          bd ready --json  # Check if more tasks are now unblocked
-          ```
+          ## Step 3: After Subagents Complete
+          \`\`\`bash
+          bd sync
+          bd ready --json
+          \`\`\`
+          If more tasks ready → repeat Step 2
+          If none ready → check if all closed with \`bd list --json\`
 
-          If more tasks are ready → Go to Step 2
-          If no more tasks ready → Check if epic is complete
+          ## Step 4: Verify All Tasks Closed
+          ALL tasks must have status \"closed\" before proceeding to Phase 2.
 
-          ### Step 5: Verify Epic Complete
-          ```bash
-          bd list --json
-          ```
-          Check if ALL tasks have status "closed". If yes, you're done!
-          If some tasks are still open but none are ready, there may be a dependency issue.
+          ---
 
-          ## Completion Criteria
-          - ALL tasks in beads have status "closed"
-          - All task branches pushed to remote
-          - bd sync completed (beads state saved)
+          # PHASE 2: MERGE ALL TASK BRANCHES
 
-          ## Output When Done
-          When all tasks are complete, output EXACTLY this line (for parsing):
-          ```
+          After ALL tasks are closed:
+
+          \`\`\`bash
+          git checkout $FEATURE_BRANCH
+          git pull origin $FEATURE_BRANCH
+          \`\`\`
+
+          Get list of task branches:
+          \`\`\`bash
+          git fetch --all
+          git branch -r | grep \"$FEATURE_BRANCH-task-\" | sed 's|origin/||'
+          \`\`\`
+
+          For each task branch, merge into feature branch:
+          \`\`\`bash
+          git merge origin/<task-branch> --no-edit -m \"Merge <task-id>\"
+          \`\`\`
+
+          If conflicts occur:
+          1. Examine conflicted files
+          2. Resolve conflicts intelligently (keep functionality from both sides)
+          3. Remove conflict markers
+          4. git add -A && git commit -m \"Merge <task-id> (resolved conflicts)\"
+
+          After all merges:
+          \`\`\`bash
+          git push origin $FEATURE_BRANCH
+          \`\`\`
+
+          ---
+
+          # PHASE 3: CREATE PULL REQUEST
+
+          Use gh CLI to create the PR:
+          \`\`\`bash
+          gh pr create \\
+            --base main \\
+            --head $FEATURE_BRANCH \\
+            --title \"🤖 <issue title>\" \\
+            --body \"## Summary
+
+          Automated implementation for #$ISSUE_NUMBER
+
+          ## Tasks Completed
+          <list task IDs and titles>
+
+          ---
+          Closes #$ISSUE_NUMBER\"
+          \`\`\`
+
+          Save the PR number from the output.
+
+          ---
+
+          # PHASE 4: CLEANUP TASK BRANCHES
+
+          Delete all task sub-branches:
+          \`\`\`bash
+          git push origin --delete \"<task-branch>\"
+          \`\`\`
+
+          ---
+
+          # COMPLETION
+
+          When everything is done, output EXACTLY:
+          \`\`\`
           EPIC_COMPLETE: true
-          ```
+          PR_NUMBER: <number>
+          \`\`\`
 
-          If there's an error or tasks are stuck:
-          ```
+          If any phase fails unrecoverably:
+          \`\`\`
           EPIC_COMPLETE: false
-          ERROR: <description of what went wrong>
-          ```
+          ERROR: <description>
+          \`\`\`
 
           ## Important Rules
-          1. NEVER modify the feature branch directly - only task sub-branches
-          2. Each subagent works on its OWN branch (no conflicts)
-          3. Use bd sync after EVERY status change
-          4. If a subagent fails, note it but continue with others
-          5. Keep going until ALL tasks are closed or you hit an unrecoverable error
-          PROMPT_EOF
-
-          # Replace variables in prompt
-          sed -i "s|\$FEATURE_BRANCH|${{ steps.payload.outputs.branch }}|g" /tmp/coordinator-prompt.md
-          sed -i "s|\$ISSUE_NUMBER|${{ steps.payload.outputs.issue_number }}|g" /tmp/coordinator-prompt.md
-
-          # Run Sisyphus with the coordinator prompt
-          RESULT=$(opencode run \
-            --model "opencode/big-pickle" \
-            --print-only \
-            "$(cat /tmp/coordinator-prompt.md)")
+          1. Each subagent works on its OWN task branch (no conflicts during implementation)
+          2. Use bd sync after EVERY status change
+          3. If a subagent fails, note it but continue with others
+          4. Resolve merge conflicts - don't give up
+          5. The PR must be created before you're done" 2>&1 | tee /tmp/sisyphus-output.txt
           
-          echo "$RESULT"
-          
-          # Check if epic complete
-          if echo "$RESULT" | grep -q "EPIC_COMPLETE: true"; then
+          # Parse output for results
+          if grep -q "EPIC_COMPLETE: true" /tmp/sisyphus-output.txt; then
             echo "epic_complete=true" >> $GITHUB_OUTPUT
+            PR_NUM=$(grep "PR_NUMBER:" /tmp/sisyphus-output.txt | sed 's/PR_NUMBER: //' | tr -d ' ')
+            echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
           else
             echo "epic_complete=false" >> $GITHUB_OUTPUT
           fi
@@ -220,13 +271,16 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const epicComplete = '${{ steps.sisyphus.outputs.epic_complete }}' === 'true';
+            const prNumber = '${{ steps.sisyphus.outputs.pr_number }}';
             const commentId = parseInt('${{ steps.comment.outputs.result }}');
             
             let body;
-            if (epicComplete) {
-              body = '### ✅ All Tasks Complete\n\nAll tasks have been implemented. Dispatching merge workflow...';
+            if (epicComplete && prNumber) {
+              body = `### 🎉 Implementation Complete\n\nAll tasks implemented and merged.\n\n**Pull Request:** #${prNumber}`;
+            } else if (epicComplete) {
+              body = '### ✅ All Tasks Complete\n\nAll tasks have been implemented and merged. Check for the PR.';
             } else {
-              body = '### ⚠️ Batch Processing Finished\n\nSome tasks may have failed. Check workflow logs for details.';
+              body = '### ⚠️ Implementation Finished with Issues\n\nSome tasks may have failed. Check workflow logs for details.';
             }
             
             await github.rest.issues.updateComment({
@@ -235,28 +289,3 @@ jobs:
               comment_id: commentId,
               body: body
             });
-
-      - name: Dispatch merge
-        if: steps.sisyphus.outputs.epic_complete == 'true'
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ steps.app-token.outputs.token }}
-          script: |
-            // Get all task IDs for merge workflow
-            const { execSync } = require('child_process');
-            const tasksJson = execSync('bd list --json 2>/dev/null || echo "[]"').toString();
-            const tasks = JSON.parse(tasksJson);
-            const taskIds = tasks.map(t => t.id);
-            
-            await github.rest.repos.createDispatchEvent({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              event_type: 'opencode-merge',
-              client_payload: {
-                issue_number: parseInt('${{ steps.payload.outputs.issue_number }}'),
-                branch: '${{ steps.payload.outputs.branch }}',
-                task_ids: taskIds
-              }
-            });
-            
-            console.log('Dispatched merge workflow with task IDs:', taskIds);
