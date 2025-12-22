@@ -197,6 +197,14 @@ jobs:
         id: branch
         run: |
           TASK_BRANCH="${{ steps.payload.outputs.branch }}-task-${{ matrix.task_id }}"
+          
+          # Check if branch exists remotely and delete it first
+          if git ls-remote --heads origin "$TASK_BRANCH" | grep -q "$TASK_BRANCH"; then
+            echo "Branch $TASK_BRANCH already exists, deleting it first..."
+            git push origin --delete "$TASK_BRANCH" || echo "Failed to delete remote branch (may not exist)"
+          fi
+          
+          # Create new branch
           git checkout -b "$TASK_BRANCH"
           echo "task_branch=$TASK_BRANCH" >> $GITHUB_OUTPUT
           echo "Created branch: $TASK_BRANCH"
@@ -270,7 +278,7 @@ jobs:
             git commit -m "feat(${{ matrix.task_id }}): ${{ steps.task-spec.outputs.title }}" || echo "Nothing to commit"
           fi
 
-          git push -u origin ${{ steps.branch.outputs.task_branch }}
+          git push -u origin ${{ steps.branch.outputs.task_branch }} --force-with-lease
           echo "Pushed to: ${{ steps.branch.outputs.task_branch }}"
 
       - name: Report completion
