@@ -1,4 +1,8 @@
-# bun-react-tailwind-shadcn-template
+# Descope Trust Center
+
+A Next.js application for displaying security and compliance information.
+
+## Installation
 
 To install dependencies:
 
@@ -6,16 +10,42 @@ To install dependencies:
 bun install
 ```
 
+## Development
+
 To start a development server:
 
 ```bash
-bun dev
+bun run dev
 ```
 
-To run for production:
+## Production
+
+To build for production:
 
 ```bash
-bun start
+bun run build
 ```
 
-This project was created using `bun init` in bun v1.3.5. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+To start the production server:
+
+```bash
+bun run start
+```
+
+## Technology Stack
+
+- **Next.js 16** - React framework with App Router
+- **React 19** - UI library
+- **TypeScript** - Type-safe JavaScript
+- **Tailwind CSS v4** - Utility-first CSS framework
+- **Bun** - Package manager and runtime
+
+## Features
+
+- Security & Compliance Overview
+- Document Library
+- FAQ Section
+- API Testing Interface
+- Responsive Design
+- SEO Optimized
+- Security Headers
