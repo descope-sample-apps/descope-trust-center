@@ -56,15 +56,32 @@ jobs:
 
       - name: Setup tools
         run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          curl -fsSL https://opencode.ai/install | bash
-          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          # Install mise
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
+          
+          # Install tools with mise
+          "$HOME/.local/share/mise/bin/mise" install
+          
+          # Add mise shims to PATH
+          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
 
       - name: Setup git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup tools
+        run: |
+          # Install mise
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
+          
+          # Install tools with mise
+          "$HOME/.local/share/mise/bin/mise" install
+          
+          # Add mise shims to PATH
+          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
 
       - name: Get diff for review
         id: diff
@@ -182,10 +199,15 @@ jobs:
 
       - name: Setup tools
         run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          curl -fsSL https://opencode.ai/install | bash
-          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          # Install mise
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
+          
+          # Install tools with mise
+          "$HOME/.local/share/mise/bin/mise" install
+          
+          # Add mise shims to PATH
+          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
 
       - name: Setup git identity
         run: |
