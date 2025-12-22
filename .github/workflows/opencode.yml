@@ -180,13 +180,16 @@ jobs:
           
           CI Workers will read these Beads notes for implementation guidance."
 
-      - name: Get task summary
+       - name: Get task summary
         id: tasks
         run: |
           TOTAL=$(bd list --json 2>/dev/null | jq 'length' || echo '0')
           READY=$(bd ready --json 2>/dev/null | jq 'length' || echo '0')
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
           echo "ready=$READY" >> $GITHUB_OUTPUT
+          # Also output ready tasks as JSON for workers
+          TASK_IDS=$(bd ready --json 2>/dev/null | jq -c '[.[].id]' || echo '[]')
+          echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
 
       - name: Post plan summary
         uses: actions/github-script@v8

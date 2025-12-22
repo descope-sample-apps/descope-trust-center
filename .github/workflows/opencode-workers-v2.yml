@@ -72,20 +72,20 @@ jobs:
           # Initialize beads with sync branch config
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
           "$HOME/.local/bin/bd" init
-          
+
           # Pull from beads-sync but don't sync (avoid conflicts with parallel workers)
           git fetch origin beads-sync:beads-sync || echo "beads-sync branch not found"
-          
+
           # Get ready tasks (no dependencies blocking them)
           READY_TASKS=$("$HOME/.local/bin/bd" ready --json)
-          
+
           # Extract just the IDs as a JSON array
           TASK_IDS=$(echo "$READY_TASKS" | jq -c '[.[].id]')
           TASK_COUNT=$(echo "$TASK_IDS" | jq 'length')
-          
+
           echo "task_ids=$TASK_IDS" >> $GITHUB_OUTPUT
           echo "task_count=$TASK_COUNT" >> $GITHUB_OUTPUT
-          
+
           echo "Found $TASK_COUNT ready tasks: $TASK_IDS"
           echo "DEBUG: task_ids output is: '$TASK_IDS'"
           echo "DEBUG: task_count output is: '$TASK_COUNT'"
@@ -98,7 +98,7 @@ jobs:
           script: |
             const taskIds = JSON.parse('${{ needs.get-ready-tasks.outputs.task_ids }}');
             const count = taskIds.length;
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -109,13 +109,13 @@ jobs:
   # Job 2: Execute tasks in parallel (matrix strategy)
   execute-task:
     needs: get-ready-tasks
-    if: needs.get-ready-tasks.outputs.task_count > 0
+    if: always() && needs.get-ready-tasks.outputs.task_count != '0'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         task_id: ${{ fromJson(needs.get-ready-tasks.outputs.task_ids) }}
-      max-parallel: 5  # Run up to 5 tasks at once
-      fail-fast: false  # Continue even if one task fails
+      max-parallel: 5 # Run up to 5 tasks at once
+      fail-fast: false # Continue even if one task fails
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -147,20 +147,20 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-          
+
           # Install beads
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          
+
           # Install bun
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          
+
           # Install opencode
           curl -fsSL https://opencode.ai/install | bash
           echo "$HOME/.opencode/bin" >> $GITHUB_PATH
-          
+
           # Install bun dependencies
           $HOME/.bun/bin/bun install
 
@@ -174,7 +174,7 @@ jobs:
           # Initialize beads with sync branch config
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
           "$HOME/.local/bin/bd" init
-          
+
           # Pull from beads-sync but don't sync (avoid conflicts with parallel workers)
           git fetch origin beads-sync:beads-sync || echo "beads-sync branch not found"
 
@@ -185,10 +185,10 @@ jobs:
           TASK_JSON=$("$HOME/.local/bin/bd" show ${{ matrix.task_id }} --json)
           TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.title')
           TASK_DESC=$(echo "$TASK_JSON" | jq -r '.description // ""')
-          
+
           echo "title=$TASK_TITLE" >> $GITHUB_OUTPUT
           echo "Task: $TASK_TITLE"
-          
+
           # Save full spec to file for agent
           echo "$TASK_DESC" > /tmp/task-spec.txt
 
@@ -211,49 +211,49 @@ jobs:
         run: |
           # Run Coder Agent to implement this task
           # CRITICAL: NO beads operations in this step!
-          
+
           opencode run \
             --agent "Coder Agent" \
             --model "opencode/big-pickle" \
             "# Task Implementation: $TASK_TITLE
-          
+
           Implement task \`$TASK_ID\` from GitHub issue #$ISSUE_NUMBER.
-          
+
           ## Task Specification
-          
+
           $(cat /tmp/task-spec.txt)
-          
+
           ## Your Mission
-          
+
           1. Implement the task according to the specification
           2. Follow coding standards from .opencode/context/core/standards/code.md:
              - TypeScript with strict types (no \`any\`)
              - React 19 functional components
              - Tailwind CSS v4
              - Bun as runtime
-          
+
           3. Verify your implementation:
              - Run: \`bun run build\`
              - Build MUST pass before completing
-          
+
           4. Commit your changes:
              - Add all modified files
              - Commit with message: \"feat($TASK_ID): $TASK_TITLE\"
-          
+
           ## Important Notes
-          
+
           - Do NOT update beads (no \`bd update\` or \`bd sync\` commands!)
           - Do NOT merge branches (just implement and commit)
           - Focus only on this specific task
           - Keep changes minimal and focused
-          
+
           ## Success Criteria
-          
+
           - Implementation complete
           - Build passes (\`bun run build\` succeeds)
           - Changes committed to current branch
           - No beads operations performed
-          
+
           When done, summarize what you implemented and any issues encountered."
 
       - name: Verify build
@@ -268,7 +268,7 @@ jobs:
             git add -A
             git commit -m "feat(${{ matrix.task_id }}): ${{ steps.task-spec.outputs.title }}" || echo "Nothing to commit"
           fi
-          
+
           git push -u origin ${{ steps.branch.outputs.task_branch }}
           echo "Pushed to: ${{ steps.branch.outputs.task_branch }}"
 
@@ -283,7 +283,7 @@ jobs:
   # Job 3: Merge all task branches and finalize
   merge-and-finalize:
     needs: [get-ready-tasks, execute-task]
-    if: always() && needs.get-ready-tasks.outputs.task_count > 0
+    if: always() && needs.get-ready-tasks.outputs.task_count != '0'
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
@@ -339,13 +339,13 @@ jobs:
         run: |
           TASK_IDS='${{ needs.get-ready-tasks.outputs.task_ids }}'
           FEATURE_BRANCH="${{ steps.payload.outputs.branch }}"
-          
+
           git checkout $FEATURE_BRANCH
           git pull origin $FEATURE_BRANCH
-          
+
           MERGED_COUNT=0
           CONFLICT_COUNT=0
-          
+
           for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
             TASK_BRANCH="$FEATURE_BRANCH-task-$TASK_ID"
             
@@ -372,9 +372,9 @@ jobs:
               MERGED_COUNT=$((MERGED_COUNT + 1))
             fi
           done
-          
+
           git push origin $FEATURE_BRANCH
-          
+
           echo "merged_count=$MERGED_COUNT" >> $GITHUB_OUTPUT
           echo "conflict_count=$CONFLICT_COUNT" >> $GITHUB_OUTPUT
           echo "Merged $MERGED_COUNT tasks ($CONFLICT_COUNT with conflicts)"
@@ -382,13 +382,13 @@ jobs:
       - name: Batch update Beads
         run: |
           TASK_IDS='${{ needs.get-ready-tasks.outputs.task_ids }}'
-          
+
           # Close all successfully merged tasks
           for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
             echo "Closing task $TASK_ID..."
             "$HOME/.local/bin/bd" close "$TASK_ID" || echo "Failed to close $TASK_ID"
           done
-          
+
           # Single sync for all updates
           "$HOME/.local/bin/bd" sync -m "ci: completed ${{ steps.merge.outputs.merged_count }} tasks in parallel wave"
 
@@ -404,7 +404,7 @@ jobs:
         run: |
           # Check if PR already exists
           EXISTING_PR=$(gh pr list --head ${{ steps.payload.outputs.branch }} --json number --jq '.[0].number')
-          
+
           if [ -n "$EXISTING_PR" ]; then
             echo "pr_number=$EXISTING_PR" >> $GITHUB_OUTPUT
             echo "PR #$EXISTING_PR already exists"
@@ -442,7 +442,7 @@ jobs:
         run: |
           TASK_IDS='${{ needs.get-ready-tasks.outputs.task_ids }}'
           FEATURE_BRANCH="${{ steps.payload.outputs.branch }}"
-          
+
           for TASK_ID in $(echo "$TASK_IDS" | jq -r '.[]'); do
             TASK_BRANCH="$FEATURE_BRANCH-task-$TASK_ID"
             git push origin --delete "$TASK_BRANCH" || echo "Branch $TASK_BRANCH already deleted"
@@ -456,7 +456,7 @@ jobs:
             const prNumber = '${{ steps.pr.outputs.pr_number }}';
             const merged = '${{ steps.merge.outputs.merged_count }}';
             const conflicts = '${{ steps.merge.outputs.conflict_count }}';
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
