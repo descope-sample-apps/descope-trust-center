@@ -184,8 +184,8 @@ jobs:
         run: |
           # Read task details from beads (READ ONLY - no sync!)
           TASK_JSON=$("$HOME/.local/bin/bd" show ${{ matrix.task_id }} --json)
-          TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.title')
-          TASK_DESC=$(echo "$TASK_JSON" | jq -r '.description // ""')
+          TASK_TITLE=$(echo "$TASK_JSON" | jq -r '.[0].title')
+          TASK_DESC=$(echo "$TASK_JSON" | jq -r '.[0].description // ""')
 
           echo "title=$TASK_TITLE" >> $GITHUB_OUTPUT
           echo "Task: $TASK_TITLE"
