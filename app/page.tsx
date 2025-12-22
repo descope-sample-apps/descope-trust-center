@@ -204,13 +204,13 @@ export default function Page() {
   const getDocumentIcon = (type: Document["type"]) => {
     switch (type) {
       case "policy":
-        return <FileText className="h-5 w-5 text-blue-600" />;
+        return <FileText className="h-5 w-5 text-descope-blue" />;
       case "report":
-        return <Shield className="h-5 w-5 text-green-600" />;
+        return <Shield className="h-5 w-5 text-descope-green" />;
       case "certificate":
-        return <Award className="h-5 w-5 text-purple-600" />;
+        return <Award className="h-5 w-5 text-descope-cyan" />;
       default:
-        return <FileText className="h-5 w-5 text-gray-600" />;
+        return <FileText className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -343,8 +343,8 @@ export default function Page() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 <Card className="text-center hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="bg-blue-100 dark:bg-blue-900/20 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <Lock className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600 dark:text-blue-400" />
+                  <div className="bg-primary/10 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <Lock className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
                   </div>
                   <CardTitle className="text-base sm:text-lg">End-to-End Encryption</CardTitle>
                 </CardHeader>
@@ -357,8 +357,8 @@ export default function Page() {
               
               <Card className="text-center hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="bg-green-100 dark:bg-green-900/20 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <Shield className="h-8 w-8 sm:h-10 sm:w-10 text-green-600 dark:text-green-400" />
+                  <div className="bg-accent/10 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <Shield className="h-8 w-8 sm:h-10 sm:w-10 text-accent" />
                   </div>
                   <CardTitle className="text-base sm:text-lg">24/7 Monitoring</CardTitle>
                 </CardHeader>
@@ -371,8 +371,8 @@ export default function Page() {
               
               <Card className="text-center hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="bg-purple-100 dark:bg-purple-900/20 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-purple-600 dark:text-purple-400" />
+                  <div className="bg-secondary/10 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-secondary" />
                   </div>
                   <CardTitle className="text-base sm:text-lg">Regular Audits</CardTitle>
                 </CardHeader>

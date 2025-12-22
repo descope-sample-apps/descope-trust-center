@@ -33,8 +33,8 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//twitter.com" />
         
         {/* Additional meta tags */}
-        <meta name="theme-color" content="#2563eb" />
-        <meta name="msapplication-TileColor" content="#2563eb" />
+        <meta name="theme-color" content="#0891b2" />
+        <meta name="msapplication-TileColor" content="#0891b2" />
         <meta name="application-name" content="Descope Trust Center" />
         <meta name="apple-mobile-web-app-title" content="Descope Trust Center" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -46,7 +46,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#2563eb" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0891b2" />
       </head>
       <body className={inter.className}>
         <SkipLink href="#main-content">
