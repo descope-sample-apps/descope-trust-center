@@ -83,13 +83,22 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
+          
+          # Install mise
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
+          
+          # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz /tmp/bd
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          curl -fsSL https://opencode.ai/install | bash
-          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          
+          # Install tools with mise
+          "$HOME/.local/share/mise/bin/mise" install
+          
+          # Add mise shims to PATH
+          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
+          
           sed -i 's/^# sync-branch:.*/sync-branch: "beads-sync"/' .beads/config.yaml || echo 'sync-branch: "beads-sync"' >> .beads/config.yaml
           "$HOME/.local/bin/bd" init
 
@@ -261,10 +270,15 @@ jobs:
 
       - name: Setup tools
         run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          curl -fsSL https://opencode.ai/install | bash
-          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          # Install mise
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
+          
+          # Install tools with mise
+          "$HOME/.local/share/mise/bin/mise" install
+          
+          # Add mise shims to PATH
+          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
 
       - name: Setup git identity
         run: |

@@ -53,14 +53,26 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
-      - name: Setup Beads
+      - name: Setup tools
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
+          
+          # Install mise
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
+          
+          # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          
+          # Install tools with mise
+          "$HOME/.local/share/mise/bin/mise" install
+          
+          # Add mise shims to PATH
+          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
 
       - name: Setup git identity
         run: |
@@ -148,22 +160,24 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
-
-          # Install beads
+          
+          # Install mise
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
+          
+          # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-          # Install bun
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-
-          # Install opencode
-          curl -fsSL https://opencode.ai/install | bash
-          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          
+          # Install tools with mise
+          "$HOME/.local/share/mise/bin/mise" install
+          
+          # Add mise shims to PATH
+          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
 
           # Install bun dependencies
-          $HOME/.bun/bin/bun install
+          bun install
 
       - name: Setup git
         run: |
@@ -268,7 +282,7 @@ jobs:
       - name: Verify build
         run: |
           echo "Verifying build passes..."
-          $HOME/.bun/bin/bun run build
+          bun run build
 
       - name: Push task branch
         run: |
@@ -325,12 +339,23 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           mkdir -p "$HOME/.local/bin"
+          
+          # Install mise
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
+          
+          # Install beads manually (mise doesn't have it)
           gh release download --repo steveyegge/beads --pattern 'beads_*_linux_amd64.tar.gz' --output /tmp/beads.tar.gz
           tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd "$HOME/.local/bin/" && rm -rf /tmp/beads.tar.gz
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          $HOME/.bun/bin/bun install
+          
+          # Install tools with mise
+          "$HOME/.local/share/mise/bin/mise" install
+          
+          # Add mise shims to PATH
+          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
+          
+          bun install
 
       - name: Setup git
         run: |
@@ -415,7 +440,7 @@ jobs:
       - name: Final build verification
         run: |
           echo "Running final build verification..."
-          $HOME/.bun/bin/bun run build
+          bun run build
 
       - name: Create pull request
         id: pr
