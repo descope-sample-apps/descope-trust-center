@@ -8,6 +8,7 @@ import "./index.css";
 import logo from "./logo.svg";
 import reactLogo from "./react.svg";
 
+<<<<<<< HEAD
 const mockComplianceData = [
   {
     id: "1",
@@ -60,6 +61,9 @@ const mockComplianceData = [
     ],
   },
 ];
+=======
+
+>>>>>>> origin/opencode/issue-1-task-descope-trust-center-93c
 
 export function App() {
   return (

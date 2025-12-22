@@ -33,7 +33,11 @@ Example:
   process.exit(0);
 }
 
+<<<<<<< HEAD
 const toCamelCase = (str: string): string => str.replace(/-([a-z])/g, g => g[1]?.toUpperCase() || '');
+=======
+const toCamelCase = (str: string): string => str.replace(/-([a-z])/g, (_, char) => char?.toUpperCase() || '');
+>>>>>>> origin/opencode/issue-1-task-descope-trust-center-93c
 
 const parseValue = (value: string): any => {
   if (value === "true") return true;

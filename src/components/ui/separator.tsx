@@ -10,7 +10,11 @@ const Separator = React.forwardRef<
 >(
   (
     { className, orientation = "horizontal", decorative = true, ...props },
+<<<<<<< HEAD
     ref
+=======
+    ref,
+>>>>>>> origin/opencode/issue-1-task-descope-trust-center-93c
   ) => (
     <div
       ref={ref}
@@ -19,11 +23,19 @@ const Separator = React.forwardRef<
       className={cn(
         "shrink-0 bg-border",
         orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
+<<<<<<< HEAD
         className
       )}
       {...props}
     />
   )
+=======
+        className,
+      )}
+      {...props}
+    />
+  ),
+>>>>>>> origin/opencode/issue-1-task-descope-trust-center-93c
 );
 Separator.displayName = "Separator";
 
