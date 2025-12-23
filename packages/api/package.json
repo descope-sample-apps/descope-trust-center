@@ -1,5 +1,5 @@
 {
-  "name": "@acme/api",
+  "name": "@descope-trust-center/api",
   "private": true,
   "type": "module",
   "exports": {
@@ -18,20 +18,20 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@acme/auth": "workspace:*",
-    "@acme/db": "workspace:*",
-    "@acme/validators": "workspace:*",
+    "@descope-trust-center/auth": "workspace:*",
+    "@descope-trust-center/db": "workspace:*",
+    "@descope-trust-center/validators": "workspace:*",
     "@trpc/server": "catalog:",
     "superjson": "2.2.3",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@acme/eslint-config": "workspace:*",
-    "@acme/prettier-config": "workspace:*",
-    "@acme/tsconfig": "workspace:*",
+    "@descope-trust-center/eslint-config": "workspace:*",
+    "@descope-trust-center/prettier-config": "workspace:*",
+    "@descope-trust-center/tsconfig": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@acme/prettier-config"
+  "prettier": "@descope-trust-center/prettier-config"
 }

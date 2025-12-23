@@ -4,7 +4,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { oAuthProxy } from "better-auth/plugins";
 
-import { db } from "@acme/db/client";
+import { db } from "@descope-trust-center/db/client";
 
 export function initAuth<
   TExtraPlugins extends BetterAuthPlugin[] = [],

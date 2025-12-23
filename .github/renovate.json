@@ -3,7 +3,7 @@
   "extends": ["config:base"],
   "packageRules": [
     {
-      "matchPackagePatterns": ["^@acme/"],
+      "matchPackagePatterns": ["^@descope-trust-center/"],
       "enabled": false
     }
   ],

@@ -1,5 +1,5 @@
 {
-  "name": "@acme/auth",
+  "name": "@descope-trust-center/auth",
   "private": true,
   "type": "module",
   "exports": {
@@ -17,20 +17,20 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@acme/db": "workspace:*",
     "@better-auth/expo": "catalog:",
+    "@descope-trust-center/db": "workspace:*",
     "@t3-oss/env-core": "^0.13.8",
     "better-auth": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@acme/eslint-config": "workspace:*",
-    "@acme/prettier-config": "workspace:*",
-    "@acme/tsconfig": "workspace:*",
     "@better-auth/cli": "catalog:",
+    "@descope-trust-center/eslint-config": "workspace:*",
+    "@descope-trust-center/prettier-config": "workspace:*",
+    "@descope-trust-center/tsconfig": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@acme/prettier-config"
+  "prettier": "@descope-trust-center/prettier-config"
 }

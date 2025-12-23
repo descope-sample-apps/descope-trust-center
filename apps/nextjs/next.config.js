@@ -9,11 +9,11 @@ await jiti.import("./src/env");
 const config = {
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
-    "@acme/api",
-    "@acme/auth",
-    "@acme/db",
-    "@acme/ui",
-    "@acme/validators",
+    "@descope-trust-center/api",
+    "@descope-trust-center/auth",
+    "@descope-trust-center/db",
+    "@descope-trust-center/ui",
+    "@descope-trust-center/validators",
   ],
 
   /** We already do linting and typechecking as separate tasks in CI */

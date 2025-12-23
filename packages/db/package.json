@@ -1,5 +1,5 @@
 {
-  "name": "@acme/db",
+  "name": "@descope-trust-center/db",
   "private": true,
   "type": "module",
   "exports": {
@@ -35,13 +35,13 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@acme/eslint-config": "workspace:*",
-    "@acme/prettier-config": "workspace:*",
-    "@acme/tsconfig": "workspace:*",
+    "@descope-trust-center/eslint-config": "workspace:*",
+    "@descope-trust-center/prettier-config": "workspace:*",
+    "@descope-trust-center/tsconfig": "workspace:*",
     "drizzle-kit": "^0.31.5",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@acme/prettier-config"
+  "prettier": "@descope-trust-center/prettier-config"
 }
