@@ -16,7 +16,7 @@ const config = {
     "^(expo(.*)$)|^(expo$)",
     "<THIRD_PARTY_MODULES>",
     "",
-    "<TYPES>^@acme",
+    "<TYPES>^@descope-trust-center",
     "^@descope-trust-center/(.*)$",
     "",
     "<TYPES>^[.|..|~]",
