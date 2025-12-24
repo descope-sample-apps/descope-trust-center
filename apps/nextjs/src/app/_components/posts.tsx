@@ -1,5 +1,6 @@
 "use client";
 
+import type { RouterOutputs } from "@descope-trust-center/api";
 import { useForm } from "@tanstack/react-form";
 import {
   useMutation,
@@ -7,7 +8,6 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 
-import type { RouterOutputs } from "@descope-trust-center/api";
 import { CreatePostSchema } from "@descope-trust-center/db/schema";
 import { cn } from "@descope-trust-center/ui";
 import { Button } from "@descope-trust-center/ui/button";

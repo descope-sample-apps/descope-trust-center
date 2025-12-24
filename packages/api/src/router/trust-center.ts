@@ -1,6 +1,6 @@
-import type { TRPCRouterRecord } from "@trpc/server";
 import * as fs from "fs";
 import * as path from "path";
+import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
@@ -138,7 +138,8 @@ export const trustCenterRouter = {
 
       return {
         success: true,
-        message: "Thank you for your inquiry. We will respond within 2 business days.",
+        message:
+          "Thank you for your inquiry. We will respond within 2 business days.",
       };
     }),
 
@@ -161,7 +162,8 @@ export const trustCenterRouter = {
 
       return {
         success: true,
-        message: "Your document access request has been submitted. Our security team will review and respond within 3 business days.",
+        message:
+          "Your document access request has been submitted. Our security team will review and respond within 3 business days.",
       };
     }),
 } satisfies TRPCRouterRecord;

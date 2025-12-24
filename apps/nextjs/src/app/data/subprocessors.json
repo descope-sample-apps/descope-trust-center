@@ -3,7 +3,12 @@
     "id": "aws",
     "name": "Amazon Web Services (AWS)",
     "purpose": "Cloud infrastructure and hosting",
-    "dataProcessed": ["Authentication data", "User profiles", "Session data", "Logs"],
+    "dataProcessed": [
+      "Authentication data",
+      "User profiles",
+      "Session data",
+      "Logs"
+    ],
     "location": "United States (us-east-1, us-west-2)",
     "contractUrl": "https://aws.amazon.com/compliance/data-processing-addendum/",
     "status": "active"

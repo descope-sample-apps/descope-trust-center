@@ -1,9 +1,8 @@
 "use client";
 
+import type { FAQ, FAQCategory } from "@descope-trust-center/validators";
 import { useCallback, useState } from "react";
 import Link from "next/link";
-
-import type { FAQ, FAQCategory } from "@acme/validators/trust-center";
 
 import { cn } from "@descope-trust-center/ui";
 
@@ -65,14 +64,14 @@ export function FAQSection() {
   return (
     <section
       aria-labelledby="faq-heading"
-      className="bg-white px-4 py-16 dark:bg-slate-900 sm:px-6 md:py-24 lg:px-8"
+      className="bg-white px-4 py-16 sm:px-6 md:py-24 lg:px-8 dark:bg-slate-900"
     >
       <div className="mx-auto max-w-3xl">
         {/* Section Header */}
         <div className="text-center">
           <h2
             id="faq-heading"
-            className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
+            className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white"
           >
             Frequently Asked Questions
           </h2>
@@ -84,14 +83,17 @@ export function FAQSection() {
 
         {/* Category Tabs */}
         <div className="mt-10">
-          <nav aria-label="FAQ categories" className="flex flex-wrap justify-center gap-2">
+          <nav
+            aria-label="FAQ categories"
+            className="flex flex-wrap justify-center gap-2"
+          >
             {CATEGORIES.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
                 className={cn(
                   "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 dark:focus-visible:ring-slate-300",
+                  "focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-slate-300",
                   activeCategory === category.id
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
@@ -166,18 +168,18 @@ function FAQItem({
         aria-controls={answerId}
         className={cn(
           "flex w-full items-start justify-between gap-4 text-left",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 dark:focus-visible:ring-slate-300",
-          "group"
+          "focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-slate-300",
+          "group",
         )}
       >
-        <span className="text-base font-medium text-slate-900 group-hover:text-slate-700 dark:text-white dark:group-hover:text-slate-200 sm:text-lg">
+        <span className="text-base font-medium text-slate-900 group-hover:text-slate-700 sm:text-lg dark:text-white dark:group-hover:text-slate-200">
           {faq.question}
         </span>
         <span
           className={cn(
             "flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800",
             "transition-transform duration-200 motion-reduce:transition-none",
-            isExpanded && "rotate-180"
+            isExpanded && "rotate-180",
           )}
           aria-hidden="true"
         >
@@ -190,7 +192,9 @@ function FAQItem({
         aria-labelledby={`faq-question-${faq.id}`}
         className={cn(
           "grid transition-all duration-300 ease-in-out motion-reduce:transition-none",
-          isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          isExpanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0",
         )}
       >
         <div className="overflow-hidden">

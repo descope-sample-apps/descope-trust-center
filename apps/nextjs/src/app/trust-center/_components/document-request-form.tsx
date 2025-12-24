@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 import { cn } from "@descope-trust-center/ui";
 import { Button } from "@descope-trust-center/ui/button";
@@ -8,7 +9,6 @@ import { Input } from "@descope-trust-center/ui/input";
 import { Label } from "@descope-trust-center/ui/label";
 
 import { useTRPC } from "~/trpc/react";
-import { useMutation } from "@tanstack/react-query";
 
 interface DocumentRequestFormProps {
   /** Document ID to request access to */
@@ -119,10 +119,10 @@ export function DocumentRequestForm({
           type="button"
           onClick={handleClose}
           className={cn(
-            "absolute right-4 top-4 rounded-full p-1",
+            "absolute top-4 right-4 rounded-full p-1",
             "text-slate-400 hover:bg-slate-100 hover:text-slate-600",
             "dark:hover:bg-slate-800 dark:hover:text-slate-300",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300",
+            "focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:outline-none dark:focus-visible:ring-slate-300",
           )}
           aria-label="Close dialog"
         >
@@ -216,7 +216,7 @@ export function DocumentRequestForm({
                   className={cn(
                     "mt-1.5 w-full rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm",
                     "placeholder:text-slate-400 dark:border-slate-700 dark:placeholder:text-slate-500",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300",
+                    "focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:outline-none dark:focus-visible:ring-slate-300",
                     "resize-none",
                   )}
                 />
@@ -242,7 +242,9 @@ export function DocumentRequestForm({
                   disabled={requestMutation.isPending}
                   className="flex-1"
                 >
-                  {requestMutation.isPending ? "Submitting..." : "Submit Request"}
+                  {requestMutation.isPending
+                    ? "Submitting..."
+                    : "Submit Request"}
                 </Button>
               </div>
             </form>

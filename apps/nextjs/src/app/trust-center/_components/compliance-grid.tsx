@@ -1,11 +1,15 @@
 "use client";
 
+import type {
+  Certification,
+  CertificationStatus,
+} from "@descope-trust-center/validators";
 import { useState } from "react";
-import type { Certification, CertificationStatus } from "@acme/validators";
-import { Button } from "@acme/ui/button";
-import { cn } from "@acme/ui";
 
-import certificationsData from "@/app/data/certifications.json";
+import { cn } from "@descope-trust-center/ui";
+import { Button } from "@descope-trust-center/ui/button";
+
+import certificationsData from "~/app/data/certifications.json";
 
 type FilterStatus = "all" | CertificationStatus;
 
@@ -25,15 +29,30 @@ function getStatusBadgeStyles(status: CertificationStatus): string {
 
   switch (status) {
     case "active":
-      return cn(baseStyles, "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400");
+      return cn(
+        baseStyles,
+        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+      );
     case "in-progress":
-      return cn(baseStyles, "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400");
+      return cn(
+        baseStyles,
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+      );
     case "expired":
-      return cn(baseStyles, "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400");
+      return cn(
+        baseStyles,
+        "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+      );
     case "pending-renewal":
-      return cn(baseStyles, "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400");
+      return cn(
+        baseStyles,
+        "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+      );
     default:
-      return cn(baseStyles, "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300");
+      return cn(
+        baseStyles,
+        "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+      );
   }
 }
 
@@ -98,9 +117,9 @@ function CertificationCard({
   return (
     <article
       className={cn(
-        "group relative flex flex-col rounded-lg border bg-card p-6 shadow-sm transition-all",
-        "hover:shadow-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-        isExpanded && "ring-2 ring-primary"
+        "group bg-card relative flex flex-col rounded-lg border p-6 shadow-sm transition-all",
+        "focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2 hover:shadow-md",
+        isExpanded && "ring-primary ring-2",
       )}
       aria-labelledby={`cert-name-${certification.id}`}
     >
@@ -109,14 +128,14 @@ function CertificationCard({
         <div className="flex items-center gap-3">
           {/* Logo placeholder - uses first letter as fallback */}
           <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-lg font-semibold text-muted-foreground"
+            className="bg-muted text-muted-foreground flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-lg font-semibold"
             aria-hidden="true"
           >
             {certification.name.charAt(0).toUpperCase()}
           </div>
           <h3
             id={`cert-name-${certification.id}`}
-            className="text-lg font-semibold leading-tight"
+            className="text-lg leading-tight font-semibold"
           >
             {certification.name}
           </h3>
@@ -131,7 +150,7 @@ function CertificationCard({
       </div>
 
       {/* Description */}
-      <p className="mb-4 flex-1 text-sm text-muted-foreground">
+      <p className="text-muted-foreground mb-4 flex-1 text-sm">
         {certification.description}
       </p>
 
@@ -141,7 +160,7 @@ function CertificationCard({
           id={`cert-details-${certification.id}`}
           className={cn(
             "overflow-hidden transition-all duration-200",
-            isExpanded ? "mb-4 max-h-96 opacity-100" : "max-h-0 opacity-0"
+            isExpanded ? "mb-4 max-h-96 opacity-100" : "max-h-0 opacity-0",
           )}
           aria-hidden={!isExpanded}
         >
@@ -149,7 +168,9 @@ function CertificationCard({
             {lastAuditFormatted && (
               <p className="text-sm">
                 <span className="font-medium">Last Audited:</span>{" "}
-                <span className="text-muted-foreground">{lastAuditFormatted}</span>
+                <span className="text-muted-foreground">
+                  {lastAuditFormatted}
+                </span>
               </p>
             )}
             {expiryFormatted && (
@@ -158,7 +179,8 @@ function CertificationCard({
                 <span
                   className={cn(
                     "text-muted-foreground",
-                    expiringSoon && "font-medium text-yellow-600 dark:text-yellow-400"
+                    expiringSoon &&
+                      "font-medium text-yellow-600 dark:text-yellow-400",
                   )}
                 >
                   {expiryFormatted}
@@ -239,7 +261,9 @@ export function ComplianceGrid() {
   const sortedCertifications = [...filteredCertifications].sort((a, b) => {
     // Expired first, then active with expiry, then others
     if (a.expiryDate && b.expiryDate) {
-      return new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime();
+      return (
+        new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
+      );
     }
     if (a.expiryDate) return -1;
     if (b.expiryDate) return 1;

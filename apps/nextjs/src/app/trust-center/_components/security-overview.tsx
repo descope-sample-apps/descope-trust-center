@@ -91,7 +91,8 @@ const securityPractices: SecurityPractice[] = [
       </svg>
     ),
     title: "Infrastructure Security",
-    description: "Built on SOC 2 certified cloud infrastructure with redundancy.",
+    description:
+      "Built on SOC 2 certified cloud infrastructure with redundancy.",
     highlights: [
       "SOC 2 Type II certified cloud",
       "Multi-region deployment (US, EU)",
@@ -185,24 +186,24 @@ const securityPractices: SecurityPractice[] = [
  */
 function SecurityPracticeCard({ practice }: { practice: SecurityPractice }) {
   return (
-    <article className="rounded-lg border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+    <article className="border-border bg-card rounded-lg border p-6 shadow-sm transition-shadow hover:shadow-md">
+      <div className="bg-primary/10 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
         {practice.icon}
       </div>
-      <h3 className="mb-2 text-lg font-semibold text-foreground">
+      <h3 className="text-foreground mb-2 text-lg font-semibold">
         {practice.title}
       </h3>
-      <p className="mb-4 text-sm text-muted-foreground">
+      <p className="text-muted-foreground mb-4 text-sm">
         {practice.description}
       </p>
       <ul className="space-y-2" aria-label={`${practice.title} highlights`}>
         {practice.highlights.map((highlight) => (
           <li
             key={highlight}
-            className="flex items-start gap-2 text-sm text-foreground"
+            className="text-foreground flex items-start gap-2 text-sm"
           >
             <svg
-              className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary"
+              className="text-primary mt-0.5 h-4 w-4 flex-shrink-0"
               fill="currentColor"
               viewBox="0 0 20 20"
               aria-hidden="true"
@@ -232,11 +233,11 @@ export function SecurityOverview() {
         <header className="mb-10 text-center">
           <h2
             id="security-overview-heading"
-            className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+            className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl"
           >
             Our Security Practices
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+          <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-lg">
             Security is at the core of everything we do. Learn how Descope
             protects your data and maintains the highest standards of security.
           </p>

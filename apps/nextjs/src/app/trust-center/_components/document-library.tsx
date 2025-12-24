@@ -1,13 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import Link from "next/link";
-
 import type {
   Document,
   DocumentAccessLevel,
   DocumentCategory,
-} from "@acme/validators/trust-center";
+} from "@descope-trust-center/validators";
+import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 
 import { cn } from "@descope-trust-center/ui";
 import { Button, buttonVariants } from "@descope-trust-center/ui/button";
@@ -60,8 +59,7 @@ const ACCESS_LEVEL_CONFIG: Record<
   },
   "nda-required": {
     label: "NDA Required",
-    className:
-      "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+    className: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
   },
 };
 
@@ -101,7 +99,7 @@ export function DocumentLibrary() {
         (doc) =>
           doc.title.toLowerCase().includes(query) ||
           doc.description.toLowerCase().includes(query) ||
-          doc.tags?.some((tag) => tag.toLowerCase().includes(query)),
+          doc.tags?.some((tag: string) => tag.toLowerCase().includes(query)),
       );
     }
 
@@ -131,14 +129,14 @@ export function DocumentLibrary() {
     <section
       id="documents"
       aria-labelledby="documents-heading"
-      className="bg-slate-50 px-4 py-16 dark:bg-slate-950 sm:px-6 md:py-24 lg:px-8"
+      className="bg-slate-50 px-4 py-16 sm:px-6 md:py-24 lg:px-8 dark:bg-slate-950"
     >
       <div className="mx-auto max-w-6xl">
         {/* Section Header */}
         <div className="text-center">
           <h2
             id="documents-heading"
-            className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
+            className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white"
           >
             Document Library
           </h2>
@@ -151,23 +149,23 @@ export function DocumentLibrary() {
         {/* Search Bar */}
         <div className="mt-8">
           <div className="relative mx-auto max-w-md">
-            <SearchIcon className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+            <SearchIcon className="absolute top-1/2 left-3 size-5 -translate-y-1/2 text-slate-400" />
             <Input
               type="search"
               placeholder="Search documents..."
               value={searchQuery}
               onChange={handleSearchChange}
               aria-label="Search documents"
-              className="pl-10 pr-10"
+              className="pr-10 pl-10"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={handleClearSearch}
                 className={cn(
-                  "absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5",
+                  "absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-0.5",
                   "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950",
+                  "focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:outline-none",
                 )}
                 aria-label="Clear search"
               >
@@ -189,7 +187,7 @@ export function DocumentLibrary() {
                 onClick={() => setActiveCategory(category.id)}
                 className={cn(
                   "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 dark:focus-visible:ring-slate-300",
+                  "focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-slate-300",
                   activeCategory === category.id
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
                     : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
@@ -265,7 +263,10 @@ function DocumentCard({
   document: Document;
   onRequestAccess: (doc: Document) => void;
 }) {
-  const accessConfig = ACCESS_LEVEL_CONFIG[document.accessLevel];
+  const accessConfig = ACCESS_LEVEL_CONFIG[document.accessLevel] ?? {
+    label: "Unknown",
+    className: "bg-slate-100 text-slate-700",
+  };
   const categoryColor = CATEGORY_COLORS[document.category];
 
   const formattedDate = useMemo(() => {

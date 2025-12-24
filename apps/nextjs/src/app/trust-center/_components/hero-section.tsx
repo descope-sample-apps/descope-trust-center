@@ -1,6 +1,5 @@
+import type { Certification } from "@descope-trust-center/validators";
 import Link from "next/link";
-
-import type { Certification } from "@acme/validators/trust-center";
 
 import { cn } from "@descope-trust-center/ui";
 import { buttonVariants } from "@descope-trust-center/ui/button";
@@ -35,22 +34,21 @@ export function HeroSection() {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="bg-gradient-to-b from-slate-50 to-white px-4 py-16 dark:from-slate-950 dark:to-slate-900 sm:px-6 md:py-24 lg:px-8"
+      className="bg-gradient-to-b from-slate-50 to-white px-4 py-16 sm:px-6 md:py-24 lg:px-8 dark:from-slate-950 dark:to-slate-900"
     >
       <div className="mx-auto max-w-4xl text-center">
         {/* Headline */}
         <h1
           id="hero-heading"
-          className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl md:text-6xl"
+          className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-white"
         >
           Security & Compliance at Descope
         </h1>
 
         {/* Subheadline */}
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300 sm:text-xl">
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 sm:text-xl dark:text-slate-300">
           Your trust is our foundation. We maintain rigorous security standards
-          and compliance certifications to ensure your data is always
-          protected.
+          and compliance certifications to ensure your data is always protected.
         </p>
 
         {/* CTA Button */}
@@ -65,7 +63,7 @@ export function HeroSection() {
 
         {/* Trust Badges */}
         <div className="mt-12">
-          <p className="mb-4 text-sm font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="mb-4 text-sm font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400">
             Trusted Certifications
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
@@ -79,7 +77,7 @@ export function HeroSection() {
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
           {TRUST_STATS.map((stat) => (
             <div key={stat.label} className="flex flex-col items-center">
-              <span className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
+              <span className="text-3xl font-bold text-slate-900 sm:text-4xl dark:text-white">
                 {stat.value}
               </span>
               <span className="mt-1 text-sm text-slate-600 dark:text-slate-400">

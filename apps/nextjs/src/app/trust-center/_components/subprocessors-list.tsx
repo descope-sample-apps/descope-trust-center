@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { Subprocessor, SubprocessorStatus } from "@acme/validators";
+import type {
+  Subprocessor,
+  SubprocessorStatus,
+} from "@descope-trust-center/validators";
+import { useMemo, useState } from "react";
 
-import { cn } from "@acme/ui";
-import { Input } from "@acme/ui/input";
+import { cn } from "@descope-trust-center/ui";
+import { Input } from "@descope-trust-center/ui/input";
 
 import subprocessorsData from "~/app/data/subprocessors.json";
 
@@ -43,15 +46,11 @@ function getStatusBadgeClasses(status: SubprocessorStatus): string {
 /**
  * Individual subprocessor card for mobile view
  */
-function SubprocessorCard({
-  subprocessor,
-}: {
-  subprocessor: Subprocessor;
-}) {
+function SubprocessorCard({ subprocessor }: { subprocessor: Subprocessor }) {
   return (
-    <article className="rounded-lg border border-border bg-card p-4 shadow-sm">
+    <article className="border-border bg-card rounded-lg border p-4 shadow-sm">
       <div className="mb-3 flex items-start justify-between gap-2">
-        <h3 className="font-semibold text-card-foreground">
+        <h3 className="text-card-foreground font-semibold">
           {subprocessor.name}
         </h3>
         <span
@@ -66,17 +65,17 @@ function SubprocessorCard({
 
       <dl className="space-y-2 text-sm">
         <div>
-          <dt className="font-medium text-muted-foreground">Purpose</dt>
+          <dt className="text-muted-foreground font-medium">Purpose</dt>
           <dd className="text-card-foreground">{subprocessor.purpose}</dd>
         </div>
         <div>
-          <dt className="font-medium text-muted-foreground">Data Processed</dt>
+          <dt className="text-muted-foreground font-medium">Data Processed</dt>
           <dd className="text-card-foreground">
             {subprocessor.dataProcessed.join(", ")}
           </dd>
         </div>
         <div>
-          <dt className="font-medium text-muted-foreground">Location</dt>
+          <dt className="text-muted-foreground font-medium">Location</dt>
           <dd className="text-card-foreground">{subprocessor.location}</dd>
         </div>
         {subprocessor.contractUrl && (
@@ -87,7 +86,7 @@ function SubprocessorCard({
                 href={subprocessor.contractUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="text-primary focus-visible:ring-ring inline-flex items-center gap-1 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               >
                 View DPA
                 <span className="sr-only">
@@ -161,20 +160,17 @@ export function SubprocessorsList() {
   const totalCount = subprocessors.length;
 
   return (
-    <section
-      aria-labelledby="subprocessors-heading"
-      className="py-12 md:py-16"
-    >
+    <section aria-labelledby="subprocessors-heading" className="py-12 md:py-16">
       <div className="container">
         {/* Section Header */}
         <div className="mb-8 max-w-3xl">
           <h2
             id="subprocessors-heading"
-            className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl"
+            className="text-foreground mb-4 text-3xl font-bold tracking-tight md:text-4xl"
           >
             Our Subprocessors
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             We work with trusted third-party service providers to deliver our
             platform. These subprocessors may process customer data on our
             behalf. We carefully vet each provider to ensure they meet our
@@ -192,7 +188,7 @@ export function SubprocessorsList() {
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg
                 aria-hidden="true"
-                className="size-4 text-muted-foreground"
+                className="text-muted-foreground size-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -210,7 +206,9 @@ export function SubprocessorsList() {
               type="search"
               placeholder="Search vendors..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchQuery(e.target.value)
+              }
               className="pl-9"
             />
           </div>
@@ -228,7 +226,7 @@ export function SubprocessorsList() {
                 onClick={() => setStatusFilter(status)}
                 aria-pressed={statusFilter === status}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  "focus-visible:ring-ring rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                   statusFilter === status
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -241,7 +239,7 @@ export function SubprocessorsList() {
         </div>
 
         {/* Results Count */}
-        <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+        <p className="text-muted-foreground mb-4 text-sm" aria-live="polite">
           {searchQuery || statusFilter !== "all"
             ? `${resultsCount} vendor${resultsCount !== 1 ? "s" : ""} found`
             : `${totalCount} vendor${totalCount !== 1 ? "s" : ""}`}
@@ -251,7 +249,7 @@ export function SubprocessorsList() {
         {filteredSubprocessors.length === 0 ? (
           <div
             role="status"
-            className="rounded-lg border border-border bg-muted/50 py-12 text-center"
+            className="border-border bg-muted/50 rounded-lg border py-12 text-center"
           >
             <p className="text-muted-foreground">
               No vendors found matching your search
@@ -260,64 +258,64 @@ export function SubprocessorsList() {
         ) : (
           <>
             {/* Desktop Table */}
-            <div className="hidden overflow-hidden rounded-lg border border-border md:block">
+            <div className="border-border hidden overflow-hidden rounded-lg border md:block">
               <table className="w-full">
                 <caption className="sr-only">
                   List of subprocessors authorized to process customer data
                 </caption>
-                <thead className="sticky top-0 bg-muted/50">
+                <thead className="bg-muted/50 sticky top-0">
                   <tr>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-sm font-semibold text-foreground"
+                      className="text-foreground px-4 py-3 text-left text-sm font-semibold"
                     >
                       Vendor Name
                     </th>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-sm font-semibold text-foreground"
+                      className="text-foreground px-4 py-3 text-left text-sm font-semibold"
                     >
                       Purpose
                     </th>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-sm font-semibold text-foreground"
+                      className="text-foreground px-4 py-3 text-left text-sm font-semibold"
                     >
                       Data Processed
                     </th>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-sm font-semibold text-foreground"
+                      className="text-foreground px-4 py-3 text-left text-sm font-semibold"
                     >
                       Location
                     </th>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-sm font-semibold text-foreground"
+                      className="text-foreground px-4 py-3 text-left text-sm font-semibold"
                     >
                       Status
                     </th>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-sm font-semibold text-foreground"
+                      className="text-foreground px-4 py-3 text-left text-sm font-semibold"
                     >
                       Contract
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border bg-card">
+                <tbody className="divide-border bg-card divide-y">
                   {filteredSubprocessors.map((sp) => (
                     <tr key={sp.id} className="hover:bg-muted/30">
-                      <td className="px-4 py-3 text-sm font-medium text-card-foreground">
+                      <td className="text-card-foreground px-4 py-3 text-sm font-medium">
                         {sp.name}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                      <td className="text-muted-foreground px-4 py-3 text-sm">
                         {sp.purpose}
                       </td>
-                      <td className="max-w-xs px-4 py-3 text-sm text-muted-foreground">
+                      <td className="text-muted-foreground max-w-xs px-4 py-3 text-sm">
                         {sp.dataProcessed.join(", ")}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                      <td className="text-muted-foreground px-4 py-3 text-sm">
                         {sp.location}
                       </td>
                       <td className="px-4 py-3">
@@ -336,7 +334,7 @@ export function SubprocessorsList() {
                             href={sp.contractUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            className="text-primary focus-visible:ring-ring inline-flex items-center gap-1 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                           >
                             View DPA
                             <span className="sr-only">
@@ -377,14 +375,14 @@ export function SubprocessorsList() {
         )}
 
         {/* Subscribe to Updates (placeholder for v2) */}
-        <div className="mt-8 rounded-lg border border-border bg-muted/30 p-4 text-center">
-          <p className="mb-2 text-sm font-medium text-foreground">
+        <div className="border-border bg-muted/30 mt-8 rounded-lg border p-4 text-center">
+          <p className="text-foreground mb-2 text-sm font-medium">
             Stay informed about subprocessor changes
           </p>
           <button
             type="button"
             disabled
-            className="inline-flex items-center gap-2 rounded-md bg-primary/50 px-4 py-2 text-sm font-medium text-primary-foreground opacity-60"
+            className="bg-primary/50 text-primary-foreground inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium opacity-60"
             aria-label="Subscribe to updates (coming soon)"
           >
             <svg
@@ -402,7 +400,7 @@ export function SubprocessorsList() {
               />
             </svg>
             Subscribe to Updates
-            <span className="ml-1 rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">
+            <span className="bg-accent text-accent-foreground ml-1 rounded px-1.5 py-0.5 text-xs">
               Coming Soon
             </span>
           </button>

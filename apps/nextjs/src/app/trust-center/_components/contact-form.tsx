@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useId, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
 
+import { cn } from "@descope-trust-center/ui";
 import { Button } from "@descope-trust-center/ui/button";
 import {
   Field,
@@ -13,10 +15,8 @@ import {
 } from "@descope-trust-center/ui/field";
 import { Input } from "@descope-trust-center/ui/input";
 import { Label } from "@descope-trust-center/ui/label";
-import { cn } from "@descope-trust-center/ui";
 
 import { useTRPC } from "~/trpc/react";
-import { useMutation } from "@tanstack/react-query";
 
 /**
  * Request type options for the contact form dropdown
@@ -45,9 +45,12 @@ const ContactFormSchema = z.object({
     .string()
     .min(1, "Company is required")
     .max(100, "Company must be 100 characters or less"),
-  requestType: z.enum(["general", "compliance", "security-report", "partnership", "other"], {
-    error: "Please select a request type",
-  }),
+  requestType: z.enum(
+    ["general", "compliance", "security-report", "partnership", "other"],
+    {
+      error: "Please select a request type",
+    },
+  ),
   message: z
     .string()
     .min(10, "Please provide more detail (at least 10 characters)")
@@ -104,11 +107,12 @@ export function ContactForm() {
       },
       onError: (error) => {
         setSubmitError(
-          error.message || "Something went wrong. Please try again or email us at security@descope.com"
+          error.message ||
+            "Something went wrong. Please try again or email us at security@descope.com",
         );
         setSubmitSuccess(false);
       },
-    })
+    }),
   );
 
   /**
@@ -123,7 +127,7 @@ export function ContactForm() {
       }
       return undefined;
     },
-    []
+    [],
   );
 
   /**
@@ -148,7 +152,11 @@ export function ContactForm() {
    */
   const handleChange = useCallback(
     (field: keyof ContactFormData) =>
-      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      (
+        e: React.ChangeEvent<
+          HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        >,
+      ) => {
         const value = e.target.value;
         setFormData((prev) => ({ ...prev, [field]: value }));
 
@@ -158,7 +166,7 @@ export function ContactForm() {
           setFieldErrors((prev) => ({ ...prev, [field]: error }));
         }
       },
-    [touched, validateField]
+    [touched, validateField],
   );
 
   /**
@@ -170,7 +178,7 @@ export function ContactForm() {
       const error = validateField(field, formData[field]);
       setFieldErrors((prev) => ({ ...prev, [field]: error }));
     },
-    [formData, validateField]
+    [formData, validateField],
   );
 
   /**
@@ -200,7 +208,7 @@ export function ContactForm() {
         message: `[${formData.requestType.toUpperCase()}] ${formData.message}`,
       });
     },
-    [formData, validateForm, submitMutation]
+    [formData, validateForm, submitMutation],
   );
 
   /**
@@ -232,14 +240,14 @@ export function ContactForm() {
   return (
     <section
       aria-labelledby="contact-heading"
-      className="bg-slate-50 px-4 py-16 dark:bg-slate-800/50 sm:px-6 md:py-24 lg:px-8"
+      className="bg-slate-50 px-4 py-16 sm:px-6 md:py-24 lg:px-8 dark:bg-slate-800/50"
     >
       <div className="mx-auto max-w-xl">
         {/* Section Header */}
         <div className="text-center">
           <h2
             id="contact-heading"
-            className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
+            className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white"
           >
             Contact Our Security Team
           </h2>
@@ -319,7 +327,9 @@ export function ContactForm() {
                   required
                   aria-required="true"
                   aria-invalid={!!fieldErrors.name}
-                  aria-describedby={fieldErrors.name ? `${nameId}-error` : undefined}
+                  aria-describedby={
+                    fieldErrors.name ? `${nameId}-error` : undefined
+                  }
                   value={formData.name}
                   onChange={handleChange("name")}
                   onBlur={handleBlur("name")}
@@ -328,7 +338,9 @@ export function ContactForm() {
                   className="h-11 text-base"
                 />
                 {fieldErrors.name && (
-                  <FieldError id={`${nameId}-error`}>{fieldErrors.name}</FieldError>
+                  <FieldError id={`${nameId}-error`}>
+                    {fieldErrors.name}
+                  </FieldError>
                 )}
               </Field>
 
@@ -345,7 +357,9 @@ export function ContactForm() {
                   required
                   aria-required="true"
                   aria-invalid={!!fieldErrors.email}
-                  aria-describedby={fieldErrors.email ? `${emailId}-error` : undefined}
+                  aria-describedby={
+                    fieldErrors.email ? `${emailId}-error` : undefined
+                  }
                   value={formData.email}
                   onChange={handleChange("email")}
                   onBlur={handleBlur("email")}
@@ -354,7 +368,9 @@ export function ContactForm() {
                   className="h-11 text-base"
                 />
                 {fieldErrors.email && (
-                  <FieldError id={`${emailId}-error`}>{fieldErrors.email}</FieldError>
+                  <FieldError id={`${emailId}-error`}>
+                    {fieldErrors.email}
+                  </FieldError>
                 )}
               </Field>
 
@@ -371,7 +387,9 @@ export function ContactForm() {
                   required
                   aria-required="true"
                   aria-invalid={!!fieldErrors.company}
-                  aria-describedby={fieldErrors.company ? `${companyId}-error` : undefined}
+                  aria-describedby={
+                    fieldErrors.company ? `${companyId}-error` : undefined
+                  }
                   value={formData.company}
                   onChange={handleChange("company")}
                   onBlur={handleBlur("company")}
@@ -380,7 +398,9 @@ export function ContactForm() {
                   className="h-11 text-base"
                 />
                 {fieldErrors.company && (
-                  <FieldError id={`${companyId}-error`}>{fieldErrors.company}</FieldError>
+                  <FieldError id={`${companyId}-error`}>
+                    {fieldErrors.company}
+                  </FieldError>
                 )}
               </Field>
 
@@ -396,7 +416,9 @@ export function ContactForm() {
                   aria-required="true"
                   aria-invalid={!!fieldErrors.requestType}
                   aria-describedby={
-                    fieldErrors.requestType ? `${requestTypeId}-error` : undefined
+                    fieldErrors.requestType
+                      ? `${requestTypeId}-error`
+                      : undefined
                   }
                   value={formData.requestType}
                   onChange={handleChange("requestType")}
@@ -408,7 +430,7 @@ export function ContactForm() {
                     "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
                     "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
                     fieldErrors.requestType &&
-                      "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                      "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
                   )}
                 >
                   {REQUEST_TYPES.map((type) => (
@@ -435,7 +457,9 @@ export function ContactForm() {
                   required
                   aria-required="true"
                   aria-invalid={!!fieldErrors.message}
-                  aria-describedby={fieldErrors.message ? `${messageId}-error` : undefined}
+                  aria-describedby={
+                    fieldErrors.message ? `${messageId}-error` : undefined
+                  }
                   value={formData.message}
                   onChange={handleChange("message")}
                   onBlur={handleBlur("message")}
@@ -443,20 +467,22 @@ export function ContactForm() {
                   disabled={isSubmitting}
                   rows={5}
                   className={cn(
-                    "w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none resize-y",
+                    "w-full min-w-0 resize-y rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none",
                     "placeholder:text-muted-foreground",
                     "border-input dark:bg-input/30",
                     "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
                     "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
                     fieldErrors.message &&
-                      "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                      "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
                   )}
                 />
                 <FieldDescription>
                   Minimum 10 characters. Maximum 5000 characters.
                 </FieldDescription>
                 {fieldErrors.message && (
-                  <FieldError id={`${messageId}-error`}>{fieldErrors.message}</FieldError>
+                  <FieldError id={`${messageId}-error`}>
+                    {fieldErrors.message}
+                  </FieldError>
                 )}
               </Field>
             </FieldGroup>
