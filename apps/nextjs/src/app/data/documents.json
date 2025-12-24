@@ -1,0 +1,55 @@
+[
+  {
+    "id": "security-whitepaper",
+    "title": "Security Whitepaper",
+    "category": "security-policy",
+    "description": "Comprehensive overview of Descope's security architecture, controls, and practices.",
+    "accessLevel": "public",
+    "fileUrl": "/documents/descope-security-whitepaper.pdf",
+    "fileSize": "2.4 MB",
+    "updatedAt": "2024-11-01",
+    "tags": ["security", "architecture", "controls"]
+  },
+  {
+    "id": "soc2-report",
+    "title": "SOC 2 Type II Report",
+    "category": "audit-report",
+    "description": "Full SOC 2 Type II audit report covering security, availability, and confidentiality controls.",
+    "accessLevel": "nda-required",
+    "fileSize": "45 pages",
+    "updatedAt": "2024-09-15",
+    "tags": ["soc2", "audit", "compliance"]
+  },
+  {
+    "id": "dpa",
+    "title": "Data Processing Agreement",
+    "category": "legal",
+    "description": "Standard Data Processing Agreement for customers who need GDPR compliance documentation.",
+    "accessLevel": "login-required",
+    "fileUrl": "/documents/descope-dpa.pdf",
+    "fileSize": "156 KB",
+    "updatedAt": "2024-08-20",
+    "tags": ["gdpr", "dpa", "legal", "privacy"]
+  },
+  {
+    "id": "caiq",
+    "title": "CAIQ Self-Assessment",
+    "category": "questionnaire",
+    "description": "Consensus Assessments Initiative Questionnaire (CAIQ) v4.0 self-assessment for cloud security.",
+    "accessLevel": "login-required",
+    "fileUrl": "/documents/descope-caiq-v4.xlsx",
+    "fileSize": "890 KB",
+    "updatedAt": "2024-10-10",
+    "tags": ["caiq", "csa", "cloud-security", "questionnaire"]
+  },
+  {
+    "id": "penetration-test-summary",
+    "title": "Penetration Test Executive Summary",
+    "category": "audit-report",
+    "description": "Executive summary of our latest third-party penetration test conducted by a qualified security firm.",
+    "accessLevel": "nda-required",
+    "fileSize": "8 pages",
+    "updatedAt": "2024-07-15",
+    "tags": ["pentest", "security", "audit"]
+  }
+]

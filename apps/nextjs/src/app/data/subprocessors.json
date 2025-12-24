@@ -1,0 +1,47 @@
+[
+  {
+    "id": "aws",
+    "name": "Amazon Web Services (AWS)",
+    "purpose": "Cloud infrastructure and hosting",
+    "dataProcessed": ["Authentication data", "User profiles", "Session data", "Logs"],
+    "location": "United States (us-east-1, us-west-2)",
+    "contractUrl": "https://aws.amazon.com/compliance/data-processing-addendum/",
+    "status": "active"
+  },
+  {
+    "id": "gcp",
+    "name": "Google Cloud Platform",
+    "purpose": "Cloud infrastructure and data storage",
+    "dataProcessed": ["Authentication data", "Analytics data"],
+    "location": "United States",
+    "contractUrl": "https://cloud.google.com/terms/data-processing-addendum",
+    "status": "active"
+  },
+  {
+    "id": "datadog",
+    "name": "Datadog",
+    "purpose": "Infrastructure monitoring and observability",
+    "dataProcessed": ["System logs", "Performance metrics", "Error traces"],
+    "location": "United States",
+    "contractUrl": "https://www.datadoghq.com/legal/data-processing-addendum/",
+    "status": "active"
+  },
+  {
+    "id": "sendgrid",
+    "name": "Twilio SendGrid",
+    "purpose": "Transactional email delivery",
+    "dataProcessed": ["Email addresses", "Email content", "Delivery metadata"],
+    "location": "United States",
+    "contractUrl": "https://www.twilio.com/legal/data-protection-addendum",
+    "status": "active"
+  },
+  {
+    "id": "twilio",
+    "name": "Twilio",
+    "purpose": "SMS and voice authentication",
+    "dataProcessed": ["Phone numbers", "SMS content", "Voice call metadata"],
+    "location": "United States",
+    "contractUrl": "https://www.twilio.com/legal/data-protection-addendum",
+    "status": "active"
+  }
+]
