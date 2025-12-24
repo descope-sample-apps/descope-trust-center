@@ -49,9 +49,55 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://trust.descope.com/#organization",
+      name: "Descope",
+      url: "https://descope.com",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://trust.descope.com/descope-logo.svg",
+      },
+      sameAs: [
+        "https://twitter.com/descope",
+        "https://linkedin.com/company/descope",
+        "https://github.com/descope",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://trust.descope.com/#website",
+      url: "https://trust.descope.com",
+      name: "Descope Trust Center",
+      publisher: { "@id": "https://trust.descope.com/#organization" },
+      description:
+        "Security, compliance, and privacy information for Descope. View our certifications, security practices, and compliance documentation.",
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://trust.descope.com/#webpage",
+      url: "https://trust.descope.com",
+      name: "Descope Trust Center - Security & Compliance",
+      isPartOf: { "@id": "https://trust.descope.com/#website" },
+      about: { "@id": "https://trust.descope.com/#organization" },
+      description:
+        "Descope Trust Center provides transparency into our security posture, compliance certifications (SOC 2, ISO 27001, GDPR), and data protection practices.",
+    },
+  ],
+};
+
 export default function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={cn(
           "bg-background text-foreground flex min-h-screen flex-col font-sans antialiased",
