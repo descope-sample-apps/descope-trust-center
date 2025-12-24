@@ -1,41 +1,94 @@
 import { Suspense } from "react";
 
-import { HydrateClient, prefetch, trpc } from "~/trpc/server";
-import { AuthShowcase } from "./_components/auth-showcase";
-import {
-  CreatePostForm,
-  PostCardSkeleton,
-  PostList,
-} from "./_components/posts";
+import { ComplianceGrid } from "./_components/compliance-grid";
+import { ContactForm } from "./_components/contact-form";
+import { DocumentLibrary } from "./_components/document-library";
+import { FAQSection } from "./_components/faq-section";
+import { HeroSection } from "./_components/hero-section";
+import { SecurityOverview } from "./_components/security-overview";
+import { SubprocessorsList } from "./_components/subprocessors-list";
 
-export default function HomePage() {
-  prefetch(trpc.post.all.queryOptions());
-
+/**
+ * Trust Center landing page.
+ * Displays security and compliance information for Descope.
+ *
+ * @remarks
+ * All sections are composed here with proper semantic spacing.
+ * Interactive components are wrapped in Suspense for streaming.
+ */
+export default function TrustCenterPage() {
   return (
-    <HydrateClient>
-      <main className="container h-screen py-16">
-        <div className="flex flex-col items-center justify-center gap-4">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Descope <span className="text-primary">Trust</span> Center
-          </h1>
-          <AuthShowcase />
+    <main className="flex flex-col">
+      {/* Hero - First impression with trust badges and stats */}
+      <HeroSection />
 
-          <CreatePostForm />
-          <div className="w-full max-w-2xl overflow-y-scroll">
-            <Suspense
-              fallback={
-                <div className="flex w-full flex-col gap-4">
-                  <PostCardSkeleton />
-                  <PostCardSkeleton />
-                  <PostCardSkeleton />
-                </div>
-              }
-            >
-              <PostList />
-            </Suspense>
-          </div>
-        </div>
-      </main>
-    </HydrateClient>
+      {/* Compliance Grid - Certification cards with filtering */}
+      <section id="certifications" className="scroll-mt-16">
+        <Suspense
+          fallback={
+            <div className="flex h-64 items-center justify-center">
+              Loading certifications...
+            </div>
+          }
+        >
+          <ComplianceGrid />
+        </Suspense>
+      </section>
+
+      {/* Security Overview - Security practices grid */}
+      <SecurityOverview />
+
+      {/* Document Library - Downloadable security documents */}
+      <section id="documents" className="scroll-mt-16">
+        <Suspense
+          fallback={
+            <div className="flex h-64 items-center justify-center">
+              Loading documents...
+            </div>
+          }
+        >
+          <DocumentLibrary />
+        </Suspense>
+      </section>
+
+      {/* Subprocessors List - Third-party data processors */}
+      <section id="subprocessors" className="scroll-mt-16">
+        <Suspense
+          fallback={
+            <div className="flex h-64 items-center justify-center">
+              Loading subprocessors...
+            </div>
+          }
+        >
+          <SubprocessorsList />
+        </Suspense>
+      </section>
+
+      {/* FAQ Section - Common questions with accordion */}
+      <section id="faq" className="scroll-mt-16">
+        <Suspense
+          fallback={
+            <div className="flex h-64 items-center justify-center">
+              Loading FAQs...
+            </div>
+          }
+        >
+          <FAQSection />
+        </Suspense>
+      </section>
+
+      {/* Contact Form - Security inquiries */}
+      <section id="contact" className="scroll-mt-16">
+        <Suspense
+          fallback={
+            <div className="flex h-64 items-center justify-center">
+              Loading contact form...
+            </div>
+          }
+        >
+          <ContactForm />
+        </Suspense>
+      </section>
+    </main>
   );
 }
