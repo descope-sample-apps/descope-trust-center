@@ -34,7 +34,7 @@ Show a form with fields for user inquiry.
 - Form shows fields: Name, Email, Company, Request Type (dropdown), Message
 - User enters:
   - Name: "Jane Doe"
-  - Email: "jane@acme.com"
+  - Email: "jane@descope-trust-center.com"
   - Company: "Acme Corp"
   - Request Type: "Request Document" (dropdown)
   - Message: "We need the detailed SOC 2 report for our compliance audit."
@@ -268,7 +268,7 @@ Contact Form is fully accessible.
 - User types "Jane Doe"
 - User presses Tab
 - "Email" label is announced
-- User types "jane@acme.com"
+- User types "jane@descope-trust-center.com"
 - All fields are announced with labels
 - User presses Tab to reach submit button
 - Button is announced: "Send Request, button"

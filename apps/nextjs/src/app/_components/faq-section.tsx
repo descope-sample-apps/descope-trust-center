@@ -1,9 +1,9 @@
 "use client";
 
-import type { FAQ, FAQCategory } from "@descope-trust-center/validators";
 import { useCallback, useState } from "react";
 import Link from "next/link";
 
+import type { FAQ, FAQCategory } from "@descope-trust-center/validators";
 import { cn } from "@descope-trust-center/ui";
 
 import faqsData from "~/app/data/faqs.json";

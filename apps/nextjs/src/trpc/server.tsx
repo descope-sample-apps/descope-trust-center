@@ -1,10 +1,10 @@
-import type { AppRouter } from "@descope-trust-center/api";
 import type { TRPCQueryOptions } from "@trpc/tanstack-react-query";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
+import type { AppRouter } from "@descope-trust-center/api";
 import { appRouter, createTRPCContext } from "@descope-trust-center/api";
 
 import { auth } from "~/auth/server";

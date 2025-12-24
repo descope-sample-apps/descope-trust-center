@@ -1,11 +1,11 @@
 "use client";
 
+import { useState } from "react";
+
 import type {
   Certification,
   CertificationStatus,
 } from "@descope-trust-center/validators";
-import { useState } from "react";
-
 import { cn } from "@descope-trust-center/ui";
 import { Button } from "@descope-trust-center/ui/button";
 
@@ -66,7 +66,7 @@ function getStatusLabel(status: CertificationStatus): string {
     expired: "Expired",
     "pending-renewal": "Pending Renewal",
   };
-  return labels[status] ?? status;
+  return labels[status];
 }
 
 /**

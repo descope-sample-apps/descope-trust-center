@@ -1,6 +1,6 @@
-import type { Certification } from "@descope-trust-center/validators";
 import Link from "next/link";
 
+import type { Certification } from "@descope-trust-center/validators";
 import { cn } from "@descope-trust-center/ui";
 import { buttonVariants } from "@descope-trust-center/ui/button";
 

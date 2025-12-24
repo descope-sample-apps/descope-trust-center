@@ -1,13 +1,13 @@
 "use client";
 
+import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
+
 import type {
   Document,
   DocumentAccessLevel,
   DocumentCategory,
 } from "@descope-trust-center/validators";
-import { useCallback, useMemo, useState } from "react";
-import Link from "next/link";
-
 import { cn } from "@descope-trust-center/ui";
 import { Button, buttonVariants } from "@descope-trust-center/ui/button";
 import { Input } from "@descope-trust-center/ui/input";
@@ -263,10 +263,7 @@ function DocumentCard({
   document: Document;
   onRequestAccess: (doc: Document) => void;
 }) {
-  const accessConfig = ACCESS_LEVEL_CONFIG[document.accessLevel] ?? {
-    label: "Unknown",
-    className: "bg-slate-100 text-slate-700",
-  };
+  const accessConfig = ACCESS_LEVEL_CONFIG[document.accessLevel];
   const categoryColor = CATEGORY_COLORS[document.category];
 
   const formattedDate = useMemo(() => {

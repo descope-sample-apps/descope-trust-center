@@ -1,11 +1,11 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 import type {
   Subprocessor,
   SubprocessorStatus,
 } from "@descope-trust-center/validators";
-import { useMemo, useState } from "react";
-
 import { cn } from "@descope-trust-center/ui";
 import { Input } from "@descope-trust-center/ui/input";
 

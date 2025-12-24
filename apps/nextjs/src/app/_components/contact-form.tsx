@@ -14,7 +14,6 @@ import {
   FieldLabel,
 } from "@descope-trust-center/ui/field";
 import { Input } from "@descope-trust-center/ui/input";
-import { Label } from "@descope-trust-center/ui/label";
 
 import { useTRPC } from "~/trpc/react";
 
@@ -29,7 +28,7 @@ const REQUEST_TYPES = [
   { value: "other", label: "Other" },
 ] as const;
 
-type RequestType = (typeof REQUEST_TYPES)[number]["value"];
+type _RequestType = (typeof REQUEST_TYPES)[number]["value"];
 
 /**
  * Zod schema for contact form validation
@@ -97,21 +96,31 @@ export function ContactForm() {
 
   const trpc = useTRPC();
 
+  /**
+   * Handle successful form submission
+   */
+  const handleSuccess = useCallback(() => {
+    setSubmitSuccess(true);
+    setSubmitError(null);
+    // Focus the success message for screen readers
+    setTimeout(() => successRef.current?.focus(), 100);
+  }, []);
+
+  /**
+   * Handle form submission error
+   */
+  const handleError = useCallback((error: { message?: string }) => {
+    setSubmitError(
+      error.message ??
+        "Something went wrong. Please try again or email us at security@descope.com",
+    );
+    setSubmitSuccess(false);
+  }, []);
+
   const submitMutation = useMutation(
     trpc.trustCenter.submitContactForm.mutationOptions({
-      onSuccess: () => {
-        setSubmitSuccess(true);
-        setSubmitError(null);
-        // Focus the success message for screen readers
-        setTimeout(() => successRef.current?.focus(), 100);
-      },
-      onError: (error) => {
-        setSubmitError(
-          error.message ||
-            "Something went wrong. Please try again or email us at security@descope.com",
-        );
-        setSubmitSuccess(false);
-      },
+      onSuccess: handleSuccess,
+      onError: handleError,
     }),
   );
 
@@ -140,9 +149,7 @@ export function ContactForm() {
     const errors: FieldErrors = {};
     for (const issue of result.error.issues) {
       const field = issue.path[0] as keyof ContactFormData;
-      if (!errors[field]) {
-        errors[field] = issue.message;
-      }
+      errors[field] ??= issue.message;
     }
     return errors;
   }, [formData]);
@@ -185,7 +192,7 @@ export function ContactForm() {
    * Handles form submission
    */
   const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
+    (e: React.FormEvent) => {
       e.preventDefault();
       setSubmitError(null);
 
@@ -363,7 +370,7 @@ export function ContactForm() {
                   value={formData.email}
                   onChange={handleChange("email")}
                   onBlur={handleBlur("email")}
-                  placeholder="jane@acme.com"
+                  placeholder="jane@descope-trust-center.com"
                   disabled={isSubmitting}
                   className="h-11 text-base"
                 />
