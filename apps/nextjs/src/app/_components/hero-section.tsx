@@ -34,30 +34,54 @@ export function HeroSection() {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="bg-gradient-to-b from-slate-50 to-white px-4 py-16 sm:px-6 md:py-24 lg:px-8 dark:from-slate-950 dark:to-slate-900"
+      className="relative overflow-hidden bg-gradient-to-br from-violet-50 via-white to-purple-50 px-4 py-20 sm:px-6 md:py-32 lg:px-8 dark:from-slate-950 dark:via-slate-900 dark:to-violet-950"
     >
-      <div className="mx-auto max-w-4xl text-center">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-violet-200/30 to-purple-200/30 blur-3xl dark:from-violet-900/20 dark:to-purple-900/20" />
+        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-gradient-to-tr from-purple-200/30 to-violet-200/30 blur-3xl dark:from-purple-900/20 dark:to-violet-900/20" />
+      </div>
+
+      <div className="relative mx-auto max-w-4xl text-center">
+        {/* Trust badge */}
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-4 py-2 text-sm font-medium text-violet-700 shadow-sm backdrop-blur-sm dark:border-violet-800 dark:bg-slate-900/80 dark:text-violet-300">
+          <span className="flex h-2 w-2 rounded-full bg-green-500" />
+          SOC 2 Type II Certified
+        </div>
+
         {/* Headline */}
         <h1
           id="hero-heading"
-          className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-white"
+          className="bg-gradient-to-r from-slate-900 via-violet-800 to-slate-900 bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl md:text-6xl dark:from-white dark:via-violet-300 dark:to-white"
         >
           Security & Compliance at Descope
         </h1>
 
         {/* Subheadline */}
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 sm:text-xl dark:text-slate-300">
+        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl dark:text-slate-300">
           Your trust is our foundation. We maintain rigorous security standards
           and compliance certifications to ensure your data is always protected.
         </p>
 
-        {/* CTA Button */}
-        <div className="mt-8">
+        {/* CTA Buttons */}
+        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             href="#certifications"
-            className={cn(buttonVariants({ size: "lg" }), "text-base")}
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "bg-primary hover:bg-primary/90 text-base shadow-lg shadow-violet-500/25",
+            )}
           >
             View Our Certifications
+          </Link>
+          <Link
+            href="#documents"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "text-base",
+            )}
+          >
+            Browse Security Docs
           </Link>
         </div>
 
@@ -76,8 +100,11 @@ export function HeroSection() {
         {/* Key Stats */}
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
           {TRUST_STATS.map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center">
-              <span className="text-3xl font-bold text-slate-900 sm:text-4xl dark:text-white">
+            <div
+              key={stat.label}
+              className="flex flex-col items-center rounded-2xl border border-violet-100 bg-white/60 p-6 backdrop-blur-sm dark:border-violet-900/50 dark:bg-slate-900/60"
+            >
+              <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-3xl font-bold text-transparent sm:text-4xl dark:from-violet-400 dark:to-purple-400">
                 {stat.value}
               </span>
               <span className="mt-1 text-sm text-slate-600 dark:text-slate-400">

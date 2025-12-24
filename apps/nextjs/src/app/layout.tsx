@@ -5,6 +5,8 @@ import { cn } from "@descope-trust-center/ui";
 import { ThemeProvider, ThemeToggle } from "@descope-trust-center/ui/theme";
 import { Toaster } from "@descope-trust-center/ui/toast";
 
+import { Footer } from "~/app/_components/footer";
+import { Header } from "~/app/_components/header";
 import { env } from "~/env";
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -52,14 +54,18 @@ export default function RootLayout(props: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "bg-background text-foreground min-h-screen font-sans antialiased",
+          "bg-background text-foreground flex min-h-screen flex-col font-sans antialiased",
           geistSans.variable,
           geistMono.variable,
         )}
       >
         <ThemeProvider>
-          <TRPCReactProvider>{props.children}</TRPCReactProvider>
-          <div className="absolute right-4 bottom-4">
+          <TRPCReactProvider>
+            <Header />
+            <div className="flex-1">{props.children}</div>
+            <Footer />
+          </TRPCReactProvider>
+          <div className="fixed right-4 bottom-4 z-50">
             <ThemeToggle />
           </div>
           <Toaster />

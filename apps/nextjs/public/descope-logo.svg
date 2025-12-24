@@ -1,0 +1,13 @@
+<svg width="140" height="32" viewBox="0 0 140 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Descope Logo - Purple gradient icon + wordmark -->
+  <defs>
+    <linearGradient id="descope-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#A855F7"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon: Abstract D shape -->
+  <path d="M4 4h12c6.627 0 12 5.373 12 12s-5.373 12-12 12H4V4zm4 4v16h8c4.418 0 8-3.582 8-8s-3.582-8-8-8H8z" fill="url(#descope-gradient)"/>
+  <!-- Wordmark: descope -->
+  <text x="36" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600" fill="currentColor">descope</text>
+</svg>
