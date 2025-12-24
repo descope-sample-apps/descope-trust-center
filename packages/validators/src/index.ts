@@ -6,3 +6,37 @@ export const unused = z.string().describe(
    with back and frontend, you can put them in here
   `,
 );
+
+// Trust Center schemas
+export {
+  // Certifications
+  CertificationStatusSchema,
+  CertificationSchema,
+  CertificationsSchema,
+  type CertificationStatus,
+  type Certification,
+  type Certifications,
+  // Documents
+  DocumentAccessLevelSchema,
+  DocumentCategorySchema,
+  DocumentSchema,
+  DocumentsSchema,
+  type DocumentAccessLevel,
+  type DocumentCategory,
+  type Document,
+  type Documents,
+  // Subprocessors
+  SubprocessorStatusSchema,
+  SubprocessorSchema,
+  SubprocessorsSchema,
+  type SubprocessorStatus,
+  type Subprocessor,
+  type Subprocessors,
+  // FAQs
+  FAQCategorySchema,
+  FAQSchema,
+  FAQsSchema,
+  type FAQCategory,
+  type FAQ,
+  type FAQs,
+} from "./trust-center";
