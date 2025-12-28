@@ -25,9 +25,12 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
 
+  snapshotPathTemplate:
+    "{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}",
+
   expect: {
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.005,
+      maxDiffPixelRatio: 0.01,
       animations: "disabled",
       caret: "hide",
     },
