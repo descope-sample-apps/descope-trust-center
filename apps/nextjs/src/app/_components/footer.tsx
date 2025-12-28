@@ -2,9 +2,22 @@ import Image from "next/image";
 import Link from "next/link";
 
 /**
+ * Footer link structure.
+ */
+interface FooterLink {
+  href: string;
+  label: string;
+  external?: boolean;
+}
+
+/**
  * Footer links organized by category.
  */
-const FOOTER_LINKS = {
+const FOOTER_LINKS: {
+  security: FooterLink[];
+  company: FooterLink[];
+  legal: FooterLink[];
+} = {
   security: [
     { href: "#certifications", label: "Certifications" },
     { href: "#documents", label: "Security Documents" },
@@ -46,7 +59,7 @@ const FOOTER_LINKS = {
       external: true,
     },
   ],
-} as const;
+};
 
 /**
  * Social media links.
