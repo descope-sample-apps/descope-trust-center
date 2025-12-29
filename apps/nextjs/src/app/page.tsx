@@ -6,8 +6,8 @@ import { DocumentLibrary } from "./_components/document-library";
 import { FAQSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
 import { SecurityOverview } from "./_components/security-overview";
-import { SubprocessorsList } from "./_components/subprocessors-list";
 import { SubprocessorSubscription } from "./_components/subprocessor-subscription";
+import { SubprocessorsList } from "./_components/subprocessors-list";
 
 /**
  * Trust Center landing page.
@@ -68,7 +68,8 @@ export default function TrustCenterPage() {
                 Stay Informed
               </h3>
               <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
-                Subscribe to receive notifications when we add or update subprocessors
+                Subscribe to receive notifications when we add or update
+                subprocessors
               </p>
               <SubprocessorSubscription />
             </div>

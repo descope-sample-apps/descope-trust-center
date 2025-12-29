@@ -4,13 +4,8 @@ import { useCallback, useId, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
 
-import { cn } from "@descope-trust-center/ui";
 import { Button } from "@descope-trust-center/ui/button";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@descope-trust-center/ui/field";
+import { Field, FieldError, FieldLabel } from "@descope-trust-center/ui/field";
 import { Input } from "@descope-trust-center/ui/input";
 
 import { useTRPC } from "~/trpc/react";
@@ -86,14 +81,19 @@ export function SubprocessorSubscription() {
         className="rounded-lg border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-900/20"
       >
         <p className="text-sm font-medium text-teal-800 dark:text-teal-300">
-          ✓ You're subscribed! We'll notify you when our subprocessor list changes.
+          ✓ You're subscribed! We'll notify you when our subprocessor list
+          changes.
         </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 sm:flex-row sm:items-start">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="flex flex-col gap-4 sm:flex-row sm:items-start"
+    >
       <Field data-invalid={!!error} className="flex-1">
         <FieldLabel htmlFor={emailId} className="sr-only">
           Email address

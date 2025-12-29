@@ -10,8 +10,8 @@ import {
   FAQCategorySchema,
   FAQsSchema,
   SubprocessorsSchema,
-} from "@descope-trust-center/validators";
   SubprocessorSubscriptionSchema,
+} from "@descope-trust-center/validators";
 
 import { publicProcedure } from "../trpc";
 
@@ -182,5 +182,4 @@ export const trustCenterRouter = {
           "You're subscribed! We'll notify you when our subprocessor list changes.",
       };
     }),
-
 } satisfies TRPCRouterRecord;
