@@ -108,9 +108,6 @@ importers:
       '@descope-trust-center/api':
         specifier: workspace:*
         version: link:../../packages/api
-      '@descope-trust-center/auth':
-        specifier: workspace:*
-        version: link:../../packages/auth
       '@descope-trust-center/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -122,7 +119,7 @@ importers:
         version: link:../../packages/validators
       '@descope/nextjs-sdk':
         specifier: 'catalog:'
-        version: 0.15.3(@reduxjs/toolkit@2.11.2(react@19.1.4))(@types/react@19.1.12)(immer@11.1.3)(next@16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.4(react@19.1.4))(react@19.1.4))(react@19.1.4)(redux-thunk@3.1.0(redux@5.0.1))(redux@5.0.1)
+        version: 0.15.3(@reduxjs/toolkit@2.11.2(react@19.1.4))(@types/react@19.1.12)(immer@11.1.3)(next@16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.4(react@19.1.4))(react@19.1.4))(react@19.1.4)(redux-thunk@3.1.0(redux@5.0.1))(redux@5.0.1)
       '@t3-oss/env-nextjs':
         specifier: ^0.13.8
         version: 0.13.8(arktype@2.1.20)(typescript@5.9.3)(valibot@1.0.0-beta.15(typescript@5.9.3))(zod@4.1.12)
@@ -217,9 +214,6 @@ importers:
 
   packages/api:
     dependencies:
-      '@descope-trust-center/auth':
-        specifier: workspace:*
-        version: link:../auth
       '@descope-trust-center/db':
         specifier: workspace:*
         version: link:../db
@@ -272,37 +266,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 3.2.4(@types/node@25.0.3)(jiti@2.6.1)(jsdom@26.1.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(lightningcss@1.30.1)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.2)
-
-  packages/auth:
-    dependencies:
-      '@descope/nextjs-sdk':
-        specifier: 'catalog:'
-        version: 0.15.3(@reduxjs/toolkit@2.11.2(react@19.1.4))(@types/react@19.1.12)(immer@11.1.3)(next@16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.4(react@19.1.4))(react@19.1.4))(react@19.1.4)(redux-thunk@3.1.0(redux@5.0.1))(redux@5.0.1)
-      '@t3-oss/env-core':
-        specifier: ^0.13.8
-        version: 0.13.8(arktype@2.1.20)(typescript@5.9.3)(valibot@1.0.0-beta.15(typescript@5.9.3))(zod@4.1.12)
-      zod:
-        specifier: 'catalog:'
-        version: 4.1.12
-    devDependencies:
-      '@descope-trust-center/eslint-config':
-        specifier: workspace:*
-        version: link:../../tooling/eslint
-      '@descope-trust-center/prettier-config':
-        specifier: workspace:*
-        version: link:../../tooling/prettier
-      '@descope-trust-center/tsconfig':
-        specifier: workspace:*
-        version: link:../../tooling/typescript
-      eslint:
-        specifier: 'catalog:'
-        version: 9.38.0(jiti@2.6.1)
-      prettier:
-        specifier: 'catalog:'
-        version: 3.6.2
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
 
   packages/db:
     dependencies:
@@ -6879,7 +6842,7 @@ snapshots:
 
   '@descope/escape-markdown@0.1.6': {}
 
-  '@descope/nextjs-sdk@0.15.3(@reduxjs/toolkit@2.11.2(react@19.1.4))(@types/react@19.1.12)(immer@11.1.3)(next@16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.4(react@19.1.4))(react@19.1.4))(react@19.1.4)(redux-thunk@3.1.0(redux@5.0.1))(redux@5.0.1)':
+  '@descope/nextjs-sdk@0.15.3(@reduxjs/toolkit@2.11.2(react@19.1.4))(@types/react@19.1.12)(immer@11.1.3)(next@16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.4(react@19.1.4))(react@19.1.4))(react@19.1.4)(redux-thunk@3.1.0(redux@5.0.1))(redux@5.0.1)':
     dependencies:
       '@descope/core-js-sdk': 2.54.0
       '@descope/node-sdk': 1.7.19

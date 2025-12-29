@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@descope-trust-center/api": "workspace:*",
-    "@descope-trust-center/auth": "workspace:*",
     "@descope-trust-center/db": "workspace:*",
     "@descope-trust-center/ui": "workspace:*",
     "@descope-trust-center/validators": "workspace:*",
