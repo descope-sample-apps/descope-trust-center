@@ -7,6 +7,9 @@ on:
     branches: ["main"]
   merge_group:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -55,3 +58,43 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+  # Visual regression tests are available for local development (pnpm test:visual)
+  # but skipped in CI due to cross-platform font rendering differences.
+  # Baselines captured on macOS differ from Linux CI runners by 2-5% even with
+  # maxDiffPixelRatio tolerance. Options for future:
+  # - Use Docker for consistent snapshot generation
+  # - Generate Linux-specific baselines in CI
+  # - Use Chromatic or Percy for cloud visual testing
+  visual-regression:
+    runs-on: ubuntu-latest
+    if: false # Disabled - see comment above
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Visual Regression Tests
+        run: pnpm test:visual --project=desktop-chrome
+        env:
+          CI: true
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: tests/visual/playwright-report/
+          retention-days: 30
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: tests/visual/test-results/
+          retention-days: 7

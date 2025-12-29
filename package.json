@@ -22,11 +22,16 @@
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
     "typecheck": "turbo run typecheck",
-    "ui-add": "turbo run ui-add"
+    "ui-add": "turbo run ui-add",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:visual:ui": "playwright test --ui"
   },
   "devDependencies": {
     "@descope-trust-center/prettier-config": "workspace:*",
+    "@playwright/test": "^1.57.0",
     "@turbo/gen": "^2.5.8",
+    "@types/node": "catalog:",
     "dotenv-cli": "^10.0.0",
     "prettier": "catalog:",
     "turbo": "^2.5.8",
