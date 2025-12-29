@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://trust.descope.com/sitemap.xml
