@@ -25,7 +25,7 @@ function isAdmin(email: string | undefined | null): boolean {
 }
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (!isAdmin(ctx.session?.user?.email)) {
+  if (!isAdmin(ctx.session.user.email)) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Admin access required",
@@ -173,7 +173,7 @@ export const analyticsRouter = {
   approveAccess: adminProcedure
     .input(z.object({ requestId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const adminEmail = ctx.session.user.email ?? "unknown";
+      const adminEmail = ctx.session.user.email || "unknown";
       const [updated] = await ctx.db
         .update(DocumentAccessRequest)
         .set({
@@ -196,7 +196,7 @@ export const analyticsRouter = {
       z.object({ requestId: z.string().uuid(), reason: z.string().min(10) }),
     )
     .mutation(async ({ ctx, input }) => {
-      const adminEmail = ctx.session.user.email ?? "unknown";
+      const adminEmail = ctx.session.user.email || "unknown";
       const [updated] = await ctx.db
         .update(DocumentAccessRequest)
         .set({
