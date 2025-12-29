@@ -144,3 +144,10 @@ export const FAQSchema = z.object({
 export type FAQ = z.infer<typeof FAQSchema>;
 export const FAQsSchema = z.array(FAQSchema);
 export type FAQs = z.infer<typeof FAQsSchema>;
+
+export const SubprocessorSubscriptionSchema = z.object({
+  email: z.email("Please enter a valid email address"),
+});
+export type SubprocessorSubscription = z.infer<
+  typeof SubprocessorSubscriptionSchema
+>;
