@@ -92,10 +92,11 @@ export const analyticsRouter = {
           .offset(offset),
         ctx.db.select({ count: sql<number>`count(*)` }).from(DocumentDownload),
       ]);
+      const total = Number(countResult[0]?.count ?? 0);
       return {
         downloads,
-        total: countResult[0]?.count ?? 0,
-        hasMore: offset + downloads.length < (countResult[0]?.count ?? 0),
+        total,
+        hasMore: offset + downloads.length < total,
       };
     }),
 
@@ -133,10 +134,11 @@ export const analyticsRouter = {
       const [countResult] = await ctx.db
         .select({ count: sql<number>`count(*)` })
         .from(FormSubmission);
+      const total = Number(countResult?.count ?? 0);
       return {
         submissions,
-        total: countResult?.count ?? 0,
-        hasMore: offset + submissions.length < (countResult?.count ?? 0),
+        total,
+        hasMore: offset + submissions.length < total,
       };
     }),
 
@@ -165,10 +167,11 @@ export const analyticsRouter = {
       const [countResult] = await ctx.db
         .select({ count: sql<number>`count(*)` })
         .from(DocumentAccessRequest);
+      const total = Number(countResult?.count ?? 0);
       return {
         requests,
-        total: countResult?.count ?? 0,
-        hasMore: offset + requests.length < (countResult?.count ?? 0),
+        total,
+        hasMore: offset + requests.length < total,
       };
     }),
 
@@ -181,7 +184,8 @@ export const analyticsRouter = {
         .set({
           status: "approved",
           approvedBy: adminEmail,
-          approvedAt: new Date(),
+          // Use sql template to bypass drizzle's mapToDriverValue which fails with Date across module boundaries
+          approvedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(DocumentAccessRequest.id, input.requestId))
         .returning();
@@ -204,7 +208,7 @@ export const analyticsRouter = {
         .set({
           status: "denied",
           deniedBy: adminEmail,
-          deniedAt: new Date(),
+          deniedAt: sql`CURRENT_TIMESTAMP`,
           denialReason: input.reason,
         })
         .where(eq(DocumentAccessRequest.id, input.requestId))
@@ -227,9 +231,9 @@ export const analyticsRouter = {
         .where(eq(DocumentAccessRequest.status, "pending")),
     ]);
     return {
-      totalDownloads: downloadCount[0]?.count ?? 0,
-      totalFormSubmissions: formCount[0]?.count ?? 0,
-      pendingAccessRequests: pendingRequests[0]?.count ?? 0,
+      totalDownloads: Number(downloadCount[0]?.count ?? 0),
+      totalFormSubmissions: Number(formCount[0]?.count ?? 0),
+      pendingAccessRequests: Number(pendingRequests[0]?.count ?? 0),
     };
   }),
 } satisfies TRPCRouterRecord;
