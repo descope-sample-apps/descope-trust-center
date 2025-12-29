@@ -19,18 +19,16 @@ describe("FAQSection", () => {
     ).toBeInTheDocument();
   });
 
-  it("displays category filter tabs", () => {
+  it("displays category filter buttons", () => {
     render(<FAQSection />);
-    expect(screen.getByRole("button", { name: /All/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Security/i }),
+      screen.getByRole("button", { name: "Security" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Compliance/i }),
+      screen.getByRole("button", { name: "Compliance" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Privacy/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Privacy" })).toBeInTheDocument();
   });
 
   it("displays FAQ items", () => {
@@ -45,9 +43,7 @@ describe("FAQSection", () => {
 
     const allButtons = screen.getAllByRole("button");
     const faqButton = allButtons.find(
-      (btn) =>
-        btn.getAttribute("aria-expanded") !== null &&
-        !btn.textContent?.match(/All|Security|Compliance|Privacy/),
+      (btn) => btn.getAttribute("aria-expanded") === "false",
     );
 
     if (faqButton) {
@@ -65,9 +61,7 @@ describe("FAQSection", () => {
 
     const allButtons = screen.getAllByRole("button");
     const faqButton = allButtons.find(
-      (btn) =>
-        btn.getAttribute("aria-expanded") !== null &&
-        !btn.textContent?.match(/All|Security|Compliance|Privacy/),
+      (btn) => btn.getAttribute("aria-expanded") === "false",
     );
 
     if (faqButton) {
@@ -85,9 +79,7 @@ describe("FAQSection", () => {
 
     const allButtons = screen.getAllByRole("button");
     const faqButton = allButtons.find(
-      (btn) =>
-        btn.getAttribute("aria-expanded") !== null &&
-        !btn.textContent?.match(/All|Security|Compliance|Privacy/),
+      (btn) => btn.getAttribute("aria-expanded") === "false",
     );
 
     if (faqButton) {

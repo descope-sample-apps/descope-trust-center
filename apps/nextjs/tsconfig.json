@@ -6,8 +6,9 @@
     "paths": {
       "~/*": ["./src/*"]
     },
-    "plugins": [{ "name": "next" }]
+    "plugins": [{ "name": "next" }],
+    "types": ["vitest/globals"]
   },
   "include": [".", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "**/__tests__/**"]
+  "exclude": ["node_modules"]
 }

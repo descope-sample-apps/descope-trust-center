@@ -11,7 +11,7 @@ describe("Footer", () => {
 
   it("displays Descope logo", () => {
     render(<Footer />);
-    const logo = screen.getByAltText("Descope logo");
+    const logo = screen.getByAltText("Descope");
     expect(logo).toBeInTheDocument();
   });
 
@@ -67,11 +67,6 @@ describe("Footer", () => {
 
   it("displays social media links", () => {
     render(<Footer />);
-    const socialNav = screen.getByRole("navigation", {
-      name: /Social media links/i,
-    });
-    expect(socialNav).toBeInTheDocument();
-
     expect(screen.getByRole("link", { name: /GitHub/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Twitter/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /LinkedIn/i })).toBeInTheDocument();

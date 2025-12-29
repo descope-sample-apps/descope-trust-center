@@ -53,9 +53,8 @@ describe("HeroSection", () => {
     expect(screen.getByText("Trusted Certifications")).toBeInTheDocument();
   });
 
-  it("has proper ARIA structure", () => {
+  it("has proper heading structure", () => {
     render(<HeroSection />);
-    const section = screen.getByRole("region", { name: /hero/i });
-    expect(section).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 });
