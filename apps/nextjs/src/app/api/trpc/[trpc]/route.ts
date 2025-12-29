@@ -33,13 +33,16 @@ const handler = async (req: NextRequest) => {
         session: descopeSession
           ? {
               token: {
-                jwt: descopeSession.jwt ?? "",
-                claims: descopeSession.token ?? {},
+                jwt: descopeSession.jwt,
+                claims: descopeSession.token,
               },
               user: {
-                userId: descopeSession.token?.sub ?? "",
-                email: descopeSession.token?.email as string | undefined,
-                name: descopeSession.token?.name as string | undefined,
+                id: descopeSession.token.sub ?? "",
+                email: descopeSession.token.email as string | undefined,
+                name: descopeSession.token.name as string | undefined,
+                verifiedEmail: descopeSession.token.email_verified as
+                  | boolean
+                  | undefined,
               },
             }
           : null,

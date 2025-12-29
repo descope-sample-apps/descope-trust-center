@@ -20,11 +20,12 @@ const createContext = cache(async () => {
     headers: heads,
     session: session
       ? {
-          token: { jwt: session.jwt ?? "", claims: session.token ?? {} },
+          token: { jwt: session.jwt, claims: session.token },
           user: {
-            userId: session.token?.sub ?? "",
-            email: session.token?.email as string | undefined,
-            name: session.token?.name as string | undefined,
+            id: session.token.sub ?? "",
+            email: session.token.email as string | undefined,
+            name: session.token.name as string | undefined,
+            verifiedEmail: session.token.email_verified as boolean | undefined,
           },
         }
       : null,

@@ -13,7 +13,7 @@ import { z, ZodError } from "zod/v4";
 import { db } from "@descope-trust-center/db/client";
 
 export interface DescopeUser {
-  userId: string;
+  id: string;
   email?: string;
   name?: string;
   verifiedEmail?: boolean;
@@ -40,7 +40,7 @@ export interface DescopeSession {
  * @see https://trpc.io/docs/server/context
  */
 
-export const createTRPCContext = async (opts: {
+export const createTRPCContext = (opts: {
   headers: Headers;
   session: DescopeSession | null;
 }) => {
