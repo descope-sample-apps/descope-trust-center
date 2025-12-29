@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod/v4";
 
-import * as trustCenterModule from "../trust-center";
-
 const mockCertifications = [
   {
     id: "soc2-type2",

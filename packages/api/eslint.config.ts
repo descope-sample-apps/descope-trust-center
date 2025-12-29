@@ -4,7 +4,7 @@ import { baseConfig } from "@descope-trust-center/eslint-config/base";
 
 export default defineConfig(
   {
-    ignores: ["dist/**"],
+    ignores: ["dist/**", "**/__tests__/**"],
   },
   baseConfig,
 );
