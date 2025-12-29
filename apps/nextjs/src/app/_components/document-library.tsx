@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import Link from "next/link";
 
 import type {
   Document,
@@ -13,7 +12,9 @@ import { Button, buttonVariants } from "@descope-trust-center/ui/button";
 import { Input } from "@descope-trust-center/ui/input";
 
 import documentsData from "~/app/data/documents.json";
+import { useSession } from "~/auth/client";
 import { DocumentRequestForm } from "./document-request-form";
+import { LoginModal } from "./login-modal";
 
 /** Category configuration with labels */
 const CATEGORIES: { id: DocumentCategory | "all"; label: string }[] = [
@@ -73,6 +74,7 @@ const ACCESS_LEVEL_CONFIG: Record<
  * Documents are loaded from static JSON data.
  */
 export function DocumentLibrary() {
+  const { isAuthenticated } = useSession();
   const documents = documentsData as Document[];
   const [activeCategory, setActiveCategory] = useState<
     DocumentCategory | "all"
@@ -82,6 +84,7 @@ export function DocumentLibrary() {
     id: string;
     title: string;
   } | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   /** Filter documents by category and search query */
   const filteredDocuments = useMemo(() => {
@@ -231,7 +234,9 @@ export function DocumentLibrary() {
                 <DocumentCard
                   key={doc.id}
                   document={doc}
+                  isAuthenticated={isAuthenticated}
                   onRequestAccess={openRequestModal}
+                  onLoginRequired={() => setShowLoginModal(true)}
                 />
               ))}
             </div>
@@ -248,6 +253,12 @@ export function DocumentLibrary() {
           onClose={closeRequestModal}
         />
       )}
+
+      {/* Login Modal for restricted documents */}
+      <LoginModal
+        open={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </section>
   );
 }
@@ -258,10 +269,14 @@ export function DocumentLibrary() {
  */
 function DocumentCard({
   document,
+  isAuthenticated,
   onRequestAccess,
+  onLoginRequired,
 }: {
   document: Document;
+  isAuthenticated: boolean;
   onRequestAccess: (doc: Document) => void;
+  onLoginRequired: () => void;
 }) {
   const accessConfig = ACCESS_LEVEL_CONFIG[document.accessLevel];
   const categoryColor = CATEGORY_COLORS[document.category];
@@ -342,7 +357,9 @@ function DocumentCard({
       <div className="mt-4">
         <DocumentActionButton
           document={document}
+          isAuthenticated={isAuthenticated}
           onRequestAccess={onRequestAccess}
+          onLoginRequired={onLoginRequired}
         />
       </div>
     </article>
@@ -350,17 +367,22 @@ function DocumentCard({
 }
 
 /**
- * Action button that changes based on document access level:
- * - public: Direct download
- * - login-required: Sign in to download (links to auth)
+ * Action button that changes based on document access level and auth state:
+ * - public: Direct download (no auth required)
+ * - login-required + authenticated: Direct download
+ * - login-required + unauthenticated: Shows login button
  * - nda-required: Request access (opens modal)
  */
 function DocumentActionButton({
   document,
+  isAuthenticated,
   onRequestAccess,
+  onLoginRequired,
 }: {
   document: Document;
+  isAuthenticated: boolean;
   onRequestAccess: (doc: Document) => void;
+  onLoginRequired: () => void;
 }) {
   switch (document.accessLevel) {
     case "public":
@@ -386,25 +408,37 @@ function DocumentActionButton({
       );
 
     case "login-required":
-      // For login-required docs, authenticated users can download,
-      // unauthenticated users are directed to sign in
-      if (document.fileUrl) {
+      if (!document.fileUrl) {
         return (
-          <Link
-            href={`/api/auth/signin?callbackUrl=/trust-center`}
+          <Button variant="outline" size="sm" disabled className="w-full">
+            Not Available
+          </Button>
+        );
+      }
+      if (isAuthenticated) {
+        return (
+          <a
+            href={document.fileUrl}
+            download
             className={cn(
-              buttonVariants({ variant: "secondary", size: "sm" }),
+              buttonVariants({ variant: "default", size: "sm" }),
               "w-full",
             )}
           >
-            <LockIcon className="size-4" />
-            Sign in to Download
-          </Link>
+            <DownloadIcon className="size-4" />
+            Download
+          </a>
         );
       }
       return (
-        <Button variant="outline" size="sm" disabled className="w-full">
-          Not Available
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onLoginRequired}
+          className="w-full"
+        >
+          <LockIcon className="size-4" />
+          Sign in to Download
         </Button>
       );
 
