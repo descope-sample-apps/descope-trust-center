@@ -11,6 +11,7 @@ import {
   FAQsSchema,
   SubprocessorsSchema,
 } from "@descope-trust-center/validators";
+  SubprocessorSubscriptionSchema,
 
 import { publicProcedure } from "../trpc";
 
@@ -166,4 +167,20 @@ export const trustCenterRouter = {
           "Your document access request has been submitted. Our security team will review and respond within 3 business days.",
       };
     }),
+
+  subscribeToSubprocessorUpdates: publicProcedure
+    .input(SubprocessorSubscriptionSchema)
+    .mutation(({ input }) => {
+      console.log("[Trust Center] Subprocessor subscription:", {
+        email: input.email,
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        success: true,
+        message:
+          "You're subscribed! We'll notify you when our subprocessor list changes.",
+      };
+    }),
+
 } satisfies TRPCRouterRecord;

@@ -7,6 +7,7 @@ import { FAQSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
 import { SecurityOverview } from "./_components/security-overview";
 import { SubprocessorsList } from "./_components/subprocessors-list";
+import { SubprocessorSubscription } from "./_components/subprocessor-subscription";
 
 /**
  * Trust Center landing page.
@@ -61,6 +62,17 @@ export default function TrustCenterPage() {
           }
         >
           <SubprocessorsList />
+          <div className="container mt-8">
+            <div className="mx-auto max-w-xl rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800/50">
+              <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+                Stay Informed
+              </h3>
+              <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
+                Subscribe to receive notifications when we add or update subprocessors
+              </p>
+              <SubprocessorSubscription />
+            </div>
+          </div>
         </Suspense>
       </section>
 

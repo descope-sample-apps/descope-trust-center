@@ -39,4 +39,6 @@ export {
   type FAQCategory,
   type FAQ,
   type FAQs,
+  SubprocessorSubscriptionSchema,
+  type SubprocessorSubscription,
 } from "./trust-center";
