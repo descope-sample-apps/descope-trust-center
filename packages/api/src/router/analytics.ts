@@ -1,15 +1,17 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { desc, eq, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
 import {
   CreateDocumentAccessRequestSchema,
   CreateDocumentDownloadSchema,
   CreateFormSubmissionSchema,
+  desc,
   DocumentAccessRequest,
   DocumentDownload,
+  eq,
   FormSubmission,
+  sql,
 } from "@descope-trust-center/db";
 
 import { protectedProcedure, publicProcedure } from "../trpc";

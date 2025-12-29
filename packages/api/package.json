@@ -22,7 +22,6 @@
     "@descope-trust-center/db": "workspace:*",
     "@descope-trust-center/validators": "workspace:*",
     "@trpc/server": "catalog:",
-    "drizzle-orm": "^0.44.0",
     "superjson": "2.2.3",
     "zod": "catalog:"
   },
