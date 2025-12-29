@@ -126,3 +126,9 @@ export const protectedProcedure = t.procedure
       },
     });
   });
+
+/**
+ * Create a server-side caller for testing
+ * @see https://trpc.io/docs/server/server-side-calls
+ */
+export const createCallerFactory = t.createCallerFactory;

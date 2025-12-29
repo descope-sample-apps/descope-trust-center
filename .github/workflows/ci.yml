@@ -59,6 +59,21 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Copy env
+        shell: bash
+        run: cp .env.example .env
+
+      - name: Run Tests
+        run: pnpm test
+
   # Visual regression tests are available for local development (pnpm test:visual)
   # but skipped in CI due to cross-platform font rendering differences.
   # Baselines captured on macOS differ from Linux CI runners by 2-5% even with

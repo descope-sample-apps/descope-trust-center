@@ -30,8 +30,13 @@
     "@descope-trust-center/eslint-config": "workspace:*",
     "@descope-trust-center/prettier-config": "workspace:*",
     "@descope-trust-center/tsconfig": "workspace:*",
+    "@testcontainers/postgresql": "^11.11.0",
+    "@types/pg": "^8.16.0",
+    "drizzle-orm": "^0.44.7",
     "eslint": "catalog:",
+    "pg": "^8.16.3",
     "prettier": "catalog:",
+    "testcontainers": "^11.11.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
