@@ -7,6 +7,7 @@ import { Toaster } from "@descope-trust-center/ui/toast";
 
 import { Footer } from "~/app/_components/footer";
 import { Header } from "~/app/_components/header";
+import { AuthProvider } from "~/auth/client";
 import { env } from "~/env";
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -105,17 +106,19 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           geistMono.variable,
         )}
       >
-        <ThemeProvider>
-          <TRPCReactProvider>
-            <Header />
-            <div className="flex-1">{props.children}</div>
-            <Footer />
-          </TRPCReactProvider>
-          <div className="fixed right-4 bottom-4 z-50">
-            <ThemeToggle />
-          </div>
-          <Toaster />
-        </ThemeProvider>
+        <AuthProvider projectId={env.NEXT_PUBLIC_DESCOPE_PROJECT_ID}>
+          <ThemeProvider>
+            <TRPCReactProvider>
+              <Header />
+              <div className="flex-1">{props.children}</div>
+              <Footer />
+            </TRPCReactProvider>
+            <div className="fixed right-4 bottom-4 z-50">
+              <ThemeToggle />
+            </div>
+            <Toaster />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

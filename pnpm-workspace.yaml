@@ -4,8 +4,7 @@ packages:
   - tooling/*
 
 catalog:
-  "@better-auth/cli": 1.4.0-beta.9
-  "@better-auth/expo": 1.4.0-beta.9
+  "@descope/nextjs-sdk": ^0.15.3
   "@eslint/js": ^9.38.0
   "@tailwindcss/postcss": ^4.1.16
   "@tailwindcss/vite": ^4.1.16
@@ -16,7 +15,6 @@ catalog:
   "@trpc/tanstack-react-query": ^11.7.1
   "@types/node": ^22.18.12
   "@vitejs/plugin-react": 5.1.0
-  better-auth: 1.4.0-beta.9
   eslint: ^9.38.0
   prettier: ^3.6.2
   tailwindcss: ^4.1.16
@@ -40,6 +38,7 @@ onlyBuiltDependencies:
 
 overrides:
   "@types/minimatch": 5.1.2
+  drizzle-orm: 0.44.7
   lightningcss: 1.30.1
   vite: 7.1.12
 

@@ -1,6 +1,29 @@
+import { sql } from "drizzle-orm";
 import { pgTable } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+
+/**
+ * User table - references Descope user IDs for app-specific data
+ * Descope manages authentication, we just store the reference for relations
+ */
+export const User = pgTable("user", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  descopeUserId: t.varchar({ length: 256 }).notNull().unique(),
+  email: t.varchar({ length: 256 }),
+  name: t.varchar({ length: 256 }),
+  createdAt: t
+    .timestamp()
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: t.timestamp({ withTimezone: true }),
+}));
+
+export const CreateUserSchema = createInsertSchema(User, {
+  descopeUserId: z.string().min(1),
+  email: z.string().email().optional(),
+  name: z.string().optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const Post = pgTable("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -108,5 +131,3 @@ export const CreateDocumentAccessRequestSchema = createInsertSchema(
   deniedBy: true,
   deniedAt: true,
 });
-
-export * from "./auth-schema";

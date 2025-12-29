@@ -1,58 +1,44 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useRouter } from "next/navigation";
 
 import { Button } from "@descope-trust-center/ui/button";
 
-import { auth, getSession } from "~/auth/server";
+import { Descope, useSession, useUser } from "~/auth/client";
 
-export async function AuthShowcase() {
-  const session = await getSession();
+export function AuthShowcase() {
+  const router = useRouter();
+  const { isAuthenticated, isSessionLoading } = useSession();
+  const { user } = useUser();
 
-  if (!session) {
+  if (isSessionLoading) {
+    return <div className="animate-pulse">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
     return (
-      <form>
-        <Button
-          size="lg"
-          formAction={async () => {
-            "use server";
-            const res = await auth.api.signInSocial({
-              body: {
-                provider: "discord",
-                callbackURL: "/",
-              },
-            });
-            if (!res.url) {
-              throw new Error("No URL returned from signInSocial");
-            }
-            redirect(res.url);
-          }}
-        >
-          Sign in with Discord
-        </Button>
-      </form>
+      <Descope
+        flowId="sign-up-or-in"
+        onSuccess={() => router.refresh()}
+        onError={(e: unknown) => console.error("Auth error:", e)}
+      />
     );
   }
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <p className="text-center text-2xl">
-        <span>Logged in as {session.user.name}</span>
+        <span>Logged in as {user?.name ?? user?.email ?? "User"}</span>
       </p>
 
-      <form>
-        <Button
-          size="lg"
-          formAction={async () => {
-            "use server";
-            await auth.api.signOut({
-              headers: await headers(),
-            });
-            redirect("/");
-          }}
-        >
-          Sign out
-        </Button>
-      </form>
+      <Button
+        size="lg"
+        onClick={() => {
+          window.location.href = "/api/auth/logout";
+        }}
+      >
+        Sign out
+      </Button>
     </div>
   );
 }

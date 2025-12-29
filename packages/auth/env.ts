@@ -3,14 +3,10 @@ import { z } from "zod/v4";
 
 export function authEnv() {
   return createEnv({
-    server: {
-      AUTH_DISCORD_ID: z.string().min(1),
-      AUTH_DISCORD_SECRET: z.string().min(1),
-      AUTH_SECRET:
-        process.env.NODE_ENV === "production"
-          ? z.string().min(1)
-          : z.string().min(1).optional(),
-      NODE_ENV: z.enum(["development", "production"]).optional(),
+    server: {},
+    clientPrefix: "NEXT_PUBLIC_",
+    client: {
+      NEXT_PUBLIC_DESCOPE_PROJECT_ID: z.string().min(1),
     },
     runtimeEnv: process.env,
     skipValidation:
