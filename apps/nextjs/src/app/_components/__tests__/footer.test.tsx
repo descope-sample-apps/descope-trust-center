@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
 import { Footer } from "../footer";
 
 describe("Footer", () => {
@@ -55,9 +56,7 @@ describe("Footer", () => {
 
   it("displays Legal links", () => {
     render(<Footer />);
-    expect(
-      screen.getByRole("heading", { name: /Legal/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Legal/i })).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Privacy Policy/i }),
     ).toBeInTheDocument();
@@ -73,15 +72,9 @@ describe("Footer", () => {
     });
     expect(socialNav).toBeInTheDocument();
 
-    expect(
-      screen.getByRole("link", { name: /GitHub/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /Twitter/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /LinkedIn/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /GitHub/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Twitter/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /LinkedIn/i })).toBeInTheDocument();
   });
 
   it("displays copyright notice with current year", () => {

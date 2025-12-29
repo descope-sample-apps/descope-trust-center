@@ -9,7 +9,7 @@ import { reactConfig } from "@descope-trust-center/eslint-config/react";
 
 export default defineConfig(
   {
-    ignores: [".next/**"],
+    ignores: [".next/**", "**/__tests__/**"],
   },
   baseConfig,
   reactConfig,

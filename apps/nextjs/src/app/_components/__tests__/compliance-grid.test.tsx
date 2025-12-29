@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
+
 import { ComplianceGrid } from "../compliance-grid";
 
 describe("ComplianceGrid", () => {
@@ -12,9 +13,7 @@ describe("ComplianceGrid", () => {
   it("displays filter buttons", () => {
     render(<ComplianceGrid />);
     expect(screen.getByRole("button", { name: /All/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Active/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Active/i })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /In Progress/i }),
     ).toBeInTheDocument();
