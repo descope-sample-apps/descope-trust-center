@@ -1,8 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./tests/visual",
-  outputDir: "./tests/visual/test-results",
+  testDir: "./tests",
+  outputDir: "./tests/test-results",
 
   fullyParallel: !!process.env.CI,
   workers: process.env.CI ? 2 : 1,
@@ -10,14 +10,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
 
   reporter: process.env.CI
-    ? [
-        ["github"],
-        ["html", { outputFolder: "./tests/visual/playwright-report" }],
-      ]
-    : [
-        ["list"],
-        ["html", { outputFolder: "./tests/visual/playwright-report" }],
-      ],
+    ? [["github"], ["html", { outputFolder: "./tests/playwright-report" }]]
+    : [["list"], ["html", { outputFolder: "./tests/playwright-report" }]],
 
   use: {
     baseURL: "http://localhost:3000",
