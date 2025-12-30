@@ -54,7 +54,11 @@
     "POSTGRES_URL",
     "NEXT_PUBLIC_DESCOPE_PROJECT_ID",
     "PORT",
-    "ADMIN_EMAILS"
+    "ADMIN_EMAILS",
+    "NEXT_PUBLIC_SENTRY_DSN",
+    "SENTRY_ORG",
+    "SENTRY_PROJECT",
+    "SENTRY_AUTH_TOKEN"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",

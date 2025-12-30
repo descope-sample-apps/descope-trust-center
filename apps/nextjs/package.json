@@ -19,6 +19,7 @@
     "@descope-trust-center/ui": "workspace:*",
     "@descope-trust-center/validators": "workspace:*",
     "@descope/nextjs-sdk": "catalog:",
+    "@sentry/nextjs": "^10.32.1",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",
