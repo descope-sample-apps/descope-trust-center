@@ -205,16 +205,16 @@ function CertificationCard({
         {hasDetails && (
           <Button
             variant="ghost"
-            size="sm"
             onClick={onToggleExpand}
             aria-expanded={isExpanded}
             aria-controls={`cert-details-${certification.id}`}
+            className="min-h-[44px] px-4"
           >
             {isExpanded ? "Show Less" : "Show Details"}
           </Button>
         )}
         {certification.certificateUrl ? (
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" asChild className="min-h-[44px] px-4">
             <a
               href={certification.certificateUrl}
               target="_blank"
@@ -226,7 +226,7 @@ function CertificationCard({
             </a>
           </Button>
         ) : certification.status === "in-progress" ? (
-          <Button variant="outline" size="sm">
+          <Button variant="outline" className="min-h-[44px] px-4">
             Request Access
           </Button>
         ) : null}
@@ -300,10 +300,9 @@ export function ComplianceGrid() {
               <Button
                 key={filter.value}
                 variant={activeFilter === filter.value ? "default" : "outline"}
-                size="sm"
                 onClick={() => setActiveFilter(filter.value)}
                 aria-pressed={activeFilter === filter.value}
-                className="min-h-[44px] shrink-0"
+                className="min-h-[44px] shrink-0 px-4"
               >
                 {filter.label}
               </Button>
