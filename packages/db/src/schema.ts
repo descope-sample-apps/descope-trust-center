@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable } from "drizzle-orm/pg-core";
+import { index, pgTable } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -40,7 +40,61 @@ export const CreatePostSchema = createInsertSchema(Post, {
   id: true,
   createdAt: true,
   updatedAt: true,
+  status: true,
+  approvedBy: true,
+  approvedAt: true,
+  denialReason: true,
+  deniedBy: true,
+  deniedAt: true,
 });
+
+export const auditActionEnum = [
+  "create",
+  "update",
+  "delete",
+  "view",
+  "download",
+  "approve",
+  "deny",
+  "login",
+  "logout",
+] as const;
+
+export const AuditLog = pgTable(
+  "audit_log",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    action: t.varchar({ length: 50 }).notNull(),
+    entityType: t.varchar({ length: 100 }).notNull(),
+    entityId: t.varchar({ length: 256 }),
+    userId: t.varchar({ length: 256 }),
+    userEmail: t.varchar({ length: 256 }),
+    userName: t.varchar({ length: 256 }),
+    metadata: t.jsonb(),
+    ipAddress: t.varchar({ length: 45 }),
+    userAgent: t.text(),
+    createdAt: t.timestamp().defaultNow().notNull(),
+  }),
+  (table) => [
+    index("audit_log_action_idx").on(table.action),
+    index("audit_log_entity_type_idx").on(table.entityType),
+    index("audit_log_entity_id_idx").on(table.entityId),
+    index("audit_log_user_id_idx").on(table.userId),
+    index("audit_log_created_at_idx").on(table.createdAt),
+  ],
+);
+
+export const CreateAuditLogSchema = createInsertSchema(AuditLog, {
+  action: z.enum(auditActionEnum),
+  entityType: z.string().min(1),
+  entityId: z.string().optional(),
+  userId: z.string().optional(),
+  userEmail: z.string().email().optional(),
+  userName: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
+  ipAddress: z.string().optional(),
+  userAgent: z.string().optional(),
+}).omit({ id: true, createdAt: true });
 
 export const DocumentDownload = pgTable("document_download", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
