@@ -20,8 +20,8 @@ export function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
           Something went wrong
         </h1>
         <p className="text-gray-600">
-          An error occurred while processing your request. Our team has been
-          notified.
+          An error occurred while processing your request. Please try again
+          or contact support if the problem persists.
         </p>
         {error.digest && (
           <p className="text-sm text-gray-500">Error ID: {error.digest}</p>
