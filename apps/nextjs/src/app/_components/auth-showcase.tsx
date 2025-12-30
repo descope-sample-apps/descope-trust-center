@@ -20,8 +20,12 @@ export function AuthShowcase() {
   const { logout } = useDescope();
 
   const handleLogout = useCallback(async () => {
-    await logout();
-    router.refresh();
+    try {
+      await logout();
+      router.refresh();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   }, [logout, router]);
 
   if (isSessionLoading) {

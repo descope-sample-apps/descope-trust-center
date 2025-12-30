@@ -30,8 +30,12 @@ export function Header() {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleLogout = useCallback(async () => {
-    await logout();
-    router.refresh();
+    try {
+      await logout();
+      router.refresh();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   }, [logout, router]);
 
   return (

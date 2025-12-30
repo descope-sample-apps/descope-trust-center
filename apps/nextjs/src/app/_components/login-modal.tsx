@@ -72,10 +72,13 @@ export function LoginModal({
       aria-labelledby="login-modal-title"
     >
       {/* Backdrop */}
-      <div
+      <button
+        type="button"
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
-        aria-hidden="true"
+        onKeyDown={(e) => e.key === "Enter" && onClose()}
+        aria-label="Close modal"
+        tabIndex={-1}
       />
 
       {/* Modal Content */}
