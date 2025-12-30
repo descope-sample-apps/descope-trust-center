@@ -1,11 +1,8 @@
 import "server-only";
 
-import type {
-  DescopeJwtClaims,
-  DescopeSession,
-} from "@descope-trust-center/api";
+import type { DescopeSession } from "@descope-trust-center/api";
 
-import { getSession } from "./server";
+import type { getSession } from "./server";
 
 type DescopeAuthInfo = Awaited<ReturnType<typeof getSession>>;
 
