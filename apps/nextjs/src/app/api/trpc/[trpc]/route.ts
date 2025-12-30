@@ -4,6 +4,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter, createTRPCContext } from "@descope-trust-center/api";
 
 import { getSession } from "~/auth/server";
+import { mapDescopeSession } from "~/auth/session";
 
 const setCorsHeaders = (res: Response) => {
   res.headers.set("Access-Control-Allow-Origin", "*");
@@ -30,22 +31,7 @@ const handler = async (req: NextRequest) => {
     createContext: () =>
       createTRPCContext({
         headers: req.headers,
-        session: descopeSession
-          ? {
-              token: {
-                jwt: descopeSession.jwt,
-                claims: descopeSession.token,
-              },
-              user: {
-                id: descopeSession.token.sub ?? "",
-                email: descopeSession.token.email as string | undefined,
-                name: descopeSession.token.name as string | undefined,
-                verifiedEmail: descopeSession.token.email_verified as
-                  | boolean
-                  | undefined,
-              },
-            }
-          : null,
+        session: mapDescopeSession(descopeSession),
       }),
     onError({ error, path }) {
       console.error(`>>> tRPC Error on '${path}'`, error);

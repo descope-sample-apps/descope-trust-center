@@ -1,7 +1,25 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Header } from "../header";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+vi.mock("~/auth/client", () => ({
+  useSession: () => ({ isAuthenticated: false, isSessionLoading: false }),
+  useUser: () => ({ user: { name: null, email: null } }),
+  useDescope: () => ({ logout: vi.fn() }),
+}));
+
+vi.mock("../login-modal", () => ({
+  LoginModal: () => null,
+}));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("Header", () => {
   it("renders without crashing", () => {

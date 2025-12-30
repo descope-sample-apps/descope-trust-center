@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { cn } from "@descope-trust-center/ui";
 import { Button, buttonVariants } from "@descope-trust-center/ui/button";
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
  * Trust Center header with Descope logo, navigation, and auth controls.
  */
 export function Header() {
+  const router = useRouter();
   const { isAuthenticated, isSessionLoading } = useSession();
   const { user } = useUser();
   const { logout } = useDescope();
@@ -29,8 +31,8 @@ export function Header() {
 
   const handleLogout = useCallback(async () => {
     await logout();
-    window.location.reload();
-  }, [logout]);
+    router.refresh();
+  }, [logout, router]);
 
   return (
     <>

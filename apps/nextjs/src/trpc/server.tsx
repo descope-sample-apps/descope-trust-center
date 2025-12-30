@@ -8,6 +8,7 @@ import type { AppRouter } from "@descope-trust-center/api";
 import { appRouter, createTRPCContext } from "@descope-trust-center/api";
 
 import { getSession } from "~/auth/server";
+import { mapDescopeSession } from "~/auth/session";
 import { createQueryClient } from "./query-client";
 
 const createContext = cache(async () => {
@@ -18,17 +19,7 @@ const createContext = cache(async () => {
 
   return createTRPCContext({
     headers: heads,
-    session: session
-      ? {
-          token: { jwt: session.jwt, claims: session.token },
-          user: {
-            id: session.token.sub ?? "",
-            email: session.token.email as string | undefined,
-            name: session.token.name as string | undefined,
-            verifiedEmail: session.token.email_verified as boolean | undefined,
-          },
-        }
-      : null,
+    session: mapDescopeSession(session),
   });
 });
 
