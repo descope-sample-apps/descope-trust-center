@@ -77,7 +77,7 @@ export function Header() {
             ) : isAuthenticated ? (
               <>
                 <span className="hidden text-sm text-slate-600 sm:inline dark:text-slate-300">
-                  {user.name ?? user.email}
+                  {user.name ?? user.email ?? "User"}
                 </span>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   Sign out
