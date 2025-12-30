@@ -3,12 +3,9 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 import { appRouter, createTRPCContext } from "@descope-trust-center/api";
 
-import { auth } from "~/auth/server";
+import { getSession } from "~/auth/server";
+import { mapDescopeSession } from "~/auth/session";
 
-/**
- * Configure basic CORS headers
- * You should extend this to match your needs
- */
 const setCorsHeaders = (res: Response) => {
   res.headers.set("Access-Control-Allow-Origin", "*");
   res.headers.set("Access-Control-Request-Method", "*");
@@ -25,14 +22,16 @@ export const OPTIONS = () => {
 };
 
 const handler = async (req: NextRequest) => {
+  const descopeSession = await getSession();
+
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,
     req,
     createContext: () =>
       createTRPCContext({
-        auth: auth,
         headers: req.headers,
+        session: mapDescopeSession(descopeSession),
       }),
     onError({ error, path }) {
       console.error(`>>> tRPC Error on '${path}'`, error);

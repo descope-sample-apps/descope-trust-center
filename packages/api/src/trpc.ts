@@ -10,8 +10,30 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod/v4";
 
-import type { Auth } from "@descope-trust-center/auth";
 import { db } from "@descope-trust-center/db/client";
+
+export interface DescopeUser {
+  id: string;
+  email?: string;
+  name?: string;
+  verifiedEmail?: boolean;
+}
+
+export interface DescopeJwtClaims {
+  sub?: string;
+  email?: string;
+  name?: string;
+  email_verified?: boolean;
+  [key: string]: unknown;
+}
+
+export interface DescopeSession {
+  token: {
+    jwt: string;
+    claims: DescopeJwtClaims;
+  };
+  user: DescopeUser;
+}
 
 /**
  * 1. CONTEXT
@@ -26,17 +48,12 @@ import { db } from "@descope-trust-center/db/client";
  * @see https://trpc.io/docs/server/context
  */
 
-export const createTRPCContext = async (opts: {
+export const createTRPCContext = (opts: {
   headers: Headers;
-  auth: Auth;
+  session: DescopeSession | null;
 }) => {
-  const authApi = opts.auth.api;
-  const session = await authApi.getSession({
-    headers: opts.headers,
-  });
   return {
-    authApi,
-    session,
+    session: opts.session,
     db,
   };
 };

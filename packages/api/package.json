@@ -19,7 +19,6 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@descope-trust-center/auth": "workspace:*",
     "@descope-trust-center/db": "workspace:*",
     "@descope-trust-center/validators": "workspace:*",
     "@trpc/server": "catalog:",
