@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 
+import { env } from "~/env";
+
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export function GET() {
   // Only allow in development to prevent abuse of Sentry quota
-  if (process.env.NODE_ENV === "production") {
+  if (env.NODE_ENV === "production") {
     return NextResponse.json(
       { error: "Test endpoint disabled in production" },
       { status: 404 },
