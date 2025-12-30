@@ -290,21 +290,26 @@ export function ComplianceGrid() {
 
       {/* Filter buttons */}
       <div
-        className="mb-6 flex flex-wrap gap-2"
+        className="-mx-4 mb-6 px-4 sm:mx-0 sm:px-0"
         role="group"
         aria-label="Filter certifications by status"
       >
-        {STATUS_FILTERS.map((filter) => (
-          <Button
-            key={filter.value}
-            variant={activeFilter === filter.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveFilter(filter.value)}
-            aria-pressed={activeFilter === filter.value}
-          >
-            {filter.label}
-          </Button>
-        ))}
+        <div className="scrollbar-hide overflow-x-auto">
+          <div className="flex gap-2 pb-2 sm:flex-wrap sm:pb-0">
+            {STATUS_FILTERS.map((filter) => (
+              <Button
+                key={filter.value}
+                variant={activeFilter === filter.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveFilter(filter.value)}
+                aria-pressed={activeFilter === filter.value}
+                className="min-h-[44px] shrink-0"
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Certification grid */}
