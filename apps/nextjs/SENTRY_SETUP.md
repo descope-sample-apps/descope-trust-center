@@ -23,8 +23,8 @@ Sentry has been integrated with the following features:
 - `apps/nextjs/sentry.edge.config.ts` - Edge runtime Sentry initialization
 - `apps/nextjs/src/app/_components/error-boundary.tsx` - Error boundary component
 - `apps/nextjs/src/app/error.tsx` - Global error handler
-- `apps/nextjs/src/app/api/test-sentry/route.ts` - Test endpoint for Sentry
-- `apps/nextjs/.sentryclirc` - Sentry CLI configuration
+- `apps/nextjs/src/app/api/test-sentry/route.ts` - Test endpoint for Sentry (disabled in production)
+- `apps/nextjs/.sentryclirc.example` - Sentry CLI configuration template
 
 ### Modified Files
 
@@ -112,7 +112,7 @@ The configuration includes `automaticVercelMonitors: true`, which enables:
 
 Configured sample rates:
 
-- **Traces**: 100% (adjust in production based on volume)
+- **Traces**: 10% in production, 100% in development
 - **Replay on error**: 100% (captures all sessions with errors)
 - **Replay sessions**: 10% (captures 1 in 10 normal sessions)
 
