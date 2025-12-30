@@ -4,6 +4,14 @@ import * as Sentry from "@sentry/nextjs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // Only allow in development to prevent abuse of Sentry quota
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "Test endpoint disabled in production" },
+      { status: 404 },
+    );
+  }
+
   try {
     throw new Error("Test Sentry error from API route");
   } catch (error) {
