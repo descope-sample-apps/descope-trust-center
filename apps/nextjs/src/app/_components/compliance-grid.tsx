@@ -205,16 +205,16 @@ function CertificationCard({
         {hasDetails && (
           <Button
             variant="ghost"
-            size="sm"
             onClick={onToggleExpand}
             aria-expanded={isExpanded}
             aria-controls={`cert-details-${certification.id}`}
+            className="min-h-[44px] px-4"
           >
             {isExpanded ? "Show Less" : "Show Details"}
           </Button>
         )}
         {certification.certificateUrl ? (
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" asChild className="min-h-[44px] px-4">
             <a
               href={certification.certificateUrl}
               target="_blank"
@@ -226,7 +226,7 @@ function CertificationCard({
             </a>
           </Button>
         ) : certification.status === "in-progress" ? (
-          <Button variant="outline" size="sm">
+          <Button variant="outline" className="min-h-[44px] px-4">
             Request Access
           </Button>
         ) : null}
@@ -290,21 +290,25 @@ export function ComplianceGrid() {
 
       {/* Filter buttons */}
       <div
-        className="mb-6 flex flex-wrap gap-2"
+        className="-mx-4 mb-6 px-4 sm:mx-0 sm:px-0"
         role="group"
         aria-label="Filter certifications by status"
       >
-        {STATUS_FILTERS.map((filter) => (
-          <Button
-            key={filter.value}
-            variant={activeFilter === filter.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveFilter(filter.value)}
-            aria-pressed={activeFilter === filter.value}
-          >
-            {filter.label}
-          </Button>
-        ))}
+        <div className="scrollbar-hide overflow-x-auto">
+          <div className="flex gap-2 pb-2 sm:flex-wrap sm:pb-0">
+            {STATUS_FILTERS.map((filter) => (
+              <Button
+                key={filter.value}
+                variant={activeFilter === filter.value ? "default" : "outline"}
+                onClick={() => setActiveFilter(filter.value)}
+                aria-pressed={activeFilter === filter.value}
+                className="min-h-[44px] shrink-0 px-4"
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Certification grid */}

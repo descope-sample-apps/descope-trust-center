@@ -214,27 +214,28 @@ export function SubprocessorsList() {
           </div>
 
           {/* Status Filter Buttons */}
-          <div
-            role="group"
-            aria-label="Filter by status"
-            className="flex flex-wrap gap-2"
-          >
-            {STATUS_FILTERS.map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setStatusFilter(status)}
-                aria-pressed={statusFilter === status}
-                className={cn(
-                  "focus-visible:ring-ring rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                  statusFilter === status
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-                )}
-              >
-                {STATUS_LABELS[status]}
-              </button>
-            ))}
+          <div role="group" aria-label="Filter by status">
+            <div className="scrollbar-hide -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-2 pb-2 sm:flex-wrap sm:pb-0">
+                {STATUS_FILTERS.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setStatusFilter(status)}
+                    aria-pressed={statusFilter === status}
+                    className={cn(
+                      "focus-visible:ring-ring shrink-0 rounded-full px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                      "min-h-[44px]",
+                      statusFilter === status
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                    )}
+                  >
+                    {STATUS_LABELS[status]}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

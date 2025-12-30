@@ -82,28 +82,31 @@ export function FAQSection() {
         </div>
 
         {/* Category Tabs */}
-        <div className="mt-10">
-          <nav
-            aria-label="FAQ categories"
-            className="flex flex-wrap justify-center gap-2"
-          >
-            {CATEGORIES.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setActiveCategory(category.id)}
-                className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                  "focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-slate-300",
-                  activeCategory === category.id
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
-                )}
-                aria-pressed={activeCategory === category.id}
-              >
-                {category.label}
-              </button>
-            ))}
-          </nav>
+        <div className="-mx-4 mt-10 px-4 sm:mx-0 sm:px-0">
+          <div className="scrollbar-hide overflow-x-auto">
+            <nav
+              aria-label="FAQ categories"
+              className="flex gap-2 pb-2 sm:flex-wrap sm:justify-center sm:pb-0"
+            >
+              {CATEGORIES.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveCategory(category.id)}
+                  className={cn(
+                    "shrink-0 rounded-full px-4 py-2.5 text-sm font-medium transition-colors",
+                    "min-h-[44px]",
+                    "focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-slate-300",
+                    activeCategory === category.id
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
+                  )}
+                  aria-pressed={activeCategory === category.id}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
 
         {/* FAQ Accordion */}
