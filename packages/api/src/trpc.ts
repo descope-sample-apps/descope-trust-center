@@ -19,10 +19,18 @@ export interface DescopeUser {
   verifiedEmail?: boolean;
 }
 
+export interface DescopeJwtClaims {
+  sub?: string;
+  email?: string;
+  name?: string;
+  email_verified?: boolean;
+  [key: string]: unknown;
+}
+
 export interface DescopeSession {
   token: {
     jwt: string;
-    claims: Record<string, unknown>;
+    claims: DescopeJwtClaims;
   };
   user: DescopeUser;
 }

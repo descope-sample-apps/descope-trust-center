@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { cn } from "@descope-trust-center/ui";
 
-import { Descope } from "~/auth/client";
+import { Descope, DESCOPE_FLOW_ID } from "~/auth/client";
 
 /**
  * Login modal component that displays the Descope authentication flow.
@@ -109,7 +109,7 @@ export function LoginModal({
 
         {/* Descope Flow */}
         <Descope
-          flowId="sign-up-or-in"
+          flowId={DESCOPE_FLOW_ID}
           onSuccess={handleSuccess}
           onError={handleError}
         />

@@ -1,6 +1,9 @@
 import "server-only";
 
-import type { DescopeSession } from "@descope-trust-center/api";
+import type {
+  DescopeJwtClaims,
+  DescopeSession,
+} from "@descope-trust-center/api";
 
 import { getSession } from "./server";
 

@@ -20,5 +20,5 @@ type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 export { type AppRouter, appRouter } from "./root";
 export { createTRPCContext } from "./trpc";
-export type { DescopeSession, DescopeUser } from "./trpc";
+export type { DescopeJwtClaims, DescopeSession, DescopeUser } from "./trpc";
 export type { RouterInputs, RouterOutputs };

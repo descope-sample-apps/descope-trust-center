@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@descope-trust-center/ui/button";
 
-import { Descope, useDescope, useSession, useUser } from "~/auth/client";
+import {
+  Descope,
+  DESCOPE_FLOW_ID,
+  useDescope,
+  useSession,
+  useUser,
+} from "~/auth/client";
 
 export function AuthShowcase() {
   const router = useRouter();
@@ -25,7 +31,7 @@ export function AuthShowcase() {
   if (!isAuthenticated) {
     return (
       <Descope
-        flowId="sign-up-or-in"
+        flowId={DESCOPE_FLOW_ID}
         onSuccess={() => router.refresh()}
         onError={(e: unknown) => console.error("Auth error:", e)}
       />
