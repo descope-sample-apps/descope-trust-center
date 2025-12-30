@@ -234,6 +234,6 @@ describe("SubprocessorsList", () => {
 
     const updatedCount = screen.getByText(/^\d+ vendors? found$/i);
     expect(updatedCount).toBeInTheDocument();
-    expect(updatedCount.textContent).toBeDefined();
+    expect(updatedCount.textContent).toMatch(/^\d+ vendors? found$/i);
   });
 });

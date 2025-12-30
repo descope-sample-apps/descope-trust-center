@@ -150,7 +150,7 @@ describe("DocumentLibrary", () => {
     const signInButtons = screen.queryAllByRole("button", {
       name: /sign in to download/i,
     });
-    expect(signInButtons).toBeDefined();
+    expect(signInButtons.length).toBeGreaterThan(0);
   });
 
   it("opens login modal when sign in button is clicked", async () => {
@@ -173,7 +173,7 @@ describe("DocumentLibrary", () => {
     const requestButtons = screen.queryAllByRole("button", {
       name: /request access/i,
     });
-    expect(requestButtons).toBeDefined();
+    expect(requestButtons.length).toBeGreaterThan(0);
   });
 
   it("opens request modal when request access is clicked", async () => {
