@@ -207,9 +207,7 @@ describe("SubprocessorsList", () => {
     if (table) {
       const tbody = table.querySelector("tbody");
       if (tbody) {
-        const rows = within(tbody as HTMLTableSectionElement).getAllByRole(
-          "row",
-        );
+        const rows = within(tbody).getAllByRole("row");
         rows.forEach((row) => {
           expect(row).toHaveClass("hover:bg-muted/30");
         });
