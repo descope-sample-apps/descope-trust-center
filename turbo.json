@@ -62,6 +62,21 @@
     "VERCEL",
     "VERCEL_ENV",
     "VERCEL_URL",
-    "npm_lifecycle_event"
+    "npm_lifecycle_event",
+    "POSTGRES_PRISMA_URL",
+    "POSTGRES_URL_NON_POOLING",
+    "POSTGRES_URL_NO_SSL",
+    "POSTGRES_HOST",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "POSTGRES_DATABASE",
+    "DATABASE_URL",
+    "DATABASE_URL_UNPOOLED",
+    "PGHOST",
+    "PGHOST_UNPOOLED",
+    "PGUSER",
+    "PGPASSWORD",
+    "PGDATABASE",
+    "NEON_PROJECT_ID"
   ]
 }
