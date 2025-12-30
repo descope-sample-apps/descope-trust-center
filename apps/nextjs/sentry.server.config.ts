@@ -1,19 +1,17 @@
 import * as Sentry from "@sentry/nextjs";
 
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+const hasDsn = typeof dsn === "string" && dsn.length > 0;
+
 Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: hasDsn ? dsn : undefined,
 
   // Sample 10% of transactions in production, 100% in development
   tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 
-  // Configure environment
   environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
 
-  // Disable Sentry in development if DSN is not set
-  enabled:
-    process.env.NODE_ENV === "production" ||
-    !!process.env.NEXT_PUBLIC_SENTRY_DSN,
+  enabled: process.env.NODE_ENV === "production" || hasDsn,
 });
