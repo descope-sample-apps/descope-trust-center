@@ -215,7 +215,7 @@ export function SubprocessorsList() {
 
           {/* Status Filter Buttons */}
           <div role="group" aria-label="Filter by status">
-            <div className="scrollbar-hide -mr-4 overflow-x-auto pr-4 sm:mr-0 sm:pr-0">
+            <div className="scrollbar-hide -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
               <div className="flex gap-2 pb-2 sm:flex-wrap sm:pb-0">
                 {STATUS_FILTERS.map((status) => (
                   <button

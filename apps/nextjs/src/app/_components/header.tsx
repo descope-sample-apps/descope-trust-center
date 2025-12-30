@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,10 +19,6 @@ const NAV_ITEMS = [
   { href: "#contact", label: "Contact" },
 ] as const;
 
-/**
- * Trust Center header with Descope logo, navigation, and auth controls.
- * Features mobile hamburger menu that collapses navigation on small screens.
- */
 export function Header() {
   const router = useRouter();
   const { isAuthenticated, isSessionLoading } = useSession();
@@ -31,18 +27,29 @@ export function Header() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuOpen(false);
+  }, []);
+
   const handleLogout = useCallback(async () => {
     try {
+      closeMobileMenu();
       await logout();
       router.refresh();
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  }, [logout, router]);
+  }, [logout, router, closeMobileMenu]);
 
-  const closeMobileMenu = useCallback(() => {
-    setMobileMenuOpen(false);
-  }, []);
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileMenuOpen) {
+        closeMobileMenu();
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [mobileMenuOpen, closeMobileMenu]);
 
   return (
     <>
@@ -99,21 +106,25 @@ export function Header() {
           {/* Auth & CTA - Desktop */}
           <div className="hidden items-center gap-3 md:flex">
             {isSessionLoading ? (
-              <div className="h-9 w-20 animate-pulse rounded-md bg-slate-200 dark:bg-slate-700" />
+              <div className="h-11 w-20 animate-pulse rounded-md bg-slate-200 dark:bg-slate-700" />
             ) : isAuthenticated ? (
               <>
                 <span className="hidden text-sm text-slate-600 lg:inline dark:text-slate-300">
                   {user.name ?? user.email ?? "Signed in"}
                 </span>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="min-h-[44px] px-4"
+                >
                   Sign out
                 </Button>
               </>
             ) : (
               <Button
                 variant="default"
-                size="sm"
                 onClick={() => setShowLoginModal(true)}
+                className="min-h-[44px] px-4"
               >
                 Sign in
               </Button>
@@ -123,8 +134,8 @@ export function Header() {
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-                "hidden lg:inline-flex",
+                buttonVariants({ variant: "outline" }),
+                "hidden min-h-[44px] px-4 lg:inline-flex",
               )}
             >
               Visit Descope
@@ -164,9 +175,8 @@ export function Header() {
                     ) : null}
                     <Button
                       variant="ghost"
-                      size="sm"
                       onClick={handleLogout}
-                      className="w-full justify-start"
+                      className="min-h-[44px] w-full justify-start"
                     >
                       Sign out
                     </Button>
@@ -174,12 +184,11 @@ export function Header() {
                 ) : (
                   <Button
                     variant="default"
-                    size="sm"
                     onClick={() => {
                       setShowLoginModal(true);
                       closeMobileMenu();
                     }}
-                    className="w-full"
+                    className="min-h-[44px] w-full"
                   >
                     Sign in
                   </Button>
@@ -189,8 +198,8 @@ export function Header() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cn(
-                    buttonVariants({ variant: "outline", size: "sm" }),
-                    "mt-2 w-full",
+                    buttonVariants({ variant: "outline" }),
+                    "mt-2 min-h-[44px] w-full",
                   )}
                 >
                   Visit Descope
