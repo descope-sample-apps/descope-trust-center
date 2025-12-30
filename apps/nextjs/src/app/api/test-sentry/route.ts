@@ -10,7 +10,7 @@ export function GET() {
   if (env.NODE_ENV === "production") {
     return NextResponse.json(
       { error: "Test endpoint disabled in production" },
-      { status: 404 },
+      { status: 403 },
     );
   }
 
