@@ -25,7 +25,7 @@ pnpm -F @descope-trust-center/api test
 
 # Visual regression tests (Playwright)
 pnpm test:visual
-pnpm test:visual --update-snapshots  # Update snapshots
+pnpm test:visual:update  # Update snapshots
 ```
 
 ## Project Structure
@@ -54,7 +54,7 @@ import type { User } from "@descope-trust-center/db"; // 5. Workspace types
 import { db } from "@descope-trust-center/db/client"; // 6. Workspace packages
 
 import type { Props } from "~/types"; // 7. Local types
-import { api } from "~/trpc/react"; // 8. Local imports
+import { useTRPC } from "~/trpc/react"; // 8. Local imports
 ```
 
 ### TypeScript Rules
@@ -94,15 +94,25 @@ export function MyComponent({ title, onClick }: Props) { ... }
 ### tRPC Patterns
 
 ```typescript
-// In server components - use prefetch
+// Server components - use prefetch with HydrateClient
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 
-// In client components - use hooks pattern
-const trpc = useTRPC();
-const { data } = useQuery(trpc.router.procedure.queryOptions({ input }));
-const mutation = useMutation(trpc.router.procedure.mutationOptions());
+export default async function Page() {
+  prefetch(trpc.post.all.queryOptions());
+  return (
+    <HydrateClient>
+      <MyClientComponent />
+    </HydrateClient>
+  );
+}
 
-prefetch(trpc.router.procedure.queryOptions({ input }));
+// Client components - use useTRPC hook with useSuspenseQuery
+import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { useTRPC } from "~/trpc/react";
+
+const trpc = useTRPC();
+const { data } = useSuspenseQuery(trpc.post.all.queryOptions());
+const mutation = useMutation(trpc.post.delete.mutationOptions());
 ```
 
 ### Error Handling

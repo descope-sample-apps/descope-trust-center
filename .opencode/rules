@@ -15,8 +15,11 @@ This is a Next.js 16 trust center application with React 19, tRPC, Drizzle ORM, 
 
 ### tRPC Client Usage
 ```typescript
+import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { useTRPC } from "~/trpc/react";
+
 const trpc = useTRPC();
-const { data } = useQuery(trpc.router.procedure.queryOptions({ input }));
+const { data } = useSuspenseQuery(trpc.router.procedure.queryOptions({ input }));
 const mutation = useMutation(trpc.router.procedure.mutationOptions());
 ```
 

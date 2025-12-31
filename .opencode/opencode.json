@@ -1,5 +1,4 @@
 {
-  "$schema": "https://opencode.ai/schemas/opencode.json",
   "mcpServers": {
     "context7": {
       "command": "npx",
