@@ -10,4 +10,4 @@ opencode = "0.6.0"
 postgres = "17"
 
 # Development tools
-gh = "latest"          # GitHub CLI for issue/PR management
+gh = "2.63.2"          # GitHub CLI for issue/PR management
