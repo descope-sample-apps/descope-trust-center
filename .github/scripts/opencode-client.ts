@@ -43,7 +43,8 @@ export async function waitForServer(client: OpencodeClient): Promise<void> {
     await new Promise((resolve) =>
       setTimeout(resolve, SERVER_CONFIG.connectTimeoutMs),
     );
-  } while (retry++ < SERVER_CONFIG.maxConnectRetries);
+    retry++;
+  } while (retry < SERVER_CONFIG.maxConnectRetries);
 
   if (!connected) {
     throw new Error(
@@ -65,11 +66,24 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
     },
   );
 
+  const serverProcessErrorPromise = new Promise<never>((_, reject) => {
+    serverProcess.once("error", (error: unknown) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : "Unknown error";
+      reject(new Error(`Failed to start OpenCode server process: ${message}`));
+    });
+  });
+
   serverProcess.unref();
 
   const client = createOpencodeClient({ baseUrl });
 
-  await waitForServer(client);
+  const connectPromise = waitForServer(client);
+  await Promise.race([connectPromise, serverProcessErrorPromise]);
 
   return {
     client,
@@ -140,7 +154,9 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
           throw new Error(`OpenCode error: ${data.error}`);
         }
 
-        const match = data.parts?.reverse().find((p) => p.type === "text");
+        const match = data.parts
+          ? [...data.parts].reverse().find((p) => p.type === "text")
+          : undefined;
         if (!match?.text) {
           throw new Error("No text response from OpenCode");
         }

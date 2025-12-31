@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@descope-trust-center/prettier-config": "workspace:*",
-    "@opencode-ai/sdk": "latest",
+    "@opencode-ai/sdk": "^1.0.221",
     "@playwright/test": "^1.57.0",
     "@turbo/gen": "^2.5.8",
     "@types/node": "catalog:",

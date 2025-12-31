@@ -25,7 +25,7 @@ async function main() {
   console.log("🤖 Starting OpenCode agent...");
   console.log(`Prompt: ${prompt.slice(0, 200)}...`);
 
-  let server;
+  let server: Awaited<ReturnType<typeof createOpenCodeServer>> | undefined;
   let exitCode = 0;
 
   try {
