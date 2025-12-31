@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { createOpenCodeClient } from "./opencode-client";
+import { createOpenCodeServer } from "./opencode-client";
 
 const DEFAULT_PROMPT = `You are an autonomous AI agent working on the Descope Trust Center repository.
 
@@ -25,28 +25,28 @@ async function main() {
   console.log("🤖 Starting OpenCode agent...");
   console.log(`Prompt: ${prompt.slice(0, 200)}...`);
 
-  let client;
+  let server;
   let exitCode = 0;
 
   try {
-    console.log("🔧 Creating OpenCode client...");
-    client = await createOpenCodeClient();
+    console.log("🔧 Starting OpenCode server...");
+    server = await createOpenCodeServer();
+    console.log("✅ Connected to OpenCode server");
 
     console.log("📝 Creating session...");
-    const sessionId = await client.createSession();
+    const session = await server.createSession();
+    console.log(`   Session ID: ${session.id}`);
 
-    console.log("💬 Sending prompt...");
-    const response = await client.sendMessage(sessionId, prompt);
+    console.log("💬 Sending prompt and streaming response...\n");
+    await server.subscribeAndChat(session, prompt);
 
-    console.log("✅ Agent completed");
-    console.log("Response:", response.slice(0, 500));
+    console.log("\n✅ Agent completed");
   } catch (error) {
-    console.error("❌ Agent failed:", error);
+    console.error("\n❌ Agent failed:", error);
     exitCode = 1;
   } finally {
-    if (client) {
-      console.log("🧹 Cleaning up...");
-      await client.cleanup();
+    if (server) {
+      await server.cleanup();
     }
   }
 
