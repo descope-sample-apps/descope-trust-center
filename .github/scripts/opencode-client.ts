@@ -54,7 +54,7 @@ export async function waitForServer(client: OpencodeClient): Promise<void> {
 }
 
 export async function createOpenCodeServer(): Promise<OpenCodeServer> {
-  const { host, port } = SERVER_CONFIG;
+  const { host, port, chatTimeoutMs } = SERVER_CONFIG;
   const baseUrl = `http://${host}:${port}`;
 
   const serverProcess = spawn(
@@ -80,7 +80,23 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
 
   serverProcess.unref();
 
-  const client = createOpencodeClient({ baseUrl });
+  // Create custom fetch with extended timeouts to match our chat timeout
+  // Default undici timeout is 300s (5 min), but agent sessions can run longer
+  const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    // Set connection timeout to match our chat timeout
+    // This prevents "HeadersTimeoutError" for long-running agent sessions
+    return fetch(input, {
+      ...init,
+      // @ts-expect-error - Node.js fetch (undici) specific options
+      headersTimeout: chatTimeoutMs,
+      bodyTimeout: chatTimeoutMs,
+    });
+  };
+
+  const client = createOpencodeClient({
+    baseUrl,
+    fetch: customFetch,
+  });
 
   const connectPromise = waitForServer(client);
   await Promise.race([connectPromise, serverProcessErrorPromise]);
