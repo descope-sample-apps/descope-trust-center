@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "Sisyphus": {
+      "model": "opencode/claude-sonnet-4-5"
+    },
+    "librarian": {
+      "model": "opencode/claude-sonnet-4-5"
+    },
+    "oracle": {
+      "model": "opencode/claude-sonnet-4-5"
+    },
+    "frontend-ui-ux-engineer": {
+      "model": "opencode/claude-sonnet-4-5"
+    },
+    "document-writer": {
+      "model": "opencode/claude-sonnet-4-5"
+    },
+    "multimodal-looker": {
+      "model": "opencode/claude-sonnet-4-5"
+    },
+    "explore": {
+      "model": "opencode/claude-sonnet-4-5"
+    }
+  }
+}

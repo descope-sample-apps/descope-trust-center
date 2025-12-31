@@ -4,7 +4,7 @@ node = "22"
 pnpm = "10"
 
 # AI agent CLI - pinned for supply chain security
-opencode = "0.6.0"
+opencode = "1.0.200"
 
 # Database tools
 postgres = "17"

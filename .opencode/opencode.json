@@ -1,4 +1,6 @@
 {
+  "plugin": ["oh-my-opencode"],
+  "instructions": ["context/**/*.md"],
   "mcpServers": {
     "context7": {
       "command": "npx",
