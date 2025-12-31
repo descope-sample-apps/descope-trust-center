@@ -1,50 +1,57 @@
+# Descope Trust Center - AI Agent Rules
 
-````markdown
-## UBS Quick Reference for AI Agents
+## Project Context
+This is a Next.js 16 trust center application with React 19, tRPC, Drizzle ORM, and Tailwind CSS.
 
-UBS stands for "Ultimate Bug Scanner": **The AI Coding Agent's Secret Weapon: Flagging Likely Bugs for Fixing Early On**
+## Stack
+- **Framework**: Next.js 16 (App Router, Server Components)
+- **UI**: React 19, Tailwind CSS, shadcn/ui
+- **API**: tRPC with tanstack-query
+- **Database**: PostgreSQL with Drizzle ORM
+- **Auth**: Descope
+- **Testing**: Vitest, Playwright, Testing Library
 
-**Install:** `curl -sSL https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/main/install.sh | bash`
+## Code Patterns
 
-**Golden Rule:** `ubs <changed-files>` before every commit. Exit 0 = safe. Exit >0 = fix & re-run.
+### tRPC Client Usage
+```typescript
+const trpc = useTRPC();
+const { data } = useQuery(trpc.router.procedure.queryOptions({ input }));
+const mutation = useMutation(trpc.router.procedure.mutationOptions());
+```
 
-**Commands:**
+### Import Order (auto-sorted)
+1. Type imports first
+2. React/Next.js
+3. Third-party
+4. Workspace packages (@descope-trust-center/*)
+5. Local imports (~/)
+
+### Key Rules
+- Use `zod/v4` not `zod`
+- Use `import { env } from "~/env"` not `process.env`
+- Prefix unused vars with `_`
+- Server Components are default - only add "use client" when needed
+- Use `cn()` for conditional Tailwind classes
+
+## GitHub Workflow
+1. Check `gh issue list --state open --label "P1-high"` for tasks
+2. Add `opencode` label when claiming an issue
+3. Create branch: `feat/<slug>` or `fix/<slug>`
+4. Reference issues in commits: `Closes #N`
+
+## Pre-Commit
 ```bash
-ubs file.ts file2.py                    # Specific files (< 1s) — USE THIS
-ubs $(git diff --name-only --cached)    # Staged files — before commit
-ubs --only=js,python src/               # Language filter (3-5x faster)
-ubs --ci --fail-on-warning .            # CI mode — before PR
-ubs --help                              # Full command reference
-ubs sessions --entries 1                # Tail the latest install session log
-ubs .                                   # Whole project (ignores things like .venv and node_modules automatically)
+pnpm typecheck && pnpm lint && pnpm test
 ```
 
-**Output Format:**
+## UBS Quick Reference
+
+**Golden Rule:** `ubs <changed-files>` before every commit.
+
+```bash
+ubs file.ts                         # Single file (fast)
+ubs $(git diff --name-only --cached)  # Staged files
 ```
-⚠️  Category (N errors)
-    file.ts:42:5 – Issue description
-    💡 Suggested fix
-Exit code: 1
-```
-Parse: `file:line:col` → location | 💡 → how to fix | Exit 0/1 → pass/fail
 
-**Fix Workflow:**
-1. Read finding → category + fix suggestion
-2. Navigate `file:line:col` → view context
-3. Verify real issue (not false positive)
-4. Fix root cause (not symptom)
-5. Re-run `ubs <file>` → exit 0
-6. Commit
-
-**Speed Critical:** Scope to changed files. `ubs src/file.ts` (< 1s) vs `ubs .` (30s). Never full scan for small edits.
-
-**Bug Severity:**
-- **Critical** (always fix): Null safety, XSS/injection, async/await, memory leaks
-- **Important** (production): Type narrowing, division-by-zero, resource leaks
-- **Contextual** (judgment): TODO/FIXME, console logs
-
-**Anti-Patterns:**
-- ❌ Ignore findings → ✅ Investigate each
-- ❌ Full scan per edit → ✅ Scope to file
-- ❌ Fix symptom (`if (x) { x.y }`) → ✅ Root cause (`x?.y`)
-````
+Exit 0 = safe to commit. Exit >0 = fix issues first.

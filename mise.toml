@@ -1,4 +1,10 @@
 [tools]
 node = "22"
-opencode = "latest"
 pnpm = "10"
+opencode = "latest"
+
+# Database tools
+postgres = "17"
+
+# Development tools
+gh = "latest"          # GitHub CLI for issue/PR management

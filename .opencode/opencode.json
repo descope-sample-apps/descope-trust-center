@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/schemas/opencode.json",
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@context7/mcp@latest"],
+      "env": {}
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/next-devtools-mcp@latest"],
+      "env": {}
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "env": {}
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-playwright@latest"],
+      "env": {}
+    }
+  }
+}
