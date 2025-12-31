@@ -111,27 +111,40 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
         });
 
         const eventPromise = (async () => {
-          for await (const rawEvent of stream) {
-            try {
-              if (!("data" in rawEvent)) continue;
-              const event = JSON.parse(String(rawEvent.data));
+          try {
+            for await (const evt of stream as AsyncGenerator<{
+              type: string;
+              properties: {
+                part?: {
+                  sessionID: string;
+                  type: string;
+                  tool?: string;
+                  text?: string;
+                  state?: { status: string; title?: string };
+                  time?: { end?: number };
+                };
+              };
+            }>) {
+              if (evt.type === "message.part.updated") {
+                const part = evt.properties.part;
+                if (!part || part.sessionID !== session.id) continue;
 
-              if (event.type === "part") {
-                const part = event.properties?.part;
-
-                if (part?.type === "text" && part.text) {
-                  process.stdout.write(part.text);
-                } else if (part?.type === "tool_call") {
+                if (
+                  part.type === "tool" &&
+                  part.state?.status === "completed"
+                ) {
                   const toolName = part.tool ?? "unknown";
-                  const status = part.state?.status;
+                  console.log(`🔧 ${toolName}`);
+                }
 
-                  if (status === "pending") {
-                    console.log(`\n🔧 ${toolName}...`);
-                  }
+                if (part.type === "text" && part.time?.end) {
+                  console.log(part.text ?? "");
                 }
               }
-            } catch (parseErr) {
-              console.error("Failed to parse event:", parseErr);
+            }
+          } catch (err) {
+            if (!controller.signal.aborted) {
+              console.error("Stream error:", err);
             }
           }
         })();
