@@ -110,6 +110,8 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
           },
         });
 
+        let accumulatedText = "";
+
         const eventPromise = (async () => {
           try {
             for await (const evt of stream as AsyncGenerator<{
@@ -137,8 +139,12 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
                   console.log(`🔧 ${toolName}`);
                 }
 
-                if (part.type === "text" && part.time?.end) {
-                  console.log(part.text ?? "");
+                if (part.type === "text") {
+                  accumulatedText = part.text ?? "";
+                  if (part.time?.end) {
+                    console.log(accumulatedText);
+                    accumulatedText = "";
+                  }
                 }
               }
             }
@@ -176,6 +182,11 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
         }
 
         response = match.text;
+
+        console.log("\n📄 Final Response:");
+        console.log(response);
+        console.log();
+
         return response;
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
