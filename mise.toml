@@ -6,8 +6,5 @@ pnpm = "10"
 # AI agent CLI - pinned for supply chain security
 opencode = "1.0.200"
 
-# Database tools
-postgres = "17"
-
 # Development tools
 gh = "2.63.2"          # GitHub CLI for issue/PR management
