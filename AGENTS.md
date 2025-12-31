@@ -15,7 +15,7 @@ pnpm test             # Run all tests
 
 ```bash
 # Run a single test file
-pnpm -F @descope-trust-center/nextjs test src/app/_components/__tests__/hero-section.test.tsx
+pnpm --filter @descope-trust-center/nextjs test -- src/app/_components/__tests__/hero-section.test.tsx
 
 # Run tests matching a pattern
 pnpm -F @descope-trust-center/nextjs test -- -t "HeroSection"
