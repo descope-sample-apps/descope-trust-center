@@ -6,14 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "Specific task to work on (leave empty to auto-pick)"
+        description: "Specific task to work on"
         required: false
         type: string
-      skip_pr_review:
-        description: "Skip PR review handling"
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write
@@ -62,30 +57,6 @@ jobs:
           git config user.name "opencode-agent[bot]"
           git config user.email "opencode-agent[bot]@users.noreply.github.com"
 
-      - name: Handle PR Reviews
-        if: ${{ inputs.skip_pr_review != true }}
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          echo "🔍 Checking for PRs with pending reviews..."
-
-          # Find PRs with any review comments (not just CHANGES_REQUESTED)
-          prs_with_reviews=$(gh pr list --state open --json number,headRefName,reviews,reviewThreads --jq '
-            [.[] | select((.reviews | length > 0) or (.reviewThreads | length > 0)) | {
-              number: .number,
-              branch: .headRefName,
-              review_count: (.reviews | length),
-              unresolved_threads: ([.reviewThreads[]? | select(.isResolved == false)] | length)
-            }] | .[]
-          ')
-
-          if [ -z "$prs_with_reviews" ]; then
-            echo "No PRs with pending reviews found"
-          else
-            echo "Found PRs with reviews - will be handled by opencode"
-            echo "$prs_with_reviews"
-          fi
-
       - name: Run OpenCode Agent
         id: run-agent
         env:
@@ -93,99 +64,28 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          # Build the prompt based on inputs
+          # Use custom task if provided, otherwise use the standard workflow
           if [ -n "${{ inputs.task }}" ]; then
             PROMPT="${{ inputs.task }}"
           else
-            PROMPT=$(cat <<'PROMPT_EOF'
+            PROMPT=$(cat <<'EOF'
           You are an autonomous AI agent working on the Descope Trust Center repository.
 
-          ## Your Mission
+          Handle ONE task from highest to lowest priority:
 
-          Complete ONE of the following tasks in priority order:
+          1. PR REVIEWS: If there are open PRs with unresolved review comments, pick one and address all the comments. Check out the branch, read comments, make fixes, reply to comments, resolve threads, commit and push.
 
-          ### Task 1: Handle PR Reviews (if any exist)
-          1. Run: `gh pr list --state open --json number,headRefName,title,reviews`
-          2. For each PR with reviews (especially from Copilot):
-             - Check out the PR branch: `git checkout <branch>`
-             - Read the review comments: `gh pr view <number> --comments`
-             - For each comment that needs addressing:
-               a. Understand the feedback
-               b. Make the necessary code changes
-               c. Reply to the comment explaining what you fixed
-               d. Resolve the comment using GraphQL:
-                  ```
-                  gh api graphql -f query='
-                    mutation {
-                      resolveReviewThread(input: {threadId: "<thread_id>"}) {
-                        thread { isResolved }
-                      }
-                    }
-                  '
-                  ```
-             - Commit and push: `git add . && git commit -m "fix: address review feedback" && git push`
-             - Keep iterating until all comments are resolved
+          2. ISSUES: If no PR reviews, pick the highest priority open issue (P0 > P1 > P2 > P3 > unlabeled) without 'blocked' label. Claim it, implement the solution following AGENTS.md patterns, run checks, create PR.
 
-          ### Task 2: Pick Up a New Issue (if no PR reviews)
-          1. Find available tasks in priority order:
-             ```
-             # Check each priority level in order - take first available
-             gh issue list --state open --label "P0-critical" --json number,title,labels
-             gh issue list --state open --label "P1-high" --json number,title,labels
-             gh issue list --state open --label "P2-medium" --json number,title,labels
-             gh issue list --state open --label "P3-low" --json number,title,labels
-             gh issue list --state open --json number,title,labels  # Any issue without priority
-             ```
-          2. Skip issues with the `blocked` label
-          3. Pick the highest priority unblocked issue (P0 > P1 > P2 > P3 > unlabeled)
-          4. Claim it:
-             - Add comment: "🤖 OpenCode agent starting work on this issue"
-             - Add `opencode` label if not present
-          5. Create a feature branch: `git checkout -b feat/<issue-slug>`
-          6. Implement the solution following AGENTS.md guidelines
-           7. Run checks: `pnpm typecheck && pnpm lint && (pnpm test || echo 'Database tests may fail in CI environment')`
-          8. Commit with conventional format: `git commit -m "feat(<scope>): <description>" -m "Closes #<issue>"`
-          9. Push and create PR:
-             ```
-             git push -u origin HEAD
-             gh pr create --title "<title>" --body "<description>
-
-             Closes #<issue>"
-             ```
-
-          ## Important Rules
-          - Only work on ONE task per run
-          - Always run `pnpm typecheck` before committing
+          Rules:
+          - Work on exactly ONE task per run
+          - Use conventional commits and proper PR descriptions
+          - Run 'pnpm typecheck && pnpm lint && (pnpm test || echo "Tests may fail in CI")' before committing
           - Follow existing code patterns from AGENTS.md
-          - Use `zod/v4` not `zod`
-          - Use `import { env } from "~/env"` not `process.env`
-          - Never suppress TypeScript errors
-          - If blocked, add `blocked` label and move to next task
-
-          ## Getting Review Thread IDs
-          To resolve comments, first get the thread IDs:
-          ```
-          gh api graphql -f query='
-            query($owner: String!, $repo: String!, $pr: Int!) {
-              repository(owner: $owner, name: $repo) {
-                pullRequest(number: $pr) {
-                  reviewThreads(first: 100) {
-                    nodes {
-                      id
-                      isResolved
-                      comments(first: 1) {
-                        nodes { body }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          ' -f owner="${{ github.repository_owner }}" -f repo="${GITHUB_REPOSITORY##*/}" -F pr=<PR_NUMBER>
-          ```
-
-          Start now. Pick one task and complete it.
-          PROMPT_EOF
+          - Use zod/v4, import { env } from '~/env', never suppress TS errors
+          - For PR reviews: resolve all comments in one go, don't leave partial work
+          - Always check git status and commit all changes before pushing
+          EOF
           )
           fi
 
@@ -213,7 +113,7 @@ jobs:
           echo "📊 Agent run completed"
           echo "Exit code: $OPENCODE_EXIT"
 
-          # Check if any PRs were created
+          # Check for any PRs were created
           recent_prs=$(gh pr list --state open --author "opencode-agent[bot]" --json number,title,url --jq '.[] | "PR #\(.number): \(.title) - \(.url)"')
           if [ -n "$recent_prs" ]; then
             echo "📬 Recent PRs by agent:"
