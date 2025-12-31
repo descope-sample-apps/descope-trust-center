@@ -113,7 +113,8 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
         const eventPromise = (async () => {
           for await (const rawEvent of stream) {
             try {
-              const event = JSON.parse(rawEvent.data);
+              if (!("data" in rawEvent)) continue;
+              const event = JSON.parse(String(rawEvent.data));
 
               if (event.type === "part") {
                 const part = event.properties?.part;
