@@ -131,3 +131,120 @@ export const CreateDocumentAccessRequestSchema = createInsertSchema(
   deniedBy: true,
   deniedAt: true,
 });
+
+/**
+ * Certification table - stores trust center certifications
+ */
+export const Certification = pgTable("certification", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar({ length: 256 }).notNull(),
+  logo: t.varchar({ length: 512 }),
+  status: t.varchar({ length: 50 }).notNull().default("active"),
+  lastAuditDate: t.timestamp(),
+  expiryDate: t.timestamp(),
+  certificateUrl: t.varchar({ length: 512 }),
+  description: t.text(),
+  standards: t.jsonb(),
+  createdAt: t
+    .timestamp()
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: t.timestamp({ withTimezone: true }),
+}));
+
+/**
+ * Document table - stores trust center documents
+ */
+export const Document = pgTable("document", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  title: t.varchar({ length: 512 }).notNull(),
+  category: t.varchar({ length: 100 }).notNull(),
+  description: t.text(),
+  accessLevel: t.varchar({ length: 50 }).notNull().default("public"),
+  fileUrl: t.varchar({ length: 512 }),
+  fileSize: t.varchar({ length: 50 }),
+  documentUpdatedAt: t.timestamp(),
+  tags: t.jsonb(),
+  createdAt: t
+    .timestamp()
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: t.timestamp({ withTimezone: true }),
+}));
+
+/**
+ * Subprocessor table - stores third-party subprocessors
+ */
+export const Subprocessor = pgTable("subprocessor", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar({ length: 256 }).notNull(),
+  purpose: t.text(),
+  dataProcessed: t.jsonb(),
+  location: t.varchar({ length: 256 }),
+  contractUrl: t.varchar({ length: 512 }),
+  status: t.varchar({ length: 50 }).notNull().default("active"),
+  createdAt: t
+    .timestamp()
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: t.timestamp({ withTimezone: true }),
+}));
+
+/**
+ * FAQ table - stores frequently asked questions
+ */
+export const FAQ = pgTable("faq", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  question: t.text().notNull(),
+  answer: t.text().notNull(),
+  category: t.varchar({ length: 100 }),
+  createdAt: t
+    .timestamp()
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: t.timestamp({ withTimezone: true }),
+}));
+
+export const CreateCertificationSchema = createInsertSchema(Certification, {
+  name: z.string().min(1),
+  logo: z.string().url().optional(),
+  status: z.enum(["active", "in-progress", "planned"]).default("active"),
+  lastAuditDate: z.string().datetime().optional(),
+  expiryDate: z.string().datetime().optional(),
+  certificateUrl: z.string().url().optional(),
+  description: z.string().optional(),
+  standards: z.array(z.string()).optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const CreateDocumentSchema = createInsertSchema(Document, {
+  title: z.string().min(1),
+  category: z.enum([
+    "audit-report",
+    "security-policy",
+    "legal",
+    "questionnaire",
+  ]),
+  description: z.string().optional(),
+  accessLevel: z
+    .enum(["public", "nda-required", "login-required"])
+    .default("public"),
+  fileUrl: z.string().url().optional(),
+  fileSize: z.string().optional(),
+  updatedAt: z.string().datetime().optional(),
+  tags: z.array(z.string()).optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const CreateSubprocessorSchema = createInsertSchema(Subprocessor, {
+  name: z.string().min(1),
+  purpose: z.string().optional(),
+  dataProcessed: z.array(z.string()).optional(),
+  location: z.string().optional(),
+  contractUrl: z.string().url().optional(),
+  status: z.enum(["active", "pending", "terminated"]).default("active"),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const CreateFAQSchema = createInsertSchema(FAQ, {
+  question: z.string().min(1),
+  answer: z.string().min(1),
+  category: z.string().optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
