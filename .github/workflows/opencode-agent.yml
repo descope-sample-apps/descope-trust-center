@@ -69,12 +69,13 @@ jobs:
         run: |
           echo "🔍 Checking for PRs with pending reviews..."
 
-          # Find PRs with copilot reviews that need attention
-          prs_with_reviews=$(gh pr list --state open --json number,headRefName,reviews --jq '
-            [.[] | select(.reviews | length > 0) | {
+          # Find PRs with any review comments (not just CHANGES_REQUESTED)
+          prs_with_reviews=$(gh pr list --state open --json number,headRefName,reviews,reviewThreads --jq '
+            [.[] | select((.reviews | length > 0) or (.reviewThreads | length > 0)) | {
               number: .number,
               branch: .headRefName,
-              has_changes_requested: ([.reviews[] | select(.state == "CHANGES_REQUESTED")] | length > 0)
+              review_count: (.reviews | length),
+              unresolved_threads: ([.reviewThreads[]? | select(.isResolved == false)] | length)
             }] | .[]
           ')
 
@@ -125,14 +126,17 @@ jobs:
              - Keep iterating until all comments are resolved
 
           ### Task 2: Pick Up a New Issue (if no PR reviews)
-          1. Find available tasks:
+          1. Find available tasks in priority order:
              ```
+             # Check each priority level in order - take first available
              gh issue list --state open --label "P0-critical" --json number,title,labels
              gh issue list --state open --label "P1-high" --json number,title,labels
-             gh issue list --state open --label "opencode" --json number,title,labels
+             gh issue list --state open --label "P2-medium" --json number,title,labels
+             gh issue list --state open --label "P3-low" --json number,title,labels
+             gh issue list --state open --json number,title,labels  # Any issue without priority
              ```
           2. Skip issues with the `blocked` label
-          3. Pick the highest priority unblocked issue
+          3. Pick the highest priority unblocked issue (P0 > P1 > P2 > P3 > unlabeled)
           4. Claim it:
              - Add comment: "🤖 OpenCode agent starting work on this issue"
              - Add `opencode` label if not present
