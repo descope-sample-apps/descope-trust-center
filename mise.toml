@@ -1,7 +1,10 @@
 [tools]
+# Core runtime and package manager
 node = "22"
 pnpm = "10"
-opencode = "latest"
+
+# AI agent CLI - pinned for supply chain security
+opencode = "0.6.0"
 
 # Database tools
 postgres = "17"

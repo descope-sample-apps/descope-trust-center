@@ -87,6 +87,7 @@ jobs:
           fi
 
       - name: Run OpenCode Agent
+        id: run-agent
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -143,11 +144,13 @@ jobs:
           5. Create a feature branch: `git checkout -b feat/<issue-slug>`
           6. Implement the solution following AGENTS.md guidelines
           7. Run checks: `pnpm typecheck && pnpm lint && pnpm test`
-          8. Commit with conventional format: `git commit -m "feat(<scope>): <description>\n\nCloses #<issue>"`
+          8. Commit with conventional format: `git commit -m "feat(<scope>): <description>" -m "Closes #<issue>"`
           9. Push and create PR:
              ```
              git push -u origin HEAD
-             gh pr create --title "<title>" --body "<description>\n\nCloses #<issue>"
+             gh pr create --title "<title>" --body "<description>
+
+             Closes #<issue>"
              ```
 
           ## Important Rules
@@ -178,7 +181,7 @@ jobs:
                 }
               }
             }
-          ' -f owner="${{ github.repository_owner }}" -f repo="${{ github.event.repository.name }}" -F pr=<PR_NUMBER>
+          ' -f owner="${{ github.repository_owner }}" -f repo="${GITHUB_REPOSITORY##*/}" -F pr=<PR_NUMBER>
           ```
 
           Start now. Pick one task and complete it.
@@ -189,16 +192,22 @@ jobs:
           echo "🤖 Starting OpenCode agent..."
           echo "Prompt: ${PROMPT:0:200}..."
 
-          # Run opencode with the prompt
+          # Run opencode with the prompt and capture exit code
+          set +e
           opencode --yes --prompt "$PROMPT"
+          OPENCODE_EXIT=$?
+          set -e
+
+          echo "opencode_exit=$OPENCODE_EXIT" >> $GITHUB_OUTPUT
 
       - name: Report Status
         if: always()
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          OPENCODE_EXIT: ${{ steps.run-agent.outputs.opencode_exit || '0' }}
         run: |
           echo "📊 Agent run completed"
-          echo "Exit code: $?"
+          echo "Exit code: $OPENCODE_EXIT"
 
           # Check if any PRs were created
           recent_prs=$(gh pr list --state open --author "opencode-agent[bot]" --json number,title,url --jq '.[] | "PR #\(.number): \(.title) - \(.url)"')
