@@ -3,8 +3,8 @@
 node = "22"
 pnpm = "10"
 
-# AI agent CLI - pinned for supply chain security
-opencode = "1.0.200"
+# AI agent CLI
+opencode = "latest"
 
 # Development tools
 gh = "2.63.2"          # GitHub CLI for issue/PR management
