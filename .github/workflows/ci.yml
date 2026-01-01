@@ -74,16 +74,8 @@ jobs:
       - name: Run Tests
         run: pnpm test
 
-  # Visual regression tests are available for local development (pnpm test:visual)
-  # but skipped in CI due to cross-platform font rendering differences.
-  # Baselines captured on macOS differ from Linux CI runners by 2-5% even with
-  # maxDiffPixelRatio tolerance. Options for future:
-  # - Use Docker for consistent snapshot generation
-  # - Generate Linux-specific baselines in CI
-  # - Use Chromatic or Percy for cloud visual testing
   visual-regression:
     runs-on: ubuntu-latest
-    if: false # Disabled - see comment above
     steps:
       - uses: actions/checkout@v5
 
@@ -113,3 +105,20 @@ jobs:
           name: test-results
           path: tests/visual/test-results/
           retention-days: 7
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [lint, format, typecheck, test, visual-regression]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Deploy to Vercel
+        run: npx vercel --prod --yes
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
