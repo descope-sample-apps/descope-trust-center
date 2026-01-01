@@ -5,10 +5,13 @@ test.describe("Trust Center E2E Tests", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Check main sections are present
     await expect(
-      page.locator("section").filter({ hasText: /hero|Hero/ }),
+      page
+        .locator("h1")
+        .filter({ hasText: "Security & Compliance at Descope" }),
     ).toBeVisible();
+
+    // Check main sections are present
     await expect(page.locator("#certifications")).toBeVisible();
     await expect(page.locator("#subprocessors")).toBeVisible();
     await expect(page.locator("#faq")).toBeVisible();
@@ -26,15 +29,20 @@ test.describe("Trust Center E2E Tests", () => {
     const certificationsSection = page.locator("#certifications");
     await certificationsSection.scrollIntoViewIfNeeded();
 
-    // Assuming there are filter buttons or inputs
-    const filterButton = certificationsSection
+    const activeFilterButton = certificationsSection
       .locator("button")
-      .filter({ hasText: /filter|Filter/ })
+      .filter({ hasText: "Active" })
       .first();
-    if ((await filterButton.count()) > 0) {
-      await filterButton.click();
-      // Check if filtering works (this would need to be adjusted based on actual implementation)
-      await expect(page.locator(".certification-item").first()).toBeVisible();
+    await activeFilterButton.click();
+
+    await page.waitForTimeout(300);
+
+    const certificationCards = certificationsSection.locator("article");
+    const count = await certificationCards.count();
+    for (let i = 0; i < count; i++) {
+      await expect(
+        certificationCards.nth(i).locator("span").filter({ hasText: "Active" }),
+      ).toBeVisible();
     }
   });
 
@@ -42,82 +50,69 @@ test.describe("Trust Center E2E Tests", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Navigate to document library if there's a link
     const docLink = page
       .locator("a")
-      .filter({ hasText: /documents|Documents/ })
+      .filter({ hasText: "Browse Security Docs" })
       .first();
-    if ((await docLink.count()) > 0) {
-      await docLink.click();
-      await page.waitForLoadState("networkidle");
+    await docLink.click();
 
-      const searchInput = page
-        .locator("input[type='search'], input[placeholder*='search']")
-        .first();
-      if ((await searchInput.count()) > 0) {
-        await searchInput.fill("test");
-        await searchInput.press("Enter");
-        // Check results
-        await expect(
-          page.locator(".document-item, .search-result").first(),
-        ).toBeVisible();
-      }
-    }
+    await page.waitForTimeout(500);
+
+    const documentsSection = page.locator("#documents");
+    const searchInput = documentsSection
+      .locator("input[placeholder*='Search documents']")
+      .first();
+    await searchInput.fill("security");
+    await searchInput.press("Enter");
+
+    await page.waitForTimeout(300);
+
+    const documentCards = documentsSection.locator("article");
+    await expect(documentCards.first()).toBeVisible();
   });
 
   test("public document download works", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Find a download link
-    const downloadLink = page
-      .locator("a[download], a[href*='.pdf'], a[href*='.doc']")
-      .first();
-    if ((await downloadLink.count()) > 0) {
-      const [download] = await Promise.all([
-        page.waitForEvent("download"),
-        downloadLink.click(),
-      ]);
-      expect(download.suggestedFilename()).toBeTruthy();
-    }
+    const documentsSection = page.locator("#documents");
+    await documentsSection.scrollIntoViewIfNeeded();
+
+    const downloadLink = documentsSection.locator("a[download]").first();
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      downloadLink.click(),
+    ]);
+    expect(download.suggestedFilename()).toBeTruthy();
   });
 
   test("login modal opens for gated documents", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Find a gated document link
-    const gatedLink = page
-      .locator("a")
-      .filter({ hasText: /login|Login|auth/ })
+    const documentsSection = page.locator("#documents");
+    await documentsSection.scrollIntoViewIfNeeded();
+
+    const signInButton = documentsSection
+      .locator("button")
+      .filter({ hasText: "Sign in to Download" })
       .first();
-    if ((await gatedLink.count()) > 0) {
-      await gatedLink.click();
-      // Check if modal opens
-      await expect(
-        page.locator("[role='dialog'], .modal, .login-modal"),
-      ).toBeVisible();
-    }
+    await signInButton.click();
+
+    await expect(page.locator("[role='dialog']")).toBeVisible();
   });
 
   test("authentication flow works (login/logout)", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Find login button
-    const loginButton = page
+    const signInButton = page
       .locator("button")
-      .filter({ hasText: /login|Login|sign in/i })
+      .filter({ hasText: "Sign in" })
       .first();
-    if ((await loginButton.count()) > 0) {
-      await loginButton.click();
-      // This would need actual auth setup, for now just check modal
-      await expect(page.locator("[role='dialog'], .modal")).toBeVisible();
+    await signInButton.click();
 
-      // For full auth flow, would need to mock or use test credentials
-      // await page.fill("input[type='email']", "test@example.com");
-      // etc.
-    }
+    await expect(page.locator("[role='dialog']")).toBeVisible();
   });
 
   test("contact form submission works", async ({ page }) => {
@@ -128,28 +123,20 @@ test.describe("Trust Center E2E Tests", () => {
     await contactSection.scrollIntoViewIfNeeded();
 
     const form = contactSection.locator("form").first();
-    if ((await form.count()) > 0) {
-      await form
-        .locator("input[name='name'], input[placeholder*='name']")
-        .first()
-        .fill("Test User");
-      await form
-        .locator("input[name='email'], input[type='email']")
-        .first()
-        .fill("test@example.com");
-      await form
-        .locator("textarea[name='message'], textarea")
-        .first()
-        .fill("Test message");
+    await form.locator("input[name='name']").first().fill("Test User");
+    await form.locator("input[name='email']").first().fill("test@example.com");
+    await form.locator("input[name='company']").first().fill("Test Company");
+    await form
+      .locator("textarea[name='message']")
+      .first()
+      .fill("Test message for contact form");
 
-      const submitButton = form.locator("button[type='submit']").first();
-      await submitButton.click();
+    const submitButton = form.locator("button[type='submit']").first();
+    await submitButton.click();
 
-      // Check for success message or redirect
-      await expect(
-        page.locator("text=Thank you, text=success, text=submitted").first(),
-      ).toBeVisible({ timeout: 5000 });
-    }
+    await expect(page.locator("text=Thank you for your inquiry")).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("subprocessors table search works", async ({ page }) => {
@@ -160,16 +147,15 @@ test.describe("Trust Center E2E Tests", () => {
     await subprocessorsSection.scrollIntoViewIfNeeded();
 
     const searchInput = subprocessorsSection
-      .locator("input[type='search'], input[placeholder*='search']")
+      .locator("input[placeholder*='Search vendors']")
       .first();
-    if ((await searchInput.count()) > 0) {
-      await searchInput.fill("test");
-      await searchInput.press("Enter");
-      // Check if table updates
-      await expect(
-        page.locator("table, .subprocessor-item").first(),
-      ).toBeVisible();
-    }
+    await searchInput.fill("amazon");
+    await searchInput.press("Enter");
+
+    await page.waitForTimeout(300);
+
+    const tableRows = subprocessorsSection.locator("tbody tr");
+    await expect(tableRows.first()).toBeVisible();
   });
 
   test("FAQ accordion expand/collapse works", async ({ page }) => {
@@ -179,17 +165,15 @@ test.describe("Trust Center E2E Tests", () => {
     const faqSection = page.locator("#faq");
     await faqSection.scrollIntoViewIfNeeded();
 
-    const firstAccordion = faqSection
-      .locator("button, [role='button']")
-      .first();
-    if ((await firstAccordion.count()) > 0) {
-      await firstAccordion.click();
-      await page.waitForTimeout(300);
-      // Check if content is visible
-      await expect(
-        page.locator("[aria-expanded='true'], .expanded"),
-      ).toBeVisible();
-    }
+    const firstAccordion = faqSection.locator("button").first();
+    await firstAccordion.click();
+
+    await page.waitForTimeout(300);
+
+    await expect(firstAccordion).toHaveAttribute("aria-expanded", "true");
+
+    const answerContent = page.locator("[role='region']");
+    await expect(answerContent).toBeVisible();
   });
 
   test("responsive layout at mobile breakpoint", async ({ page, isMobile }) => {
@@ -200,15 +184,13 @@ test.describe("Trust Center E2E Tests", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Check mobile menu or responsive elements
-    const mobileMenu = page
-      .locator("[aria-label*='menu'], .mobile-menu, button")
-      .filter({ hasText: /menu|Menu/ })
-      .first();
-    if ((await mobileMenu.count()) > 0) {
-      await mobileMenu.click();
-      await expect(page.locator("nav, .navigation")).toBeVisible();
-    }
+    const menuButton = page.locator(
+      "button[aria-label='Toggle navigation menu']",
+    );
+    await menuButton.click();
+
+    const mobileNav = page.locator("nav[aria-label='Mobile navigation']");
+    await expect(mobileNav).toBeVisible();
 
     // Check sections are still accessible
     await expect(page.locator("#certifications")).toBeVisible();
