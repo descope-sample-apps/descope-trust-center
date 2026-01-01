@@ -160,6 +160,7 @@ export const Certification = pgTable(
   (table) => [
     index("certification_status_idx").on(table.status),
     index("certification_is_published_idx").on(table.isPublished),
+    index("certification_sort_order_idx").on(table.sortOrder),
   ],
 );
 
@@ -168,8 +169,8 @@ export const CreateCertificationSchema = createInsertSchema(Certification, {
   slug: z.string().min(1).max(256),
   logo: z.string().url().optional(),
   status: z.enum(certificationStatusEnum).default("active"),
-  lastAuditDate: z.string().date().optional(),
-  expiryDate: z.string().date().optional(),
+  lastAuditDate: z.coerce.date().optional(),
+  expiryDate: z.coerce.date().optional(),
   certificateUrl: z.string().url().optional(),
   description: z.string().min(1),
   standards: z.array(z.string()).optional(),
@@ -296,6 +297,7 @@ export const FAQ = pgTable(
   (table) => [
     index("faq_category_idx").on(table.category),
     index("faq_is_published_idx").on(table.isPublished),
+    index("faq_sort_order_idx").on(table.sortOrder),
   ],
 );
 
@@ -350,7 +352,7 @@ export const CreateAuditLogSchema = createInsertSchema(AuditLog, {
   userId: z.string().optional(),
   userEmail: z.string().email().optional(),
   userName: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
 }).omit({ id: true, createdAt: true });

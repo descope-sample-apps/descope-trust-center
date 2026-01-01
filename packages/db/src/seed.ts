@@ -55,6 +55,7 @@ async function seed() {
     join(dataPath, "certifications.json"),
     "utf-8",
   );
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const certifications: CertificationJson[] = JSON.parse(certificationsRaw);
 
   for (const [index, cert] of certifications.entries()) {
@@ -76,6 +77,7 @@ async function seed() {
 
   console.log("\n📄 Seeding documents...");
   const documentsRaw = readFileSync(join(dataPath, "documents.json"), "utf-8");
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const documents: DocumentJson[] = JSON.parse(documentsRaw);
 
   for (const [index, doc] of documents.entries()) {
@@ -99,6 +101,7 @@ async function seed() {
     join(dataPath, "subprocessors.json"),
     "utf-8",
   );
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const subprocessors: SubprocessorJson[] = JSON.parse(subprocessorsRaw);
 
   for (const [index, sub] of subprocessors.entries()) {
@@ -118,16 +121,20 @@ async function seed() {
 
   console.log("\n❓ Seeding FAQs...");
   const faqsRaw = readFileSync(join(dataPath, "faqs.json"), "utf-8");
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const faqs: FAQJson[] = JSON.parse(faqsRaw);
 
-  for (const [index, faq] of faqs.entries()) {
-    await db.insert(FAQ).values({
-      question: faq.question,
-      answer: faq.answer,
-      category: faq.category,
-      sortOrder: index,
-      isPublished: true,
-    });
+  const faqValues = faqs.map((faq, index) => ({
+    question: faq.question,
+    answer: faq.answer,
+    category: faq.category,
+    sortOrder: index,
+    isPublished: true,
+  }));
+
+  await db.insert(FAQ).values(faqValues);
+
+  for (const faq of faqs) {
     console.log(`  ✓ ${faq.question.slice(0, 50)}...`);
   }
 
