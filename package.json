@@ -26,7 +26,8 @@
     "ui-add": "turbo run ui-add",
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
-    "test:visual:ui": "playwright test --ui"
+    "test:visual:ui": "playwright test --ui",
+    "test:e2e": "playwright test --config playwright.e2e.config.ts"
   },
   "devDependencies": {
     "@descope-trust-center/prettier-config": "workspace:*",
