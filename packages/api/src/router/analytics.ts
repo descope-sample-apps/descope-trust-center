@@ -1,5 +1,4 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import type { VercelPgDatabase } from "drizzle-orm/vercel-postgres";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
@@ -19,12 +18,9 @@ import {
   lte,
   sql,
 } from "@descope-trust-center/db";
-import * as schema from "@descope-trust-center/db/schema";
 
-import type { Context, DescopeSession } from "../trpc";
+import type { Context } from "../trpc";
 import { protectedProcedure, publicProcedure } from "../trpc";
-
-type Database = VercelPgDatabase<typeof schema>;
 
 const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(",") ?? [];
 const ADMIN_DOMAINS = ["descope.com"];

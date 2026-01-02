@@ -5,7 +5,7 @@ import { AuditLogTable } from "./_components/audit-log-table";
 import { AuditStats } from "./_components/audit-stats";
 import { ExportButton } from "./_components/export-button";
 
-export default async function AuditLogPage() {
+export default function AuditLogPage() {
   prefetch(trpc.audit.list.queryOptions({ limit: 50 }));
   prefetch(trpc.audit.getStats.queryOptions({ days: 30 }));
   prefetch(trpc.audit.getEntityTypes.queryOptions());
