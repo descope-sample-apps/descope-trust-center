@@ -29,6 +29,7 @@
     "next": "^16.0.9",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "recharts": "^3.6.0",
     "superjson": "2.2.3",
     "zod": "catalog:"
   },
