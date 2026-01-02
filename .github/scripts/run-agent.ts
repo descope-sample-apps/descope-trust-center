@@ -14,6 +14,7 @@ Handle ONE task from highest to lowest priority:
 2. ISSUES:
   If no PR reviews, pick the highest priority open issue (P0 > P1 > P2 > P3 > unlabeled) without 'blocked' label.
   Claim it by changing issue status to 'In Progress' in the project.
+  Create a branch for the task, the branch should be named after the issue number, if such a branch already exists with a PR it means it's already in progress and don't work it.
   Implement the solution following AGENTS.md patterns, and according to openspec.
   Run checks, create PR.
 
