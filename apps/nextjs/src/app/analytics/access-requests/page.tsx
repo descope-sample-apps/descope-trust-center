@@ -31,7 +31,7 @@ export default function AccessRequestsPage() {
     trpc.analytics.approveAccess.mutationOptions({
       onSuccess: () => {
         toast.success("Request approved successfully.");
-        queryClient.invalidateQueries(trpc.analytics.pathFilter());
+        void queryClient.invalidateQueries(trpc.analytics.pathFilter());
       },
       onError: (error) => {
         toast.error("Failed to approve the request. Please try again.");
@@ -44,7 +44,7 @@ export default function AccessRequestsPage() {
     trpc.analytics.denyAccess.mutationOptions({
       onSuccess: () => {
         toast.success("Request denied.");
-        queryClient.invalidateQueries(trpc.analytics.pathFilter());
+        void queryClient.invalidateQueries(trpc.analytics.pathFilter());
       },
       onError: (error) => {
         toast.error("Failed to deny the request. Please try again.");
