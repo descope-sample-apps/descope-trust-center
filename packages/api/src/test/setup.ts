@@ -6,6 +6,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 
 import {
+  AuditLog,
   DocumentAccessRequest,
   DocumentDownload,
   FormSubmission,
@@ -20,6 +21,7 @@ const schema = {
   DocumentDownload,
   FormSubmission,
   DocumentAccessRequest,
+  AuditLog,
 };
 
 export type TestDB = ReturnType<typeof drizzle<typeof schema>>;
@@ -91,6 +93,7 @@ export function getTestDb(): TestDB {
 }
 
 export async function cleanTestData(db: TestDB): Promise<void> {
+  await db.execute(`DELETE FROM audit_log`);
   await db.execute(`DELETE FROM document_access_request`);
   await db.execute(`DELETE FROM form_submission`);
   await db.execute(`DELETE FROM document_download`);

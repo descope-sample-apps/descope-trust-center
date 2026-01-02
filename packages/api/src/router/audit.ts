@@ -1,4 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
@@ -10,9 +11,10 @@ import {
   sql,
 } from "@descope-trust-center/db";
 
+import { env } from "../env";
 import { protectedProcedure, publicProcedure } from "../trpc";
 
-const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(",") ?? [];
+const ADMIN_EMAILS = env.ADMIN_EMAILS?.split(",") ?? [];
 const ADMIN_DOMAINS = ["descope.com"];
 
 function isAdmin(email: string | undefined | null): boolean {
@@ -24,7 +26,10 @@ function isAdmin(email: string | undefined | null): boolean {
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!isAdmin(ctx.session.user.email)) {
-    throw new Error("Admin access required");
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
   }
   return next({ ctx });
 });
