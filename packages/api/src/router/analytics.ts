@@ -307,7 +307,7 @@ export const analyticsRouter = {
         .object({
           limit: z.number().min(1).max(100).default(50),
           offset: z.number().min(0).default(0),
-          userId: z.string().optional(),
+          userEmail: z.string().optional(),
           action: z.string().optional(),
           entityType: z.string().optional(),
           fromDate: z.string().datetime().optional(),
@@ -320,7 +320,8 @@ export const analyticsRouter = {
       const offset = input?.offset ?? 0;
 
       const conditions = [];
-      if (input?.userId) conditions.push(eq(AuditLog.userId, input.userId));
+      if (input?.userEmail)
+        conditions.push(eq(AuditLog.userEmail, input.userEmail));
       if (input?.action)
         conditions.push(sql`${AuditLog.action} LIKE ${`%${input.action}%`}`);
       if (input?.entityType)
@@ -361,7 +362,7 @@ export const analyticsRouter = {
       z
         .object({
           format: z.enum(["csv", "json"]).default("csv"),
-          userId: z.string().optional(),
+          userEmail: z.string().optional(),
           action: z.string().optional(),
           entityType: z.string().optional(),
           fromDate: z.string().datetime().optional(),
@@ -371,7 +372,8 @@ export const analyticsRouter = {
     )
     .query(async ({ ctx, input }) => {
       const conditions = [];
-      if (input?.userId) conditions.push(eq(AuditLog.userId, input.userId));
+      if (input?.userEmail)
+        conditions.push(eq(AuditLog.userEmail, input.userEmail));
       if (input?.action)
         conditions.push(sql`${AuditLog.action} LIKE ${`%${input.action}%`}`);
       if (input?.entityType)

@@ -236,9 +236,11 @@ export const CreateFaqSchema = createInsertSchema(Faq, {
 
 export const AuditLog = pgTable("audit_log", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  userId: t.varchar({ length: 256 }),
+  userEmail: t.varchar({ length: 256 }),
+  userName: t.varchar({ length: 256 }),
   action: t.varchar({ length: 100 }).notNull(),
-  resource: t.varchar({ length: 256 }),
+  entityType: t.varchar({ length: 100 }),
+  entityId: t.varchar({ length: 256 }),
   details: t.jsonb(),
   ipAddress: t.varchar({ length: 45 }),
   userAgent: t.text(),
@@ -246,9 +248,11 @@ export const AuditLog = pgTable("audit_log", (t) => ({
 }));
 
 export const CreateAuditLogSchema = createInsertSchema(AuditLog, {
-  userId: z.string().optional(),
+  userEmail: z.string().optional(),
+  userName: z.string().optional(),
   action: z.string().min(1),
-  resource: z.string().optional(),
+  entityType: z.string().optional(),
+  entityId: z.string().optional(),
   details: z.any().optional(),
   ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
