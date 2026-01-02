@@ -163,7 +163,7 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
                   }
                 }
 
-                if (part.type === "text" && part.text) {
+                if (part.type === "text" || part.text) {
                   // Print only the new portion of text (streaming delta)
                   const newText = part.text.slice(lastPrintedLength);
                   if (newText) {
