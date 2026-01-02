@@ -12,7 +12,8 @@ export const env = createEnv({
     TRUST_CENTER_FROM_EMAIL: z
       .string()
       .email()
-      .default("Trust Center <noreply@descope.com>"),
+      .default("Trust Center <noreply@descope.com>")
+      .optional(),
     TRUST_CENTER_NOTIFICATION_EMAIL: z
       .string()
       .email()

@@ -6,6 +6,12 @@ interface EmailServiceOptions {
   notificationEmail: string;
 }
 
+interface CreateEmailServiceOptions {
+  apiKey?: string;
+  fromEmail?: string;
+  notificationEmail?: string;
+}
+
 /**
  * Escape HTML entities to prevent XSS in email templates
  */
@@ -460,5 +466,11 @@ export class EmailService {
 }
 
 // Export factory function
-export const createEmailService = (options: EmailServiceOptions) =>
-  new EmailService(options);
+export const createEmailService = (
+  options: CreateEmailServiceOptions,
+): EmailService | null => {
+  if (!options.apiKey || !options.fromEmail || !options.notificationEmail) {
+    return null;
+  }
+  return new EmailService(options as EmailServiceOptions);
+};

@@ -20,17 +20,15 @@ import {
 } from "@descope-trust-center/validators";
 
 import { env } from "../env";
-import { EmailService } from "../lib/email";
+import { createEmailService } from "../lib/email";
 import { protectedProcedure, publicProcedure } from "../trpc";
 
-// Create email service instance - only if API key is available
-const emailService = env.RESEND_API_KEY
-  ? new EmailService({
-      apiKey: env.RESEND_API_KEY,
-      fromEmail: env.TRUST_CENTER_FROM_EMAIL,
-      notificationEmail: env.TRUST_CENTER_NOTIFICATION_EMAIL,
-    })
-  : null;
+// Create email service instance
+const emailService = createEmailService({
+  apiKey: env.RESEND_API_KEY,
+  fromEmail: env.TRUST_CENTER_FROM_EMAIL,
+  notificationEmail: env.TRUST_CENTER_NOTIFICATION_EMAIL,
+});
 
 /**
  * Reads and parses a JSON data file from the Next.js app data directory
