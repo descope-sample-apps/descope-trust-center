@@ -221,19 +221,108 @@ export const analyticsRouter = {
       return { success: true, request: updated };
     }),
 
-  getDashboardSummary: adminProcedure.query(async ({ ctx }) => {
-    const [downloadCount, formCount, pendingRequests] = await Promise.all([
-      ctx.db.select({ count: sql<number>`count(*)` }).from(DocumentDownload),
-      ctx.db.select({ count: sql<number>`count(*)` }).from(FormSubmission),
-      ctx.db
-        .select({ count: sql<number>`count(*)` })
-        .from(DocumentAccessRequest)
-        .where(eq(DocumentAccessRequest.status, "pending")),
-    ]);
-    return {
-      totalDownloads: Number(downloadCount[0]?.count ?? 0),
-      totalFormSubmissions: Number(formCount[0]?.count ?? 0),
-      pendingAccessRequests: Number(pendingRequests[0]?.count ?? 0),
-    };
-  }),
+  getDashboardSummary: adminProcedure
+    .input(
+      z
+        .object({
+          dateRange: z.enum(["7days", "30days", "90days"]).default("30days"),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+      const dateRange = input?.dateRange ?? "30days";
+      const days = dateRange === "7days" ? 7 : dateRange === "30days" ? 30 : 90;
+      const oneRangeAgo = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+      const [
+        downloadCount,
+        downloadsThisMonth,
+        downloadsThisWeek,
+        formCount,
+        formsThisMonth,
+        formsThisWeek,
+        pendingRequests,
+        topDocuments,
+        formBreakdown,
+        recentActivity,
+      ] = await Promise.all([
+        ctx.db.select({ count: sql<number>`count(*)` }).from(DocumentDownload),
+        ctx.db
+          .select({ count: sql<number>`count(*)` })
+          .from(DocumentDownload)
+          .where(sql`${DocumentDownload.createdAt} >= ${oneRangeAgo}`),
+        ctx.db
+          .select({ count: sql<number>`count(*)` })
+          .from(DocumentDownload)
+          // downloadsThisWeek is always last 7 days
+          .where(
+            sql`${DocumentDownload.createdAt} >= ${new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)}`,
+          ),
+        ctx.db.select({ count: sql<number>`count(*)` }).from(FormSubmission),
+        ctx.db
+          .select({ count: sql<number>`count(*)` })
+          .from(FormSubmission)
+          .where(sql`${FormSubmission.createdAt} >= ${oneRangeAgo}`),
+        ctx.db
+          .select({ count: sql<number>`count(*)` })
+          .from(FormSubmission)
+          .where(
+            sql`${FormSubmission.createdAt} >= ${new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)}`,
+          ),
+        ctx.db
+          .select({ count: sql<number>`count(*)` })
+          .from(DocumentAccessRequest)
+          .where(eq(DocumentAccessRequest.status, "pending")),
+        ctx.db
+          .select({
+            documentTitle: DocumentDownload.documentTitle,
+            downloads: sql<number>`count(*)`,
+          })
+          .from(DocumentDownload)
+          .groupBy(DocumentDownload.documentTitle)
+          .orderBy(desc(sql<number>`count(*)`))
+          .limit(5),
+        ctx.db
+          .select({
+            type: FormSubmission.type,
+            count: sql<number>`count(*)`,
+          })
+          .from(FormSubmission)
+          .groupBy(FormSubmission.type),
+        ctx.db
+          .select({
+            title: DocumentDownload.documentTitle,
+            email: DocumentDownload.userEmail,
+            createdAt: DocumentDownload.createdAt,
+          })
+          .from(DocumentDownload)
+          .orderBy(desc(DocumentDownload.createdAt))
+          .limit(5),
+      ]);
+
+      return {
+        totalDownloads: Number(downloadCount[0]?.count ?? 0),
+        downloadsThisMonth: Number(downloadsThisMonth[0]?.count ?? 0),
+        downloadsThisWeek: Number(downloadsThisWeek[0]?.count ?? 0),
+        totalFormSubmissions: Number(formCount[0]?.count ?? 0),
+        formsThisMonth: Number(formsThisMonth[0]?.count ?? 0),
+        formsThisWeek: Number(formsThisWeek[0]?.count ?? 0),
+        pendingAccessRequests: Number(pendingRequests[0]?.count ?? 0),
+        topDocuments: topDocuments.map((doc) => ({
+          title: doc.documentTitle,
+          downloads: Number(doc.downloads),
+        })),
+        formBreakdown: formBreakdown.map((form) => ({
+          type: form.type,
+          count: Number(form.count),
+        })),
+        recentActivity: recentActivity.map((activity) => ({
+          type: "download",
+          title: activity.title,
+          email: activity.email,
+          createdAt: activity.createdAt,
+        })),
+      };
+    }),
 } satisfies TRPCRouterRecord;
