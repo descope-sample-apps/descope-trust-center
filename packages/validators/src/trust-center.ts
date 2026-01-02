@@ -151,3 +151,130 @@ export const SubprocessorSubscriptionSchema = z.object({
 export type SubprocessorSubscription = z.infer<
   typeof SubprocessorSubscriptionSchema
 >;
+
+/**
+ * Status page status codes (Statuspage.io)
+ */
+export const StatusPageStatusCodeSchema = z.union([
+  z.literal(100), // Operational
+  z.literal(200), // Planned Maintenance
+  z.literal(300), // Degraded Performance
+  z.literal(400), // Partial Outage
+  z.literal(500), // Major Outage
+]);
+export type StatusPageStatusCode = z.infer<typeof StatusPageStatusCodeSchema>;
+
+/**
+ * Status page status strings
+ */
+export const StatusPageStatusSchema = z.enum([
+  "Operational",
+  "Planned Maintenance",
+  "Degraded Performance",
+  "Partial Outage",
+  "Major Outage",
+]);
+export type StatusPageStatus = z.infer<typeof StatusPageStatusSchema>;
+
+/**
+ * Status page component schema
+ */
+export const StatusPageComponentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  updated: z.string().datetime(),
+  status: StatusPageStatusSchema,
+  status_code: StatusPageStatusCodeSchema,
+  containers: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        updated: z.string().datetime(),
+        status: StatusPageStatusSchema,
+        status_code: StatusPageStatusCodeSchema,
+      }),
+    )
+    .optional(),
+});
+export type StatusPageComponent = z.infer<typeof StatusPageComponentSchema>;
+
+/**
+ * Status page incident message schema
+ */
+export const StatusPageIncidentMessageSchema = z.object({
+  details: z.string(),
+  state: z.number(),
+  status: z.number(),
+  datetime: z.string().datetime(),
+});
+export type StatusPageIncidentMessage = z.infer<
+  typeof StatusPageIncidentMessageSchema
+>;
+
+/**
+ * Status page incident schema
+ */
+export const StatusPageIncidentSchema = z.object({
+  name: z.string(),
+  _id: z.string(),
+  datetime_open: z.string().datetime(),
+  messages: z.array(StatusPageIncidentMessageSchema),
+  containers_affected: z
+    .array(
+      z.object({
+        name: z.string(),
+        _id: z.string(),
+      }),
+    )
+    .optional(),
+  components_affected: z
+    .array(
+      z.object({
+        name: z.string(),
+        _id: z.string(),
+      }),
+    )
+    .optional(),
+});
+export type StatusPageIncident = z.infer<typeof StatusPageIncidentSchema>;
+
+/**
+ * Status page maintenance schema
+ */
+export const StatusPageMaintenanceSchema = z.object({
+  name: z.string(),
+  _id: z.string(),
+  datetime_open: z.string().datetime(),
+  datetime_planned_start: z.string().datetime().optional(),
+  datetime_planned_end: z.string().datetime().optional(),
+});
+export type StatusPageMaintenance = z.infer<typeof StatusPageMaintenanceSchema>;
+
+/**
+ * Status page overall status schema
+ */
+export const StatusPageOverallStatusSchema = z.object({
+  updated: z.string().datetime(),
+  status: StatusPageStatusSchema,
+  status_code: StatusPageStatusCodeSchema,
+});
+export type StatusPageOverallStatus = z.infer<
+  typeof StatusPageOverallStatusSchema
+>;
+
+/**
+ * Status page API response schema
+ */
+export const StatusPageResponseSchema = z.object({
+  result: z.object({
+    status_overall: StatusPageOverallStatusSchema,
+    status: z.array(StatusPageComponentSchema),
+    incidents: z.array(StatusPageIncidentSchema),
+    maintenance: z.object({
+      active: z.array(StatusPageMaintenanceSchema),
+      upcoming: z.array(StatusPageMaintenanceSchema),
+    }),
+  }),
+});
+export type StatusPageResponse = z.infer<typeof StatusPageResponseSchema>;

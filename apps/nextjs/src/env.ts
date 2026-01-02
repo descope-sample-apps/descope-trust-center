@@ -21,12 +21,16 @@ export const env = createEnv({
     NEXT_PUBLIC_DESCOPE_PROJECT_ID: z.string().min(1),
     NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
     NEXT_PUBLIC_GA_ID: z.string().min(1),
+    NEXT_PUBLIC_STATUSPAGE_PAGE_ID: z.string().optional(),
+    NEXT_PUBLIC_STATUSPAGE_URL: z.string().url().optional(),
   },
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_DESCOPE_PROJECT_ID: process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
+    NEXT_PUBLIC_STATUSPAGE_PAGE_ID: process.env.NEXT_PUBLIC_STATUSPAGE_PAGE_ID,
+    NEXT_PUBLIC_STATUSPAGE_URL: process.env.NEXT_PUBLIC_STATUSPAGE_URL,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

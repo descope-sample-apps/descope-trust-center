@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 
 import type { Certification } from "@descope-trust-center/validators";
@@ -5,6 +6,7 @@ import { cn } from "@descope-trust-center/ui";
 import { buttonVariants } from "@descope-trust-center/ui/button";
 
 import certificationsData from "~/app/data/certifications.json";
+import { StatusWidget } from "./status-widget";
 
 /** Key trust badges to display (filter for active/featured certifications) */
 const FEATURED_CERTIFICATION_IDS = ["soc2-type2", "iso27001", "gdpr", "hipaa"];
@@ -43,10 +45,23 @@ export function HeroSection() {
       </div>
 
       <div className="relative mx-auto max-w-4xl text-center">
-        {/* Trust badge */}
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-4 py-2 text-sm font-medium text-violet-700 shadow-sm backdrop-blur-sm dark:border-violet-800 dark:bg-slate-900/80 dark:text-violet-300">
-          <span className="flex h-2 w-2 rounded-full bg-green-500" />
-          SOC 2 Type II Certified
+        {/* Trust badge and status */}
+        <div className="mb-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-4 py-2 text-sm font-medium text-violet-700 shadow-sm backdrop-blur-sm dark:border-violet-800 dark:bg-slate-900/80 dark:text-violet-300">
+            <span className="flex h-2 w-2 rounded-full bg-green-500" />
+            SOC 2 Type II Certified
+          </div>
+
+          <Suspense
+            fallback={
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-sm font-medium text-slate-600 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-400">
+                <span className="flex h-2 w-2 animate-pulse rounded-full bg-slate-400" />
+                Loading status...
+              </div>
+            }
+          >
+            <StatusWidget />
+          </Suspense>
         </div>
 
         {/* Headline */}

@@ -9,6 +9,7 @@ import {
   DocumentsSchema,
   FAQCategorySchema,
   FAQsSchema,
+  StatusPageResponseSchema,
   SubprocessorsSchema,
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
@@ -182,4 +183,59 @@ export const trustCenterRouter = {
           "You're subscribed! We'll notify you when our subprocessor list changes.",
       };
     }),
+
+  /**
+   * Returns current status page information
+   * Fetches real-time status from Statuspage.io API
+   */
+  getStatusPage: publicProcedure.query(async () => {
+    const pageId = process.env.NEXT_PUBLIC_STATUSPAGE_PAGE_ID;
+    const statusUrl = process.env.NEXT_PUBLIC_STATUSPAGE_URL;
+
+    if (!pageId && !statusUrl) {
+      // Graceful degradation - return operational status if no config
+      return {
+        status_overall: {
+          updated: new Date().toISOString(),
+          status: "Operational" as const,
+          status_code: 100 as const,
+        },
+        status: [],
+        incidents: [],
+        maintenance: { active: [], upcoming: [] },
+      };
+    }
+
+    try {
+      const apiUrl =
+        statusUrl || `https://${pageId}.statuspage.io/api/v2/status.json`;
+
+      const response = await fetch(apiUrl, {
+        headers: {
+          "User-Agent": "Descope Trust Center",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Status API returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      return StatusPageResponseSchema.parse(data);
+    } catch (error) {
+      console.error("[Trust Center] Status page API error:", error);
+
+      // Graceful degradation - return operational status on error
+      return {
+        status_overall: {
+          updated: new Date().toISOString(),
+          status: "Operational" as const,
+          status_code: 100 as const,
+        },
+        status: [],
+        incidents: [],
+        maintenance: { active: [], upcoming: [] },
+      };
+    }
+  }),
 } satisfies TRPCRouterRecord;
