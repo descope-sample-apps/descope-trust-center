@@ -111,22 +111,26 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
     },
 
     async subscribeAndChat(session: Session, prompt: string): Promise<string> {
-      let response = "";
       const controller = new AbortController();
 
       const timeoutId = setTimeout(() => {
+        console.error(
+          `\n⏰ Chat timed out after ${Math.round(SERVER_CONFIG.chatTimeoutMs / 1000 / 60)} minutes`,
+        );
         controller.abort();
       }, SERVER_CONFIG.chatTimeoutMs);
+
+      let streamError: Error | undefined;
+      let lastPrintedLength = 0;
 
       try {
         const { stream } = await client.event.subscribe({
           signal: controller.signal,
           onSseError: (err) => {
-            console.error("SSE error:", err);
+            console.error("SSE connection error:", err);
+            streamError = err instanceof Error ? err : new Error(String(err));
           },
         });
-
-        let accumulatedText = "";
 
         const eventPromise = (async () => {
           try {
@@ -139,7 +143,7 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
                   tool?: string;
                   text?: string;
                   state?: { status: string; title?: string };
-                  time?: { end?: number };
+                  time?: { start?: number; end?: number };
                 };
               };
             }>) {
@@ -147,39 +151,65 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
                 const part = evt.properties.part;
                 if (!part || part.sessionID !== session.id) continue;
 
-                if (
-                  part.type === "tool" &&
-                  part.state?.status === "completed"
-                ) {
-                  const toolName = part.tool ?? "unknown";
-                  console.log(`🔧 ${toolName}`);
+                if (part.type === "tool") {
+                  if (part.state?.status === "pending" && part.state.title) {
+                    process.stdout.write(`🔧 ${part.state.title}...`);
+                  } else if (part.state?.status === "completed") {
+                    const toolName = part.tool ?? "unknown";
+                    process.stdout.write(`\r🔧 ${toolName} ✓\n`);
+                  } else if (part.state?.status === "error") {
+                    const toolName = part.tool ?? "unknown";
+                    process.stdout.write(`\r🔧 ${toolName} ✗\n`);
+                  }
                 }
 
-                if (part.type === "text") {
-                  accumulatedText = part.text ?? "";
-                  if (part.time?.end) {
-                    console.log(accumulatedText);
-                    accumulatedText = "";
+                if (part.type === "text" && part.text) {
+                  // Print only the new portion of text (streaming delta)
+                  const newText = part.text.slice(lastPrintedLength);
+                  if (newText) {
+                    process.stdout.write(newText);
+                    lastPrintedLength = part.text.length;
+                  }
+                  // Add newline when text part completes
+                  if (part.time?.end && lastPrintedLength > 0) {
+                    process.stdout.write("\n");
+                    lastPrintedLength = 0;
                   }
                 }
               }
             }
           } catch (err) {
             if (!controller.signal.aborted) {
-              console.error("Stream error:", err);
+              streamError =
+                err instanceof Error ? err : new Error(String(err));
+              console.error("\nStream error:", streamError.message);
             }
           }
         })();
 
-        const chatResponse = await client.session.prompt<true>({
-          path: { id: session.id },
-          body: {
-            parts: [{ type: "text", text: prompt }],
-          },
-          signal: controller.signal,
-        });
+        // Send the prompt and wait for completion
+        let chatResponse;
+        try {
+          chatResponse = await client.session.prompt<true>({
+            path: { id: session.id },
+            body: {
+              parts: [{ type: "text", text: prompt }],
+            },
+            signal: controller.signal,
+          });
+        } catch (err) {
+          // Abort the event stream if prompt fails
+          controller.abort();
+          throw err;
+        }
 
+        // Wait for event stream to finish processing
         await eventPromise;
+
+        // Check for stream errors that occurred during processing
+        if (streamError) {
+          console.warn("\n⚠️  Stream had errors but prompt completed");
+        }
 
         const data = chatResponse.data as {
           parts?: Array<{ type: string; text?: string }>;
@@ -190,22 +220,26 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
           throw new Error(`OpenCode error: ${data.error}`);
         }
 
-        const match = data.parts
-          ? [...data.parts].reverse().find((p) => p.type === "text")
-          : undefined;
-        if (!match?.text) {
-          throw new Error("No text response from OpenCode");
+        // Extract final text response
+        const textParts = data.parts?.filter(
+          (p) => p.type === "text" && p.text,
+        );
+        const finalText = textParts?.map((p) => p.text).join("\n") ?? "";
+
+        if (!finalText) {
+          // Don't fail if streaming printed output but response is empty
+          if (lastPrintedLength === 0) {
+            console.warn("⚠️  No text response received from OpenCode");
+          }
+          return "";
         }
 
-        response = match.text;
-
-        console.log("\n📄 Final Response:");
-        console.log(response);
-        console.log();
-
-        return response;
+        return finalText;
       } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
+        if (
+          err instanceof Error &&
+          (err.name === "AbortError" || controller.signal.aborted)
+        ) {
           throw new Error(
             `Chat timed out after ${Math.round(SERVER_CONFIG.chatTimeoutMs / 1000 / 60)} minutes`,
           );
@@ -213,6 +247,15 @@ export async function createOpenCodeServer(): Promise<OpenCodeServer> {
         throw err;
       } finally {
         clearTimeout(timeoutId);
+
+        // Close the session gracefully after completion
+        try {
+          await client.session.abort({
+            path: { id: session.id },
+          });
+        } catch {
+          // Session cleanup is best-effort, don't fail if it errors
+        }
       }
     },
 

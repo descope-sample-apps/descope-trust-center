@@ -2,21 +2,33 @@ name: OpenCode Agent
 
 on:
   schedule:
-    - cron: "*/5 * * * *" # Every hour
+    - cron: "0 * * * *" # Every hour at minute 0
   workflow_dispatch:
     inputs:
       task:
         description: "Specific task to work on"
         required: false
         type: string
+      task_base64:
+        description: "Base64-encoded task (for programmatic dispatch)"
+        required: false
+        type: string
+      wave_count:
+        description: "Current wave number (for chained runs)"
+        required: false
+        type: number
+        default: 0
+  repository_dispatch:
+    types: [run-agent]
 
 permissions:
   contents: write
   pull-requests: write
   issues: write
+  actions: write # To trigger workflow dispatches
 
 concurrency:
-  group: opencode-agent
+  group: opencode-agent-${{ inputs.wave_count || '0' }}-${{ github.run_id }}
   cancel-in-progress: false
 
 env:
@@ -62,38 +74,43 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CUSTOM_TASK: ${{ inputs.task }}
+          AGENT_WAVE_COUNT: ${{ inputs.wave_count || '0' }}
+          MAX_CONCURRENT_AGENTS: "5"
         run: |
-          echo "🤖 Starting OpenCode agent..."
+          echo "🤖 Starting OpenCode agent (wave ${{ inputs.wave_count || '0' }})..."
 
-          set +e
-          npx tsx .github/scripts/run-agent.ts
-          OPENCODE_EXIT=$?
-          set -e
-
-          echo "opencode_exit=$OPENCODE_EXIT" >> $GITHUB_OUTPUT
-
-          if [ $OPENCODE_EXIT -ne 0 ]; then
-            echo "::error::OpenCode agent failed with exit code $OPENCODE_EXIT"
+          # Decode base64 task if provided, otherwise use plain task
+          if [ -n "${{ inputs.task_base64 }}" ]; then
+            export CUSTOM_TASK=$(echo "${{ inputs.task_base64 }}" | base64 --decode)
+            echo "📋 Task: $CUSTOM_TASK"
+          elif [ -n "${{ inputs.task }}" ]; then
+            export CUSTOM_TASK="${{ inputs.task }}"
+            echo "📋 Task: $CUSTOM_TASK"
           fi
+
+          npx tsx .github/scripts/run-agent.ts
 
       - name: Report Status
         if: always()
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          OPENCODE_EXIT: ${{ steps.run-agent.outputs.opencode_exit || '0' }}
         run: |
           echo "📊 Agent run completed"
-          echo "Exit code: $OPENCODE_EXIT"
+          echo "Job status: ${{ job.status }}"
+          echo "Wave: ${{ inputs.wave_count || '0' }}"
 
-          # Check for any PRs were created
-          recent_prs=$(gh pr list --state open --author "opencode-agent[bot]" --json number,title,url --jq '.[] | "PR #\(.number): \(.title) - \(.url)"')
+          # Get the app's bot username for filtering
+          APP_SLUG="${{ steps.app-token.outputs.app-slug }}"
+          BOT_AUTHOR="${APP_SLUG}[bot]"
+
+          # Check for any PRs created by the app
+          recent_prs=$(gh pr list --state open --author "$BOT_AUTHOR" --json number,title,url --jq '.[] | "PR #\(.number): \(.title) - \(.url)"' 2>/dev/null || echo "")
           if [ -n "$recent_prs" ]; then
             echo "📬 Recent PRs by agent:"
             echo "$recent_prs"
           fi
 
-          # Check for any remaining open issues
-          open_issues=$(gh issue list --state open --label "P0-critical,P1-high" --json number,title --jq 'length')
-          echo "📋 Remaining high-priority issues: $open_issues"
+          # Check for high-priority issues (use search for OR logic)
+          open_p0=$(gh issue list --state open --label "P0-critical" --json number --jq 'length' 2>/dev/null || echo "0")
+          open_p1=$(gh issue list --state open --label "P1-high" --json number --jq 'length' 2>/dev/null || echo "0")
+          echo "📋 Remaining high-priority issues: P0=$open_p0, P1=$open_p1"
