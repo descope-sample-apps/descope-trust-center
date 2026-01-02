@@ -12,8 +12,6 @@ import {
   DocumentDownload,
   eq,
   FormSubmission,
-  gte,
-  lte,
   sql,
 } from "@descope-trust-center/db";
 
@@ -232,10 +230,6 @@ export const analyticsRouter = {
   getDashboardSummary: adminProcedure
     .input(DateRangeSchema.optional())
     .query(async ({ ctx, input }) => {
-      const dateFilter = input
-        ? sql`${DocumentDownload.createdAt} >= ${input.startDate} AND ${DocumentDownload.createdAt} <= ${input.endDate}`
-        : undefined;
-
       const [downloadCount, formCount, pendingRequests] = await Promise.all([
         ctx.db
           .select({ count: sql<number>`count(*)` })
