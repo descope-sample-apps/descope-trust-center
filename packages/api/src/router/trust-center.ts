@@ -371,12 +371,23 @@ export const trustCenterRouter = {
         timestamp: new Date().toISOString(),
       });
 
-      // TODO: Send approval notification email to user
-      // await emailService.sendDocumentAccessApproval({
-      //   email: input.userEmail,
-      //   name: input.userName,
-      //   documentId: input.documentId,
-      // });
+      // Send approval notification email to user
+      if (emailService) {
+        try {
+          await emailService.sendDocumentAccessApproval({
+            email: input.userEmail,
+            name: input.userName,
+            documentId: input.documentId,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send document approval notification:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
+      }
 
       return {
         success: true,
@@ -407,13 +418,24 @@ export const trustCenterRouter = {
         timestamp: new Date().toISOString(),
       });
 
-      // TODO: Send denial notification email to user
-      // await emailService.sendDocumentAccessDenial({
-      //   email: input.userEmail,
-      //   name: input.userName,
-      //   documentId: input.documentId,
-      //   reason: input.reason,
-      // });
+      // Send denial notification email to user
+      if (emailService) {
+        try {
+          await emailService.sendDocumentAccessDenial({
+            email: input.userEmail,
+            name: input.userName,
+            documentId: input.documentId,
+            reason: input.reason,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send document denial notification:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
+      }
 
       return {
         success: true,
