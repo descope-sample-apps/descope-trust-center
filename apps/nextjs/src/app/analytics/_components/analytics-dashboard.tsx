@@ -53,9 +53,7 @@ export function AnalyticsDashboard() {
             </svg>
           </div>
           <div className="p-6 pt-0">
-            <div className="text-2xl font-bold">
-              {summary.totalDownloads ?? 0}
-            </div>
+            <div className="text-2xl font-bold">{summary.totalDownloads}</div>
             <p className="text-muted-foreground text-xs">
               All time document downloads
             </p>
@@ -81,7 +79,7 @@ export function AnalyticsDashboard() {
           </div>
           <div className="p-6 pt-0">
             <div className="text-2xl font-bold">
-              {summary.totalFormSubmissions ?? 0}
+              {summary.totalFormSubmissions}
             </div>
             <p className="text-muted-foreground text-xs">
               Total form submissions received
@@ -108,7 +106,7 @@ export function AnalyticsDashboard() {
           </div>
           <div className="p-6 pt-0">
             <div className="text-2xl font-bold">
-              {summary.pendingAccessRequests ?? 0}
+              {summary.pendingAccessRequests}
             </div>
             <p className="text-muted-foreground text-xs">
               NDA access requests awaiting approval

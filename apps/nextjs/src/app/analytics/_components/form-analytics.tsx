@@ -48,9 +48,11 @@ export function FormAnalytics() {
           <div>
             <label className="mb-2 block text-sm font-medium">Type</label>
             <select
-              value={typeFilter || ""}
+              value={typeFilter ?? ""}
               onChange={(e) =>
-                setTypeFilter((e.target.value as FormType) ?? undefined)
+                setTypeFilter(
+                  e.target.value ? (e.target.value as FormType) : undefined,
+                )
               }
               className="bg-background rounded-md border px-3 py-2 text-sm"
             >
@@ -65,9 +67,11 @@ export function FormAnalytics() {
           <div>
             <label className="mb-2 block text-sm font-medium">Status</label>
             <select
-              value={statusFilter || ""}
+              value={statusFilter ?? ""}
               onChange={(e) =>
-                setStatusFilter((e.target.value as FormStatus) ?? undefined)
+                setStatusFilter(
+                  e.target.value ? (e.target.value as FormStatus) : undefined,
+                )
               }
               className="bg-background rounded-md border px-3 py-2 text-sm"
             >

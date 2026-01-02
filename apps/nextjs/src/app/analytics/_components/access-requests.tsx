@@ -48,7 +48,7 @@ export function AccessRequests() {
   const denyMutation = useMutation(
     trpc.analytics.denyAccess.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(trpc.analytics.pathFilter());
+        void queryClient.invalidateQueries(trpc.analytics.pathFilter());
         setSelectedRequest(null);
         setActionModal(null);
         setDenyReason("");
@@ -96,9 +96,13 @@ export function AccessRequests() {
           <div>
             <label className="mb-2 block text-sm font-medium">Status</label>
             <select
-              value={statusFilter || ""}
+              value={statusFilter ?? ""}
               onChange={(e) =>
-                setStatusFilter((e.target.value as RequestStatus) ?? undefined)
+                setStatusFilter(
+                  e.target.value
+                    ? (e.target.value as RequestStatus)
+                    : undefined,
+                )
               }
               className="bg-background rounded-md border px-3 py-2 text-sm"
             >

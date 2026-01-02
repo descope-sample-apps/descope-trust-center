@@ -78,7 +78,7 @@ export function DashboardOverview() {
                   </span>
                   <div>
                     <p className="text-sm font-medium">
-                      {submission.name || submission.email}
+                      {submission.name ?? submission.email}
                     </p>
                     <p className="text-muted-foreground text-xs">
                       {submission.type.replace("_", " ")} • {submission.status}
