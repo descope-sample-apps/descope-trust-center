@@ -145,6 +145,17 @@ export type FAQ = z.infer<typeof FAQSchema>;
 export const FAQsSchema = z.array(FAQSchema);
 export type FAQs = z.infer<typeof FAQsSchema>;
 
+/**
+ * Contact form request types
+ */
+export const ContactRequestTypeSchema = z.enum([
+  "request-document",
+  "security-question",
+  "schedule-security-review",
+  "other",
+]);
+export type ContactRequestType = z.infer<typeof ContactRequestTypeSchema>;
+
 export const SubprocessorSubscriptionSchema = z.object({
   email: z.email("Please enter a valid email address"),
 });
