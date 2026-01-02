@@ -1,11 +1,11 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import type { VercelPgDatabase } from "drizzle-orm/vercel-postgres";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
   and,
   AuditLog,
-  CreateAuditLogSchema,
   CreateDocumentAccessRequestSchema,
   CreateDocumentDownloadSchema,
   CreateFormSubmissionSchema,
@@ -17,11 +17,14 @@ import {
   gte,
   like,
   lte,
-  or,
   sql,
 } from "@descope-trust-center/db";
+import * as schema from "@descope-trust-center/db/schema";
 
+import type { DescopeSession } from "../trpc";
 import { protectedProcedure, publicProcedure } from "../trpc";
+
+type Database = VercelPgDatabase<typeof schema>;
 
 const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(",") ?? [];
 const ADMIN_DOMAINS = ["descope.com"];
@@ -35,17 +38,17 @@ function isAdmin(email: string | undefined | null): boolean {
 
 async function logAuditEvent(
   ctx: {
-    db: any;
+    db: Database;
     ipAddress: string;
     userAgent: string;
-    session: any;
+    session: DescopeSession | null;
   },
   action: string,
   resource?: string,
-  details?: any,
+  details?: Record<string, unknown>,
 ) {
   await ctx.db.insert(AuditLog).values({
-    userId: ctx.session?.user?.id,
+    userId: ctx.session?.user.id,
     action,
     resource,
     details,

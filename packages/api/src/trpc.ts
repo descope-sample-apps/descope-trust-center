@@ -53,10 +53,10 @@ export const createTRPCContext = (opts: {
   session: DescopeSession | null;
 }) => {
   const ipAddress =
-    opts.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    opts.headers.get("x-real-ip") ||
+    opts.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    opts.headers.get("x-real-ip") ??
     "unknown";
-  const userAgent = opts.headers.get("user-agent") || "unknown";
+  const userAgent = opts.headers.get("user-agent") ?? "unknown";
 
   return {
     session: opts.session,
