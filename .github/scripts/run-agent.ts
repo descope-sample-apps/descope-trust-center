@@ -80,7 +80,13 @@ Create PR:
 - If typecheck/lint/test fails: Fix the issues, don't skip them
 - If issue is unclear: Add a comment asking for clarification, then pick another task
 - If merge conflicts: git fetch origin main && git rebase origin/main, resolve conflicts
-- If stuck after 3 attempts on same problem: Add blocker comment to issue and exit`;
+- If stuck after 3 attempts on same problem: Add blocker comment to issue and exit
+
+## TIME MANAGEMENT
+- You have approximately 45 minutes per session
+- If you're working on a large task, commit incremental progress frequently
+- Before the session ends, ensure all work is committed and pushed
+- If you can't complete a task, commit what you have with "WIP:" prefix and push to the branch`;
 
 interface WorkItem {
   type: "pr" | "issue";
@@ -200,12 +206,22 @@ function dispatchAgentsForRemainingWork(): void {
           ? `Review and address any comments on PR #${item.number}: ${item.title}`
           : `Work on issue #${item.number}: ${item.title}`;
 
-      // Use base64 to safely pass the task through the command line
+      // Use base64 to safely pass the task through the API
       const encodedTask = Buffer.from(taskDescription).toString("base64");
 
+      // Use repository_dispatch instead of workflow_dispatch
+      // GitHub App tokens can trigger repository_dispatch but not workflow_dispatch
+      const payload = JSON.stringify({
+        event_type: "run-agent",
+        client_payload: {
+          wave_count: 1,
+          task_base64: encodedTask,
+        },
+      });
+
       execSync(
-        `gh workflow run opencode-agent.yml --repo "${repo}" -f wave_count=1 -f task_base64="${encodedTask}"`,
-        { stdio: "inherit" },
+        `gh api repos/${repo}/dispatches --method POST --input - <<< '${payload}'`,
+        { stdio: "inherit", shell: "/bin/bash" },
       );
 
       console.log(
@@ -260,8 +276,56 @@ async function main() {
     console.log("\n✅ Agent completed");
 
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("\n❌ Agent failed:", error);
     exitCode = 1;
+
+    // If we timed out, try to save work in progress
+    if (errorMessage.includes("timed out")) {
+      console.log("\n⏰ Timeout detected, attempting to save work in progress...");
+      try {
+        // Check if there are uncommitted changes
+        const status = execSync("git status --porcelain", { encoding: "utf-8" }).trim();
+        if (status) {
+          console.log("📝 Found uncommitted changes, creating WIP commit...");
+
+          // Get current branch
+          const branch = execSync("git branch --show-current", { encoding: "utf-8" }).trim();
+
+          if (branch && branch !== "main") {
+            // Stage all changes and create WIP commit
+            execSync("git add -A", { stdio: "inherit" });
+            execSync('git commit -m "WIP: work in progress (agent timeout)"', { stdio: "inherit" });
+            execSync("git push -u origin HEAD", { stdio: "inherit" });
+            console.log("✅ WIP commit pushed to branch:", branch);
+
+            // Dispatch a continuation agent for this branch
+            const repo = process.env.GITHUB_REPOSITORY || "descope-sample-apps/descope-trust-center";
+            const continuationTask = `Continue work on branch ${branch}. Run: git fetch origin && git checkout ${branch} && git pull. Then review the existing changes, run tests, and complete the task. If tests pass, create a PR or update the existing one.`;
+            const encodedTask = Buffer.from(continuationTask).toString("base64");
+            const payload = JSON.stringify({
+              event_type: "run-agent",
+              client_payload: {
+                wave_count: 1,
+                task_base64: encodedTask,
+              },
+            });
+
+            execSync(
+              `gh api repos/${repo}/dispatches --method POST --input - <<< '${payload}'`,
+              { stdio: "inherit", shell: "/bin/bash" },
+            );
+            console.log("🚀 Dispatched continuation agent for branch:", branch);
+          } else {
+            console.log("⚠️  On main branch or no branch, cannot save WIP");
+          }
+        } else {
+          console.log("ℹ️  No uncommitted changes to save");
+        }
+      } catch (wipError) {
+        console.error("⚠️  Failed to save WIP:", wipError);
+      }
+    }
   } finally {
     if (server) {
       await server.cleanup();
