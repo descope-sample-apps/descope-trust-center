@@ -4,8 +4,8 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
+  CreateAuditLogSchema as _CreateAuditLogSchema,
   AuditLog,
-  CreateAuditLogSchema,
   DocumentAccessRequest,
   FormSubmission,
 } from "@descope-trust-center/db";
