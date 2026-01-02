@@ -130,7 +130,6 @@ export function DocumentLibrary() {
 
   return (
     <section
-      id="documents"
       aria-labelledby="documents-heading"
       className="bg-slate-50 px-4 py-16 sm:px-6 md:py-24 lg:px-8 dark:bg-slate-950"
     >
