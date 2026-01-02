@@ -24,12 +24,15 @@ import {
 
 import { useTRPC } from "~/trpc/react";
 
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
+
 export default function AuditLogsPage() {
   const trpc = useTRPC();
   const [filters, setFilters] = useState({
-    userId: "",
+    userEmail: "",
     action: "",
-    resource: "",
+    entityType: "",
     fromDate: "",
     toDate: "",
   });
@@ -133,14 +136,14 @@ export default function AuditLogsPage() {
       {/* Filters */}
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5">
         <div>
-          <Label htmlFor="userId">User ID</Label>
+          <Label htmlFor="userEmail">User Email</Label>
           <Input
-            id="userId"
-            value={filters.userId}
+            id="userEmail"
+            value={filters.userEmail}
             onChange={(e) =>
-              setFilters((prev) => ({ ...prev, userId: e.target.value }))
+              setFilters((prev) => ({ ...prev, userEmail: e.target.value }))
             }
-            placeholder="Filter by user ID"
+            placeholder="Filter by user email"
           />
         </div>
         <div>
@@ -155,14 +158,14 @@ export default function AuditLogsPage() {
           />
         </div>
         <div>
-          <Label htmlFor="resource">Resource</Label>
+          <Label htmlFor="entityType">Entity Type</Label>
           <Input
-            id="resource"
-            value={filters.resource}
+            id="entityType"
+            value={filters.entityType}
             onChange={(e) =>
-              setFilters((prev) => ({ ...prev, resource: e.target.value }))
+              setFilters((prev) => ({ ...prev, entityType: e.target.value }))
             }
-            placeholder="Filter by resource"
+            placeholder="Filter by entity type"
           />
         </div>
         <div>
