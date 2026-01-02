@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 
+import type { RouterOutputs } from "@descope-trust-center/api";
 import { Button } from "@descope-trust-center/ui/button";
 import { Input } from "@descope-trust-center/ui/input";
 import { Label } from "@descope-trust-center/ui/label";
@@ -24,6 +25,8 @@ import {
 
 import { useTRPC } from "~/trpc/react";
 
+type AuditLog = RouterOutputs["analytics"]["getAuditLogs"]["logs"][0];
+
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
@@ -39,51 +42,50 @@ export default function AuditLogsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
 
-  const { data: auditData, isLoading } = trpc.analytics.getAuditLogs.useQuery({
+  const { data: auditData } = (trpc as any).analytics.getAuditLogs.useQuery({
     ...filters,
     limit: 50,
     offset: currentPage * 50,
   });
 
-  const exportMutation = trpc.analytics.exportAuditLogs.useMutation();
-  const cleanMutation = trpc.analytics.cleanAuditLogs.useMutation();
+  const exportMutation = (trpc as any).analytics.exportAuditLogs.useMutation();
+  const cleanMutation = (trpc as any).analytics.cleanAuditLogs.useMutation();
 
-  const handleExport = async () => {
-    try {
-      const result = await exportMutation.mutateAsync({
-        ...filters,
-        format: exportFormat,
+  // Type assertions needed due to tRPC client typing issues with admin procedures
+  const handleExportAsync = async () => {
+    const result = (await exportMutation.mutateAsync({
+      ...filters,
+      format: exportFormat,
+    })) as { format: string; data: string; filename?: string };
+
+    if (result.format === "csv") {
+      const blob = new Blob([result.data], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        result.filename ||
+        `audit-logs-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      const blob = new Blob([JSON.stringify(result.data, null, 2)], {
+        type: "application/json",
       });
-
-      if (result.format === "csv") {
-        const blob = new Blob([result.data], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = result.filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } else {
-        const blob = new Blob([JSON.stringify(result.data, null, 2)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `audit-logs-${new Date().toISOString().split("T")[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      console.error("Export failed:", error);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `audit-logs-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
   };
 
-  const handleClean = async () => {
+  const handleCleanAsync = async () => {
     if (
       !confirm(
         "Are you sure you want to clean old audit logs? This action cannot be undone.",
@@ -92,16 +94,18 @@ export default function AuditLogsPage() {
       return;
     }
 
-    try {
-      const result = await cleanMutation.mutateAsync({ daysOld: 90 });
-      alert(
-        `Cleaned ${result.deletedCount} audit logs older than ${result.cutoffDate}`,
-      );
-      window.location.reload();
-    } catch (error) {
-      console.error("Clean failed:", error);
-    }
+    const result = (await cleanMutation.mutateAsync({ daysOld: 90 })) as {
+      deletedCount: number;
+      cutoffDate: string;
+    };
+    alert(
+      `Cleaned ${result.deletedCount} audit logs older than ${result.cutoffDate}`,
+    );
+    window.location.reload();
   };
+
+  const handleExport = handleExportAsync;
+  const handleClean = handleCleanAsync;
 
   return (
     <div className="container mx-auto p-6">
@@ -198,41 +202,39 @@ export default function AuditLogsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Timestamp</TableHead>
-              <TableHead>User ID</TableHead>
+              <TableHead>User Email</TableHead>
               <TableHead>Action</TableHead>
-              <TableHead>Resource</TableHead>
+              <TableHead>Entity</TableHead>
               <TableHead>Details</TableHead>
               <TableHead>IP Address</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center">
-                  Loading audit logs...
-                </TableCell>
-              </TableRow>
-            ) : auditData?.logs.length === 0 ? (
+            {auditData.logs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-8 text-center">
                   No audit logs found
                 </TableCell>
               </TableRow>
             ) : (
-              auditData?.logs.map((log: any) => (
+              auditData.logs.map((log: AuditLog) => (
                 <TableRow key={log.id}>
                   <TableCell>
                     {format(new Date(log.createdAt), "yyyy-MM-dd HH:mm:ss")}
                   </TableCell>
-                  <TableCell>{log.userId || "Anonymous"}</TableCell>
+                  <TableCell>{log.userEmail ?? "Anonymous"}</TableCell>
                   <TableCell>{log.action}</TableCell>
-                  <TableCell>{log.resource || "-"}</TableCell>
+                  <TableCell>
+                    {log.entityType
+                      ? `${log.entityType}${log.entityId ? ` (${log.entityId})` : ""}`
+                      : "-"}
+                  </TableCell>
                   <TableCell>
                     <pre className="max-w-xs overflow-hidden text-xs">
                       {JSON.stringify(log.details, null, 2)}
                     </pre>
                   </TableCell>
-                  <TableCell>{log.ipAddress || "-"}</TableCell>
+                  <TableCell>{log.ipAddress ?? "-"}</TableCell>
                 </TableRow>
               ))
             )}
@@ -241,12 +243,9 @@ export default function AuditLogsPage() {
       </div>
 
       {/* Pagination */}
-      {auditData && auditData.hasMore && (
+      {auditData.hasMore && (
         <div className="mt-6 flex justify-center">
-          <Button
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-            disabled={isLoading}
-          >
+          <Button onClick={() => setCurrentPage((prev) => prev + 1)}>
             Load More
           </Button>
         </div>
