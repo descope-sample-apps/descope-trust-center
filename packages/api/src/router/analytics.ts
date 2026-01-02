@@ -16,6 +16,7 @@ import {
   FormSubmission,
   gte,
   like,
+  lt,
   lte,
   sql,
 } from "@descope-trust-center/db";
@@ -348,6 +349,104 @@ export const analyticsRouter = {
         logs,
         total,
         hasMore: offset + logs.length < total,
+      };
+    }),
+
+  exportAuditLogs: adminProcedure
+    .input(
+      z
+        .object({
+          format: z.enum(["csv", "json"]).default("csv"),
+          userId: z.string().optional(),
+          action: z.string().optional(),
+          resource: z.string().optional(),
+          fromDate: z.string().datetime().optional(),
+          toDate: z.string().datetime().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const conditions = [];
+      if (input?.userId) conditions.push(eq(AuditLog.userId, input.userId));
+      if (input?.action)
+        conditions.push(like(AuditLog.action, `%${input.action}%`));
+      if (input?.resource)
+        conditions.push(like(AuditLog.resource, `%${input.resource}%`));
+      if (input?.fromDate)
+        conditions.push(gte(AuditLog.createdAt, new Date(input.fromDate)));
+      if (input?.toDate)
+        conditions.push(lte(AuditLog.createdAt, new Date(input.toDate)));
+
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
+
+      const logs = await ctx.db
+        .select()
+        .from(AuditLog)
+        .where(whereClause)
+        .orderBy(desc(AuditLog.createdAt));
+
+      if (input?.format === "json") {
+        return {
+          data: logs,
+          format: "json",
+        };
+      }
+
+      // Generate CSV
+      const headers = [
+        "ID",
+        "User ID",
+        "Action",
+        "Resource",
+        "Details",
+        "IP Address",
+        "User Agent",
+        "Created At",
+      ];
+
+      const csvRows = [
+        headers.join(","),
+        ...logs.map((log) =>
+          [
+            log.id,
+            log.userId || "",
+            log.action,
+            log.resource || "",
+            JSON.stringify(log.details || {}).replace(/"/g, '""'), // Escape quotes in JSON
+            log.ipAddress || "",
+            (log.userAgent || "").replace(/"/g, '""'), // Escape quotes
+            log.createdAt.toISOString(),
+          ]
+            .map((field) => `"${field}"`)
+            .join(","),
+        ), // Wrap all fields in quotes
+      ];
+
+      return {
+        data: csvRows.join("\n"),
+        format: "csv",
+        filename: `audit-logs-${new Date().toISOString().split("T")[0]}.csv`,
+      };
+    }),
+
+  cleanAuditLogs: adminProcedure
+    .input(
+      z.object({
+        daysOld: z.number().min(1).max(3650).default(90), // Default 90 days
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - input.daysOld);
+
+      const result = await ctx.db
+        .delete(AuditLog)
+        .where(lt(AuditLog.createdAt, cutoffDate));
+
+      return {
+        deletedCount: result.rowCount,
+        cutoffDate: cutoffDate.toISOString(),
       };
     }),
 
