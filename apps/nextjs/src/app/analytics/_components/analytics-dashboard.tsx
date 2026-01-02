@@ -167,7 +167,9 @@ export function AnalyticsDashboard() {
         </div>
 
         <div className="mt-6">
-          {activeTab === "overview" && <DashboardOverview />}
+          {activeTab === "overview" && (
+            <DashboardOverview onTabChange={setActiveTab} />
+          )}
           {activeTab === "downloads" && <DownloadAnalytics />}
           {activeTab === "forms" && <FormAnalytics />}
           {activeTab === "requests" && <AccessRequests />}

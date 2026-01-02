@@ -1,35 +1,94 @@
 "use client";
 
+import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { useTRPC } from "~/trpc/react";
 
-export function DashboardOverview() {
+interface TopDownload {
+  documentTitle: string;
+  count: number;
+}
+
+interface FormSummaryItem {
+  type: string;
+  count: number;
+}
+
+interface RecentActivityItem {
+  id: string;
+  type: string;
+  title: string;
+  user: string | null;
+  email: string | null;
+  company: string | null;
+  createdAt: Date;
+}
+
+interface DashboardOverviewProps {
+  onTabChange?: (tab: string) => void;
+}
+
+export function DashboardOverview({ onTabChange }: DashboardOverviewProps) {
   const trpc = useTRPC();
+  const [dateRange, setDateRange] = useState("30");
 
   // Get top downloaded documents
-  const { data: downloads } = useSuspenseQuery(
-    trpc.analytics.getDownloadStats.queryOptions({ limit: 5 }),
+  const { data: topDownloads } = useSuspenseQuery(
+    trpc.analytics.getTopDownloads.queryOptions(),
   );
 
-  // Get recent form submissions
-  const { data: forms } = useSuspenseQuery(
-    trpc.analytics.getFormStats.queryOptions({ limit: 5 }),
+  // Get form summary for chart
+  const { data: formSummary } = useSuspenseQuery(
+    trpc.analytics.getFormSummary.queryOptions(),
   );
+
+  // Get recent activity timeline
+  const { data: recentActivity } = useSuspenseQuery(
+    trpc.analytics.getRecentActivity.queryOptions(),
+  );
+
+  const chartData = (formSummary as FormSummaryItem[]).map((item) => ({
+    type: item.type.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+    count: item.count,
+  }));
 
   return (
     <div className="space-y-6">
+      {/* Date Range Picker */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Dashboard Overview</h2>
+        <select
+          value={dateRange}
+          onChange={(e) => setDateRange(e.target.value)}
+          className="bg-background rounded-md border px-3 py-2 text-sm"
+        >
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+
       {/* Top Downloaded Documents */}
       <div className="bg-card text-card-foreground rounded-lg border shadow-sm">
         <div className="p-6">
           <h3 className="text-lg font-medium">Top Downloaded Documents</h3>
           <p className="text-muted-foreground mt-2 text-sm">
-            Most popular documents this month
+            Most popular documents by download count
           </p>
           <div className="mt-4 space-y-3">
-            {downloads.downloads.slice(0, 5).map((download, index) => (
+            {(topDownloads as TopDownload[]).map((download, index) => (
               <div
-                key={download.id}
+                key={download.documentTitle}
                 className="flex items-center justify-between"
               >
                 <div className="flex items-center space-x-3">
@@ -41,60 +100,168 @@ export function DashboardOverview() {
                       {download.documentTitle}
                     </p>
                     <p className="text-muted-foreground text-xs">
-                      {download.userName ?? download.userEmail ?? "Anonymous"}
+                      {download.count} downloads
                     </p>
                   </div>
                 </div>
-                <span className="text-sm font-medium">
-                  {new Date(download.createdAt).toLocaleDateString()}
-                </span>
+                <span className="text-sm font-medium">{download.count}</span>
               </div>
             ))}
-            {downloads.downloads.length === 0 && (
+            {topDownloads.length === 0 && (
               <p className="text-muted-foreground text-sm">No downloads yet</p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Recent Form Submissions */}
+      {/* Form Submission Summary Chart */}
       <div className="bg-card text-card-foreground rounded-lg border shadow-sm">
         <div className="p-6">
-          <h3 className="text-lg font-medium">Recent Form Submissions</h3>
+          <h3 className="text-lg font-medium">Form Submissions by Type</h3>
           <p className="text-muted-foreground mt-2 text-sm">
-            Latest contact and document requests
+            Breakdown of form submissions by category
+          </p>
+          <div className="mt-4 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="type" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity Timeline */}
+      <div className="bg-card text-card-foreground rounded-lg border shadow-sm">
+        <div className="p-6">
+          <h3 className="text-lg font-medium">Recent Activity</h3>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Latest downloads and form submissions
           </p>
           <div className="mt-4 space-y-3">
-            {forms.submissions.map((submission) => (
+            {(recentActivity as RecentActivityItem[]).map((activity) => (
               <div
-                key={submission.id}
-                className="flex items-center justify-between"
+                key={`${activity.type}-${activity.id}`}
+                className="flex items-center space-x-3"
               >
-                <div className="flex items-center space-x-3">
-                  <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${submission.status === "pending" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" : ""} ${submission.status === "approved" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : ""} ${submission.status === "denied" ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" : ""} ${submission.status === "completed" ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" : ""} `}
-                  >
-                    {submission.type === "contact" ? "C" : "D"}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {submission.name ?? submission.email}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {submission.type.replace("_", " ")} • {submission.status}
-                    </p>
-                  </div>
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${
+                    activity.type === "download"
+                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                      : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                  }`}
+                >
+                  {activity.type === "download" ? "↓" : "📝"}
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{activity.title}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {activity.user ?? activity.email ?? "Anonymous"}
+                    {activity.company && ` • ${activity.company}`}
+                  </p>
                 </div>
                 <span className="text-muted-foreground text-sm">
-                  {new Date(submission.createdAt).toLocaleDateString()}
+                  {new Date(activity.createdAt).toLocaleDateString()}
                 </span>
               </div>
             ))}
-            {forms.submissions.length === 0 && (
+            {recentActivity.length === 0 && (
               <p className="text-muted-foreground text-sm">
-                No submissions yet
+                No recent activity
               </p>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Access Buttons */}
+      <div className="bg-card text-card-foreground rounded-lg border shadow-sm">
+        <div className="p-6">
+          <h3 className="text-lg font-medium">Quick Access</h3>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Jump to specific analytics sections
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <button
+              onClick={() => onTabChange?.("downloads")}
+              className="flex flex-col items-center rounded-lg border p-4 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <svg
+                className="mb-2 h-8 w-8 text-slate-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <span className="text-sm font-medium">Downloads</span>
+            </button>
+            <button
+              onClick={() => onTabChange?.("forms")}
+              className="flex flex-col items-center rounded-lg border p-4 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <svg
+                className="mb-2 h-8 w-8 text-slate-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <span className="text-sm font-medium">Forms</span>
+            </button>
+            <button
+              onClick={() => onTabChange?.("requests")}
+              className="flex flex-col items-center rounded-lg border p-4 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <svg
+                className="mb-2 h-8 w-8 text-slate-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+              <span className="text-sm font-medium">Access Requests</span>
+            </button>
+            <button
+              onClick={() => onTabChange?.("engagement")}
+              className="flex flex-col items-center rounded-lg border p-4 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <svg
+                className="mb-2 h-8 w-8 text-slate-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              <span className="text-sm font-medium">Engagement</span>
+            </button>
           </div>
         </div>
       </div>
