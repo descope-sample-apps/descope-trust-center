@@ -3,6 +3,7 @@ import type { VercelPgDatabase } from "drizzle-orm/vercel-postgres";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
+import type * as schema from "@descope-trust-center/db/schema";
 import {
   and,
   AuditLog,
@@ -15,12 +16,10 @@ import {
   eq,
   FormSubmission,
   gte,
-  like,
   lt,
   lte,
   sql,
 } from "@descope-trust-center/db";
-import * as schema from "@descope-trust-center/db/schema";
 
 import type { DescopeSession } from "../trpc";
 import { protectedProcedure, publicProcedure } from "../trpc";
@@ -45,13 +44,16 @@ async function logAuditEvent(
     session: DescopeSession | null;
   },
   action: string,
-  resource?: string,
+  entityType: string,
+  entityId?: string,
   details?: Record<string, unknown>,
 ) {
   await ctx.db.insert(AuditLog).values({
-    userId: ctx.session?.user.id,
     action,
-    resource,
+    entityType,
+    entityId,
+    userEmail: ctx.session?.user.email,
+    userName: ctx.session?.user.name,
     details,
     ipAddress: ctx.ipAddress,
     userAgent: ctx.userAgent,
@@ -77,7 +79,7 @@ export const analyticsRouter = {
         .values(input)
         .returning();
 
-      await logAuditEvent(ctx, "document_download", input.documentId, {
+      await logAuditEvent(ctx, "download", "document", input.documentId, {
         documentTitle: input.documentTitle,
         userEmail: input.userEmail,
         userName: input.userName,
@@ -95,7 +97,7 @@ export const analyticsRouter = {
         .values(input)
         .returning();
 
-      await logAuditEvent(ctx, "form_submission", input.type, {
+      await logAuditEvent(ctx, "submit", "form", input.type, {
         email: input.email,
         name: input.name,
         company: input.company,
@@ -113,7 +115,7 @@ export const analyticsRouter = {
         .values(input)
         .returning();
 
-      await logAuditEvent(ctx, "document_access_request", input.documentId, {
+      await logAuditEvent(ctx, "request", "document", input.documentId, {
         documentTitle: input.documentTitle,
         email: input.email,
         name: input.name,
@@ -252,7 +254,7 @@ export const analyticsRouter = {
           message: "Access request not found",
         });
 
-      await logAuditEvent(ctx, "access_request_approved", input.requestId, {
+      await logAuditEvent(ctx, "approve", "access_request", input.requestId, {
         approvedBy: adminEmail,
         documentId: updated.documentId,
         documentTitle: updated.documentTitle,
@@ -286,7 +288,7 @@ export const analyticsRouter = {
           message: "Access request not found",
         });
 
-      await logAuditEvent(ctx, "access_request_denied", input.requestId, {
+      await logAuditEvent(ctx, "deny", "access_request", input.requestId, {
         deniedBy: adminEmail,
         documentId: updated.documentId,
         documentTitle: updated.documentTitle,
@@ -307,7 +309,7 @@ export const analyticsRouter = {
           offset: z.number().min(0).default(0),
           userId: z.string().optional(),
           action: z.string().optional(),
-          resource: z.string().optional(),
+          entityType: z.string().optional(),
           fromDate: z.string().datetime().optional(),
           toDate: z.string().datetime().optional(),
         })
@@ -320,9 +322,11 @@ export const analyticsRouter = {
       const conditions = [];
       if (input?.userId) conditions.push(eq(AuditLog.userId, input.userId));
       if (input?.action)
-        conditions.push(like(AuditLog.action, `%${input.action}%`));
-      if (input?.resource)
-        conditions.push(like(AuditLog.resource, `%${input.resource}%`));
+        conditions.push(sql`${AuditLog.action} LIKE ${`%${input.action}%`}`);
+      if (input?.entityType)
+        conditions.push(
+          sql`${AuditLog.entityType} LIKE ${`%${input.entityType}%`}`,
+        );
       if (input?.fromDate)
         conditions.push(gte(AuditLog.createdAt, new Date(input.fromDate)));
       if (input?.toDate)
@@ -359,7 +363,7 @@ export const analyticsRouter = {
           format: z.enum(["csv", "json"]).default("csv"),
           userId: z.string().optional(),
           action: z.string().optional(),
-          resource: z.string().optional(),
+          entityType: z.string().optional(),
           fromDate: z.string().datetime().optional(),
           toDate: z.string().datetime().optional(),
         })
@@ -369,9 +373,11 @@ export const analyticsRouter = {
       const conditions = [];
       if (input?.userId) conditions.push(eq(AuditLog.userId, input.userId));
       if (input?.action)
-        conditions.push(like(AuditLog.action, `%${input.action}%`));
-      if (input?.resource)
-        conditions.push(like(AuditLog.resource, `%${input.resource}%`));
+        conditions.push(sql`${AuditLog.action} LIKE ${`%${input.action}%`}`);
+      if (input?.entityType)
+        conditions.push(
+          sql`${AuditLog.entityType} LIKE ${`%${input.entityType}%`}`,
+        );
       if (input?.fromDate)
         conditions.push(gte(AuditLog.createdAt, new Date(input.fromDate)));
       if (input?.toDate)
@@ -396,9 +402,9 @@ export const analyticsRouter = {
       // Generate CSV
       const headers = [
         "ID",
-        "User ID",
+        "User Email",
         "Action",
-        "Resource",
+        "Entity Type",
         "Details",
         "IP Address",
         "User Agent",
@@ -410,12 +416,12 @@ export const analyticsRouter = {
         ...logs.map((log) =>
           [
             log.id,
-            log.userId || "",
+            log.userEmail ?? "",
             log.action,
-            log.resource || "",
-            JSON.stringify(log.details || {}).replace(/"/g, '""'), // Escape quotes in JSON
-            log.ipAddress || "",
-            (log.userAgent || "").replace(/"/g, '""'), // Escape quotes
+            log.entityType ?? "",
+            JSON.stringify(log.details ?? {}).replace(/"/g, '""'), // Escape quotes in JSON
+            log.ipAddress ?? "",
+            (log.userAgent ?? "").replace(/"/g, '""'), // Escape quotes
             log.createdAt.toISOString(),
           ]
             .map((field) => `"${field}"`)
