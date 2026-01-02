@@ -37,7 +37,7 @@ async function logAuditEvent(
   action: string,
   entityType: string,
   entityId?: string,
-  metadata?: Record<string, unknown>,
+  details?: Record<string, unknown>,
 ) {
   try {
     await ctx.db.insert(AuditLog).values({
@@ -47,13 +47,12 @@ async function logAuditEvent(
       userId: ctx.session?.user.id,
       userEmail: ctx.session?.user.email,
       userName: ctx.session?.user.name,
-      metadata,
+      details,
       ipAddress: ctx.ipAddress,
       userAgent: ctx.userAgent,
     });
   } catch (error) {
     // Audit logging should not block business operations
-    // Log the error for monitoring but don't throw
     console.error("Failed to log audit event:", error);
   }
 }

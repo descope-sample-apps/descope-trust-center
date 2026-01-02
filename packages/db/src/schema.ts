@@ -64,13 +64,13 @@ export const AuditLog = pgTable(
   "audit_log",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
-    action: t.varchar({ length: 50 }).notNull(),
-    entityType: t.varchar({ length: 100 }).notNull(),
+    action: t.varchar({ length: 100 }).notNull(),
+    entityType: t.varchar({ length: 100 }),
     entityId: t.varchar({ length: 256 }),
     userId: t.varchar({ length: 256 }),
     userEmail: t.varchar({ length: 256 }),
     userName: t.varchar({ length: 256 }),
-    metadata: t.jsonb(),
+    details: t.jsonb(),
     ipAddress: t.varchar({ length: 45 }),
     userAgent: t.text(),
     createdAt: t.timestamp().defaultNow().notNull(),
@@ -86,12 +86,12 @@ export const AuditLog = pgTable(
 
 export const CreateAuditLogSchema = createInsertSchema(AuditLog, {
   action: z.enum(auditActionEnum),
-  entityType: z.string().min(1),
+  entityType: z.string().optional(),
   entityId: z.string().optional(),
   userId: z.string().optional(),
   userEmail: z.string().email().optional(),
   userName: z.string().optional(),
-  metadata: z.any().optional(),
+  details: z.any().optional(),
   ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
 }).omit({ id: true, createdAt: true });

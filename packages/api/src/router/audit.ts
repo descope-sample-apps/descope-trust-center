@@ -91,8 +91,9 @@ export const auditRouter = {
   getEntityTypes: adminProcedure.query(async ({ ctx }) => {
     const result = await ctx.db
       .selectDistinct({ entityType: AuditLog.entityType })
-      .from(AuditLog);
-    return result.map((r) => r.entityType);
+      .from(AuditLog)
+      .where(sql`${AuditLog.entityType} IS NOT NULL`);
+    return result.map((r) => r.entityType).filter(Boolean) as string[];
   }),
 
   getStats: adminProcedure
