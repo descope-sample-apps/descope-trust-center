@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
+  and,
   CreateDocumentAccessRequestSchema,
   CreateDocumentDownloadSchema,
   CreateFormSubmissionSchema,
@@ -221,19 +222,143 @@ export const analyticsRouter = {
       return { success: true, request: updated };
     }),
 
-  getDashboardSummary: adminProcedure.query(async ({ ctx }) => {
-    const [downloadCount, formCount, pendingRequests] = await Promise.all([
-      ctx.db.select({ count: sql<number>`count(*)` }).from(DocumentDownload),
-      ctx.db.select({ count: sql<number>`count(*)` }).from(FormSubmission),
-      ctx.db
+  getTopDownloadedDocuments: adminProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().min(1).max(10).default(5),
+          startDate: z.string().datetime().optional(),
+          endDate: z.string().datetime().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 5;
+      let query = ctx.db
+        .select({
+          documentTitle: DocumentDownload.documentTitle,
+          count: sql<number>`count(*)`,
+        })
+        .from(DocumentDownload)
+        .groupBy(DocumentDownload.documentTitle)
+        .orderBy(desc(sql<number>`count(*)`))
+        .limit(limit);
+
+      if (input?.startDate) {
+        query = query.where(
+          sql`${DocumentDownload.createdAt} >= ${input.startDate}`,
+        ) as typeof query;
+      }
+      if (input?.endDate) {
+        query = query.where(
+          sql`${DocumentDownload.createdAt} <= ${input.endDate}`,
+        ) as typeof query;
+      }
+
+      return await query;
+    }),
+
+  getFormSubmissionsByType: adminProcedure
+    .input(
+      z
+        .object({
+          startDate: z.string().datetime().optional(),
+          endDate: z.string().datetime().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      let query = ctx.db
+        .select({
+          type: FormSubmission.type,
+          count: sql<number>`count(*)`,
+        })
+        .from(FormSubmission)
+        .groupBy(FormSubmission.type)
+        .orderBy(desc(sql<number>`count(*)`));
+
+      if (input?.startDate) {
+        query = query.where(
+          sql`${FormSubmission.createdAt} >= ${input.startDate}`,
+        ) as typeof query;
+      }
+      if (input?.endDate) {
+        query = query.where(
+          sql`${FormSubmission.createdAt} <= ${input.endDate}`,
+        ) as typeof query;
+      }
+
+      return await query;
+    }),
+
+  getDashboardSummary: adminProcedure
+    .input(
+      z
+        .object({
+          startDate: z.string().datetime().optional(),
+          endDate: z.string().datetime().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      // Downloads
+      const downloadConditions = [];
+      if (input?.startDate)
+        downloadConditions.push(
+          sql`${DocumentDownload.createdAt} >= ${input.startDate}`,
+        );
+      if (input?.endDate)
+        downloadConditions.push(
+          sql`${DocumentDownload.createdAt} <= ${input.endDate}`,
+        );
+      const downloadQuery = ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(DocumentDownload)
+        .where(
+          downloadConditions.length > 0
+            ? and(...downloadConditions)
+            : undefined,
+        );
+
+      // Form submissions
+      const formConditions = [];
+      if (input?.startDate)
+        formConditions.push(
+          sql`${FormSubmission.createdAt} >= ${input.startDate}`,
+        );
+      if (input?.endDate)
+        formConditions.push(
+          sql`${FormSubmission.createdAt} <= ${input.endDate}`,
+        );
+      const formQuery = ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(FormSubmission)
+        .where(formConditions.length > 0 ? and(...formConditions) : undefined);
+
+      // Pending requests
+      const pendingConditions = [eq(DocumentAccessRequest.status, "pending")];
+      if (input?.startDate)
+        pendingConditions.push(
+          sql`${DocumentAccessRequest.createdAt} >= ${input.startDate}`,
+        );
+      if (input?.endDate)
+        pendingConditions.push(
+          sql`${DocumentAccessRequest.createdAt} <= ${input.endDate}`,
+        );
+      const pendingQuery = ctx.db
         .select({ count: sql<number>`count(*)` })
         .from(DocumentAccessRequest)
-        .where(eq(DocumentAccessRequest.status, "pending")),
-    ]);
-    return {
-      totalDownloads: Number(downloadCount[0]?.count ?? 0),
-      totalFormSubmissions: Number(formCount[0]?.count ?? 0),
-      pendingAccessRequests: Number(pendingRequests[0]?.count ?? 0),
-    };
-  }),
+        .where(and(...pendingConditions));
+
+      const [downloadCount, formCount, pendingRequests] = await Promise.all([
+        downloadQuery,
+        formQuery,
+        pendingQuery,
+      ]);
+      return {
+        totalDownloads: Number(downloadCount[0]?.count ?? 0),
+        totalFormSubmissions: Number(formCount[0]?.count ?? 0),
+        pendingAccessRequests: Number(pendingRequests[0]?.count ?? 0),
+      };
+    }),
 } satisfies TRPCRouterRecord;
