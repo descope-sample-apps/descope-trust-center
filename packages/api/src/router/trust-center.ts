@@ -23,12 +23,14 @@ import { env } from "../env";
 import { createEmailService } from "../lib/email";
 import { protectedProcedure, publicProcedure } from "../trpc";
 
-// Create email service instance
-const emailService = createEmailService({
-  apiKey: env.RESEND_API_KEY,
-  fromEmail: env.TRUST_CENTER_FROM_EMAIL,
-  notificationEmail: env.TRUST_CENTER_NOTIFICATION_EMAIL,
-});
+// Create email service instance - only if API key is available
+const emailService = env.RESEND_API_KEY
+  ? createEmailService({
+      apiKey: env.RESEND_API_KEY,
+      fromEmail: env.TRUST_CENTER_FROM_EMAIL,
+      notificationEmail: env.TRUST_CENTER_NOTIFICATION_EMAIL,
+    })
+  : null;
 
 /**
  * Reads and parses a JSON data file from the Next.js app data directory
@@ -170,20 +172,22 @@ export const trustCenterRouter = {
       });
 
       // Send notification email to internal team
-      try {
-        await emailService.sendContactFormNotification({
-          name: input.name,
-          email: input.email,
-          company: input.company,
-          message: input.message,
-        });
-      } catch (error) {
-        console.error(
-          "[Trust Center] Failed to send contact form notification:",
-          error,
-        );
-        // Continue with success response even if email fails
-        // TODO: Consider implementing retry mechanism or alerting
+      if (emailService) {
+        try {
+          await emailService.sendContactFormNotification({
+            name: input.name,
+            email: input.email,
+            company: input.company,
+            message: input.message,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send contact form notification:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
       }
 
       return {
@@ -233,21 +237,23 @@ export const trustCenterRouter = {
       });
 
       // Send confirmation email to user
-      try {
-        await emailService.sendDocumentRequestConfirmation({
-          name: input.name,
-          email: input.email,
-          company: input.company,
-          documentId: input.documentId,
-          reason: input.reason,
-        });
-      } catch (error) {
-        console.error(
-          "[Trust Center] Failed to send document request confirmation:",
-          error,
-        );
-        // Continue with success response even if email fails
-        // TODO: Consider implementing retry mechanism or alerting
+      if (emailService) {
+        try {
+          await emailService.sendDocumentRequestConfirmation({
+            name: input.name,
+            email: input.email,
+            company: input.company,
+            documentId: input.documentId,
+            reason: input.reason,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send document request confirmation:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
       }
 
       return {
@@ -281,17 +287,19 @@ export const trustCenterRouter = {
       });
 
       // Send confirmation email to subscriber
-      try {
-        await emailService.sendSubprocessorSubscriptionConfirmation({
-          email: input.email,
-        });
-      } catch (error) {
-        console.error(
-          "[Trust Center] Failed to send subscription confirmation:",
-          error,
-        );
-        // Continue with success response even if email fails
-        // TODO: Consider implementing retry mechanism or alerting
+      if (emailService) {
+        try {
+          await emailService.sendSubprocessorSubscriptionConfirmation({
+            email: input.email,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send subscription confirmation:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
       }
 
       return {
