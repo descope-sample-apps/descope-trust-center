@@ -286,6 +286,51 @@ export const analyticsRouter = {
       return { success: true, request: updated };
     }),
 
+  denyAccess: adminProcedure
+    .input(
+      z.object({
+        requestId: z.string().uuid(),
+        reason: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const adminEmail = ctx.session.user.email ?? "unknown";
+      const [updated] = await ctx.db
+        .update(DocumentAccessRequest)
+        .set({
+          status: "denied",
+          deniedBy: adminEmail,
+          denialReason: input.reason,
+          // Use sql template to bypass drizzle's mapToDriverValue which fails with Date across module boundaries
+          deniedAt: sql`CURRENT_TIMESTAMP`,
+        })
+        .where(eq(DocumentAccessRequest.id, input.requestId))
+        .returning();
+      if (!updated)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Access request not found",
+        });
+
+      await logAuditEvent(
+        ctx,
+        "deny",
+        "document_access_request",
+        input.requestId,
+        {
+          deniedBy: adminEmail,
+          denialReason: input.reason,
+          documentId: updated.documentId,
+          documentTitle: updated.documentTitle,
+          email: updated.email,
+          name: updated.name,
+          company: updated.company,
+        },
+      );
+
+      return { success: true, request: updated };
+    }),
+
   getAuditLogs: adminProcedure
     .input(
       z

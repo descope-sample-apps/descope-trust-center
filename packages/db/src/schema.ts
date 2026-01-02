@@ -91,7 +91,7 @@ export const CreateAuditLogSchema = createInsertSchema(AuditLog, {
   userId: z.string().optional(),
   userEmail: z.string().email().optional(),
   userName: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.any().optional(),
   ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
 }).omit({ id: true, createdAt: true });
