@@ -23,7 +23,7 @@
     "@descope-trust-center/validators": "workspace:*",
     "@t3-oss/env-core": "^0.11.1",
     "@trpc/server": "catalog:",
-    "resend": "^6.6.0",
+    "resend": "^4.0.0",
     "superjson": "2.2.3",
     "zod": "catalog:"
   },

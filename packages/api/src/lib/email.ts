@@ -1,25 +1,23 @@
 import { Resend } from "resend";
 
-// TODO: Import env properly - this might need to be passed through context
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-
-// In test environments, allow missing API key (emails won't be sent)
-if (!RESEND_API_KEY && process.env.NODE_ENV !== "test") {
-  throw new Error("RESEND_API_KEY environment variable is not set");
+interface EmailServiceOptions {
+  apiKey: string;
+  fromEmail: string;
+  notificationEmail: string;
 }
 
 /**
  * Email service for sending transactional emails
  */
 export class EmailService {
-  private resend: Resend | null;
+  private resend: Resend;
+  private fromEmail: string;
+  private notificationEmail: string;
 
-  constructor(apiKey?: string) {
-    this.resend = apiKey
-      ? new Resend(apiKey)
-      : RESEND_API_KEY
-        ? new Resend(RESEND_API_KEY)
-        : null;
+  constructor(options: EmailServiceOptions) {
+    this.resend = new Resend(options.apiKey);
+    this.fromEmail = options.fromEmail;
+    this.notificationEmail = options.notificationEmail;
   }
 
   /**
@@ -34,13 +32,6 @@ export class EmailService {
     reply_to?: string;
   }) {
     try {
-      if (!this.resend) {
-        console.warn(
-          "[Email Service] Resend client not initialized - skipping email send",
-        );
-        return { data: null, error: null };
-      }
-
       const emailData: any = {
         from: params.from,
         to: params.to,
@@ -126,8 +117,8 @@ export class EmailService {
     `;
 
     return this.sendEmail({
-      from: "Trust Center <noreply@descope.com>",
-      to: "security@descope.com", // TODO: Configure this in env
+      from: this.fromEmail,
+      to: this.notificationEmail,
       subject: `Trust Center Inquiry: ${name} from ${company}`,
       html,
       reply_to: email,
@@ -243,5 +234,6 @@ export class EmailService {
   }
 }
 
-// Export singleton instance
-export const emailService = new EmailService();
+// Export factory function
+export const createEmailService = (options: EmailServiceOptions) =>
+  new EmailService(options);
