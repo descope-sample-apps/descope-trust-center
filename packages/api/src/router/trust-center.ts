@@ -13,6 +13,7 @@ import {
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
 
+import { emailTemplates, sendEmail } from "../email";
 import { publicProcedure } from "../trpc";
 
 /**
@@ -123,12 +124,36 @@ export const trustCenterRouter = {
 
   /**
    * Submits a security inquiry contact form
-   * For v1: logs to console (no email/database integration)
+   * Sends confirmation email to user and notification to internal team
    */
   submitContactForm: publicProcedure
     .input(ContactFormSchema)
-    .mutation(({ input }) => {
-      // v1: Log to console - email/database integration to be added later
+    .mutation(async ({ input }) => {
+      // Send confirmation email to user
+      const userEmailTemplate = emailTemplates.contactFormConfirmation(
+        input.name,
+      );
+      await sendEmail({
+        to: input.email,
+        subject: userEmailTemplate.subject,
+        html: userEmailTemplate.html,
+        text: userEmailTemplate.text,
+      });
+
+      // Send notification email to internal team
+      const internalEmailTemplate = emailTemplates.contactFormNotification({
+        name: input.name,
+        email: input.email,
+        company: input.company,
+        message: input.message,
+      });
+      await sendEmail({
+        to: "security@descope.com", // Internal email address
+        subject: internalEmailTemplate.subject,
+        html: internalEmailTemplate.html,
+        text: internalEmailTemplate.text,
+      });
+
       console.log("[Trust Center] Contact form submission:", {
         name: input.name,
         email: input.email,
@@ -146,12 +171,40 @@ export const trustCenterRouter = {
 
   /**
    * Requests access to an NDA-required document
-   * For v1: logs to console (no email/database integration)
+   * Sends confirmation email to user and notification to internal team
    */
   requestDocument: publicProcedure
     .input(DocumentRequestSchema)
-    .mutation(({ input }) => {
-      // v1: Log to console - email/database integration to be added later
+    .mutation(async ({ input }) => {
+      // Send confirmation email to user
+      const userEmailTemplate = emailTemplates.documentRequestConfirmation({
+        name: input.name,
+        email: input.email,
+        company: input.company,
+        reason: input.reason,
+      });
+      await sendEmail({
+        to: input.email,
+        subject: userEmailTemplate.subject,
+        html: userEmailTemplate.html,
+        text: userEmailTemplate.text,
+      });
+
+      // Send notification email to internal team
+      const internalEmailTemplate = emailTemplates.documentRequestNotification({
+        name: input.name,
+        email: input.email,
+        company: input.company,
+        reason: input.reason,
+        documentId: input.documentId,
+      });
+      await sendEmail({
+        to: "security@descope.com", // Internal email address
+        subject: internalEmailTemplate.subject,
+        html: internalEmailTemplate.html,
+        text: internalEmailTemplate.text,
+      });
+
       console.log("[Trust Center] Document access request:", {
         documentId: input.documentId,
         name: input.name,
@@ -170,7 +223,17 @@ export const trustCenterRouter = {
 
   subscribeToSubprocessorUpdates: publicProcedure
     .input(SubprocessorSubscriptionSchema)
-    .mutation(({ input }) => {
+    .mutation(async ({ input }) => {
+      // Send confirmation email to user
+      const confirmationTemplate =
+        emailTemplates.subprocessorSubscriptionConfirmation(input.email);
+      await sendEmail({
+        to: input.email,
+        subject: confirmationTemplate.subject,
+        html: confirmationTemplate.html,
+        text: confirmationTemplate.text,
+      });
+
       console.log("[Trust Center] Subprocessor subscription:", {
         email: input.email,
         timestamp: new Date().toISOString(),
