@@ -12,11 +12,13 @@ export const env = createEnv({
     TRUST_CENTER_FROM_EMAIL: z
       .string()
       .email()
-      .default("Trust Center <noreply@descope.com>"),
+      .default("Trust Center <noreply@descope.com>")
+      .optional(),
     TRUST_CENTER_NOTIFICATION_EMAIL: z
       .string()
       .email()
-      .default("security@descope.com"),
+      .default("security@descope.com")
+      .optional(),
     AUDIT_LOG_RETENTION_DAYS: z.coerce.number().default(90),
   },
   runtimeEnv: process.env,

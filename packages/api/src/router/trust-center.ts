@@ -19,8 +19,16 @@ import {
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
 
-import { emailService } from "../lib/email";
+import { env } from "../env";
+import { createEmailService } from "../lib/email";
 import { protectedProcedure, publicProcedure } from "../trpc";
+
+// Create email service instance
+const emailService = createEmailService({
+  apiKey: env.RESEND_API_KEY,
+  fromEmail: env.TRUST_CENTER_FROM_EMAIL,
+  notificationEmail: env.TRUST_CENTER_NOTIFICATION_EMAIL,
+});
 
 /**
  * Reads and parses a JSON data file from the Next.js app data directory
