@@ -22,6 +22,7 @@
     "@descope-trust-center/db": "workspace:*",
     "@descope-trust-center/validators": "workspace:*",
     "@trpc/server": "catalog:",
+    "resend": "^6.6.0",
     "superjson": "2.2.3",
     "zod": "catalog:"
   },
