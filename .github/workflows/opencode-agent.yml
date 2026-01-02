@@ -21,6 +21,8 @@ on:
   repository_dispatch:
     types: [run-agent]
 
+# Handle both workflow_dispatch inputs and repository_dispatch client_payload
+
 permissions:
   contents: write
   pull-requests: write
@@ -28,7 +30,7 @@ permissions:
   actions: write # To trigger workflow dispatches
 
 concurrency:
-  group: opencode-agent-${{ inputs.wave_count || '0' }}-${{ github.run_id }}
+  group: opencode-agent-${{ inputs.wave_count || github.event.client_payload.wave_count || '0' }}-${{ github.run_id }}
   cancel-in-progress: false
 
 env:
@@ -36,7 +38,7 @@ env:
 
 jobs:
   agent:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 55
     steps:
       - name: Generate GitHub App Token
@@ -74,17 +76,21 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          AGENT_WAVE_COUNT: ${{ inputs.wave_count || '0' }}
+          AGENT_WAVE_COUNT: ${{ inputs.wave_count || github.event.client_payload.wave_count || '0' }}
           MAX_CONCURRENT_AGENTS: "5"
         run: |
-          echo "🤖 Starting OpenCode agent (wave ${{ inputs.wave_count || '0' }})..."
+          WAVE_COUNT="${{ inputs.wave_count || github.event.client_payload.wave_count || '0' }}"
+          echo "🤖 Starting OpenCode agent (wave ${WAVE_COUNT})..."
 
-          # Decode base64 task if provided, otherwise use plain task
-          if [ -n "${{ inputs.task_base64 }}" ]; then
-            export CUSTOM_TASK=$(echo "${{ inputs.task_base64 }}" | base64 --decode)
+          # Handle task from workflow_dispatch inputs OR repository_dispatch client_payload
+          TASK_BASE64="${{ inputs.task_base64 || github.event.client_payload.task_base64 || '' }}"
+          TASK="${{ inputs.task || github.event.client_payload.task || '' }}"
+
+          if [ -n "${TASK_BASE64}" ]; then
+            export CUSTOM_TASK=$(echo "${TASK_BASE64}" | base64 --decode)
             echo "📋 Task: $CUSTOM_TASK"
-          elif [ -n "${{ inputs.task }}" ]; then
-            export CUSTOM_TASK="${{ inputs.task }}"
+          elif [ -n "${TASK}" ]; then
+            export CUSTOM_TASK="${TASK}"
             echo "📋 Task: $CUSTOM_TASK"
           fi
 
@@ -97,7 +103,7 @@ jobs:
         run: |
           echo "📊 Agent run completed"
           echo "Job status: ${{ job.status }}"
-          echo "Wave: ${{ inputs.wave_count || '0' }}"
+          echo "Wave: ${{ inputs.wave_count || github.event.client_payload.wave_count || '0' }}"
 
           # Get the app's bot username for filtering
           APP_SLUG="${{ steps.app-token.outputs.app-slug }}"

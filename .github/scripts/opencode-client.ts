@@ -18,7 +18,7 @@ const SERVER_CONFIG = {
   port: 4096,
   connectTimeoutMs: 300,
   maxConnectRetries: 30,
-  chatTimeoutMs: 25 * 60 * 1000,
+  chatTimeoutMs: 45 * 60 * 1000, // 45 min (leave 10 min buffer for setup/cleanup)
 } as const;
 
 export async function waitForServer(client: OpencodeClient): Promise<void> {
