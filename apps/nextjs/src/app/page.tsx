@@ -6,6 +6,7 @@ import { DocumentLibrary } from "./_components/document-library";
 import { FAQSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
 import { SecurityOverview } from "./_components/security-overview";
+import { StatusWidget } from "./_components/status-widget";
 import { SubprocessorSubscription } from "./_components/subprocessor-subscription";
 import { SubprocessorsList } from "./_components/subprocessors-list";
 
@@ -22,6 +23,13 @@ export default function TrustCenterPage() {
     <main className="flex flex-col">
       {/* Hero - First impression with trust badges and stats */}
       <HeroSection />
+
+      {/* System Status - Real-time operational status */}
+      <section className="bg-slate-50 px-4 py-8 sm:px-6 lg:px-8 dark:bg-slate-800">
+        <div className="mx-auto max-w-4xl">
+          <StatusWidget />
+        </div>
+      </section>
 
       {/* Compliance Grid - Certification cards with filtering */}
       <section id="certifications" className="scroll-mt-16">
