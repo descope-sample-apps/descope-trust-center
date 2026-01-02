@@ -11,18 +11,8 @@ import {
   sql,
 } from "@descope-trust-center/db";
 
-import { env } from "../env";
 import { protectedProcedure, publicProcedure } from "../trpc";
-
-const ADMIN_EMAILS = env.ADMIN_EMAILS?.split(",") ?? [];
-const ADMIN_DOMAINS = ["descope.com"];
-
-function isAdmin(email: string | undefined | null): boolean {
-  if (!email) return false;
-  if (ADMIN_EMAILS.includes(email)) return true;
-  const domain = email.split("@")[1];
-  return domain ? ADMIN_DOMAINS.includes(domain) : false;
-}
+import { isAdmin } from "../utils/admin";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!isAdmin(ctx.session.user.email)) {

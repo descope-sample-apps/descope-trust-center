@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
-  and,
   AuditLog,
   CreateDocumentAccessRequestSchema,
   CreateDocumentDownloadSchema,
@@ -13,49 +12,11 @@ import {
   DocumentDownload,
   eq,
   FormSubmission,
-  gte,
-  like,
-  lte,
   sql,
 } from "@descope-trust-center/db";
 
-import type { Context } from "../trpc";
 import { protectedProcedure, publicProcedure } from "../trpc";
-
-const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(",") ?? [];
-const ADMIN_DOMAINS = ["descope.com"];
-
-function isAdmin(email: string | undefined | null): boolean {
-  if (!email) return false;
-  if (ADMIN_EMAILS.includes(email)) return true;
-  const domain = email.split("@")[1];
-  return domain ? ADMIN_DOMAINS.includes(domain) : false;
-}
-
-async function logAuditEvent(
-  ctx: Context,
-  action: string,
-  entityType: string,
-  entityId?: string,
-  details?: Record<string, unknown>,
-) {
-  try {
-    await ctx.db.insert(AuditLog).values({
-      action,
-      entityType,
-      entityId,
-      userId: ctx.session?.user.id,
-      userEmail: ctx.session?.user.email,
-      userName: ctx.session?.user.name,
-      details,
-      ipAddress: ctx.ipAddress,
-      userAgent: ctx.userAgent,
-    });
-  } catch (error) {
-    // Audit logging should not block business operations
-    console.error("Failed to log audit event:", error);
-  }
-}
+import { isAdmin, logAuditEvent } from "../utils/admin";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!isAdmin(ctx.session.user.email)) {
@@ -324,59 +285,6 @@ export const analyticsRouter = {
       );
 
       return { success: true, request: updated };
-    }),
-
-  getAuditLogs: adminProcedure
-    .input(
-      z
-        .object({
-          limit: z.number().min(1).max(100).default(50),
-          offset: z.number().min(0).default(0),
-          userId: z.string().optional(),
-          action: z.string().optional(),
-          resource: z.string().optional(),
-          fromDate: z.string().datetime().optional(),
-          toDate: z.string().datetime().optional(),
-        })
-        .optional(),
-    )
-    .query(async ({ ctx, input }) => {
-      const limit = input?.limit ?? 50;
-      const offset = input?.offset ?? 0;
-
-      const conditions = [];
-      if (input?.userId) conditions.push(eq(AuditLog.userId, input.userId));
-      if (input?.action)
-        conditions.push(like(AuditLog.action, `%${input.action}%`));
-      if (input?.resource)
-        conditions.push(like(AuditLog.entityId, `%${input.resource}%`));
-      if (input?.fromDate)
-        conditions.push(gte(AuditLog.createdAt, new Date(input.fromDate)));
-      if (input?.toDate)
-        conditions.push(lte(AuditLog.createdAt, new Date(input.toDate)));
-
-      const whereClause =
-        conditions.length > 0 ? and(...conditions) : undefined;
-
-      const logs = await ctx.db
-        .select()
-        .from(AuditLog)
-        .where(whereClause)
-        .orderBy(desc(AuditLog.createdAt))
-        .limit(limit)
-        .offset(offset);
-
-      const [countResult] = await ctx.db
-        .select({ count: sql<number>`count(*)` })
-        .from(AuditLog)
-        .where(whereClause);
-      const total = Number(countResult?.count ?? 0);
-
-      return {
-        logs,
-        total,
-        hasMore: offset + logs.length < total,
-      };
     }),
 
   getDashboardSummary: adminProcedure.query(async ({ ctx }) => {
