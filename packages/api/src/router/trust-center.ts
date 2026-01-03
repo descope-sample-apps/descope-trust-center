@@ -1,5 +1,3 @@
-import * as fs from "fs";
-import * as path from "path";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -15,32 +13,14 @@ import {
   Subprocessor,
 } from "@descope-trust-center/db";
 import {
-  CertificationsSchema,
   DocumentCategorySchema,
-  DocumentsSchema,
   FAQCategorySchema,
-  FAQsSchema,
-  SubprocessorsSchema,
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
 
 import { emailTemplates, sendEmail } from "../email";
 import { env } from "../env";
 import { publicProcedure } from "../trpc";
-
-/**
- * Reads and parses a JSON data file from the Next.js app data directory
- * Used as fallback during migration
- */
-function readDataFile<T>(filename: string): T {
-  const dataPath = path.resolve(
-    process.cwd(),
-    "apps/nextjs/src/app/data",
-    filename,
-  );
-  const content = fs.readFileSync(dataPath, "utf-8");
-  return JSON.parse(content) as T;
-}
 
 /**
  * Contact form submission schema
@@ -287,7 +267,7 @@ export const trustCenterRouter = {
 
       await ctx.db.insert(DocumentAccessRequest).values({
         documentId: input.documentId,
-        documentTitle: document?.title || input.documentId,
+        documentTitle: document?.title ?? input.documentId,
         email: input.email,
         name: input.name,
         company: input.company,

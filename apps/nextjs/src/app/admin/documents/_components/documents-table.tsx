@@ -6,28 +6,28 @@ import { Button } from "@descope-trust-center/ui/button";
 
 import { useTRPC } from "~/trpc/react";
 
-export function CertificationsTable() {
+export function DocumentsTable() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  const { data: certifications, isLoading } = useQuery(
-    trpc.adminContent.getCertifications.queryOptions(),
+  const { data: documents, isLoading } = useQuery(
+    trpc.adminContent.getDocuments.queryOptions(),
   );
 
   const publishMutation = useMutation({
-    ...trpc.adminContent.publishCertification.mutationOptions(),
+    ...trpc.adminContent.publishDocument.mutationOptions(),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: trpc.adminContent.getCertifications.queryKey(),
+        queryKey: trpc.adminContent.getDocuments.queryKey(),
       });
     },
   });
 
   const deleteMutation = useMutation({
-    ...trpc.adminContent.deleteCertification.mutationOptions(),
+    ...trpc.adminContent.deleteDocument.mutationOptions(),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: trpc.adminContent.getCertifications.queryKey(),
+        queryKey: trpc.adminContent.getDocuments.queryKey(),
       });
     },
   });
@@ -38,7 +38,7 @@ export function CertificationsTable() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this certification?")) {
+    if (confirm("Are you sure you want to delete this document?")) {
       deleteMutation.mutate({ id });
     }
   };
@@ -51,32 +51,30 @@ export function CertificationsTable() {
     <div className="bg-card rounded-lg border">
       <div className="border-b p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">All Certifications</h3>
-          <Button>Add Certification</Button>
+          <h3 className="text-lg font-semibold">All Documents</h3>
+          <Button>Add Document</Button>
         </div>
       </div>
 
       <div className="p-4">
-        {certifications?.length === 0 ? (
-          <p className="text-muted-foreground">No certifications found.</p>
+        {documents?.length === 0 ? (
+          <p className="text-muted-foreground">No documents found.</p>
         ) : (
           <div className="space-y-4">
-            {certifications?.map((certification) => (
+            {documents?.map((document) => (
               <div
-                key={certification.id}
+                key={document.id}
                 className="flex items-center justify-between border-b pb-4 last:border-b-0"
               >
                 <div className="flex-1">
-                  <h4 className="font-medium">{certification.name}</h4>
+                  <h4 className="font-medium">{document.title}</h4>
                   <p className="text-muted-foreground text-sm">
-                    Status: {certification.status} | Publish:{" "}
-                    {certification.publishStatus}
+                    Category: {document.category} | Access:{" "}
+                    {document.accessLevel}
                   </p>
                   <p className="text-muted-foreground text-sm">
-                    Expires:{" "}
-                    {certification.expiryDate
-                      ? new Date(certification.expiryDate).toLocaleDateString()
-                      : "N/A"}
+                    Status: {document.publishStatus} | Size:{" "}
+                    {document.fileSize || "N/A"}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -84,13 +82,10 @@ export function CertificationsTable() {
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      handlePublishToggle(
-                        certification.id,
-                        certification.publishStatus,
-                      )
+                      handlePublishToggle(document.id, document.publishStatus)
                     }
                   >
-                    {certification.publishStatus === "published"
+                    {document.publishStatus === "published"
                       ? "Unpublish"
                       : "Publish"}
                   </Button>
@@ -100,7 +95,7 @@ export function CertificationsTable() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(certification.id)}
+                    onClick={() => handleDelete(document.id)}
                     className="text-red-600 hover:text-red-700"
                   >
                     Delete
