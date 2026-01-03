@@ -182,7 +182,7 @@ export function Header() {
                       onClick={handleLogout}
                       className="min-h-[44px] w-full justify-start"
                     >
-                      Sign out
+                      {t("signOut")}
                     </Button>
                   </>
                 ) : (
@@ -194,7 +194,7 @@ export function Header() {
                     }}
                     className="min-h-[44px] w-full"
                   >
-                    Sign in
+                    {t("signIn")}
                   </Button>
                 )}
                 <div className="mt-4">
@@ -209,7 +209,7 @@ export function Header() {
                     "mt-2 min-h-[44px] w-full",
                   )}
                 >
-                  Visit Descope
+                  {t("visitDescope")}
                 </Link>
               </div>
             </nav>

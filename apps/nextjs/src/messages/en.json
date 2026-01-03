@@ -38,5 +38,18 @@
     "termsOfService": "Terms of Service",
     "securityCompliance": "Security & Compliance",
     "copyright": "© {year} Descope, Inc. All rights reserved."
+  },
+  "page": {
+    "loading": {
+      "certifications": "Loading certifications...",
+      "documents": "Loading documents...",
+      "subprocessors": "Loading subprocessors...",
+      "faq": "Loading FAQ...",
+      "contact": "Loading contact form..."
+    },
+    "subscription": {
+      "title": "Stay Updated",
+      "description": "Get notified when new subprocessors are added or updated."
+    }
   }
 }

@@ -38,5 +38,18 @@
     "termsOfService": "利用規約",
     "securityCompliance": "セキュリティとコンプライアンス",
     "copyright": "© {year} Descope, Inc. 全著作権所有。"
+  },
+  "page": {
+    "loading": {
+      "certifications": "認定を読み込み中...",
+      "documents": "ドキュメントを読み込み中...",
+      "subprocessors": "サブプロセッサーを読み込み中...",
+      "faq": "FAQを読み込み中...",
+      "contact": "お問い合わせフォームを読み込み中..."
+    },
+    "subscription": {
+      "title": "最新情報を入手",
+      "description": "新しいサブプロセッサーが追加または更新されたときに通知を受け取ります。"
+    }
   }
 }

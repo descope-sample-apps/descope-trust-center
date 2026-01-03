@@ -16,12 +16,6 @@ const config = {
   ],
 
   typescript: { ignoreBuildErrors: true },
-
-  i18n: {
-    locales: ["en", "de", "es", "fr", "ja"],
-    defaultLocale: "en",
-    localeDetection: false,
-  },
 };
 
 export default withSentryConfig(config, {

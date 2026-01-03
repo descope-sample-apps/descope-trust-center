@@ -2,11 +2,9 @@ import { NextRequest } from "next/server";
 import { authMiddleware } from "@descope/nextjs-sdk/server";
 import createMiddleware from "next-intl/middleware";
 
-const intlMiddleware = createMiddleware({
-  locales: ["en", "de", "es", "fr", "ja"],
-  defaultLocale: "en",
-  localePrefix: "always",
-});
+import config from "../i18n";
+
+const intlMiddleware = createMiddleware(config);
 
 export default function middleware(request: NextRequest) {
   const intlResponse = intlMiddleware(request);

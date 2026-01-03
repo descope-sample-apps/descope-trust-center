@@ -38,5 +38,18 @@
     "termsOfService": "Conditions d'Utilisation",
     "securityCompliance": "Sécurité et Conformité",
     "copyright": "© {year} Descope, Inc. Tous droits réservés."
+  },
+  "page": {
+    "loading": {
+      "certifications": "Chargement des certifications...",
+      "documents": "Chargement des documents...",
+      "subprocessors": "Chargement des sous-traitants...",
+      "faq": "Chargement des FAQ...",
+      "contact": "Chargement du formulaire de contact..."
+    },
+    "subscription": {
+      "title": "Restez Informé",
+      "description": "Recevez des notifications lorsque de nouveaux sous-traitants sont ajoutés ou mis à jour."
+    }
   }
 }
