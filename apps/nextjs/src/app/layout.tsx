@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 
 import { cn } from "@descope-trust-center/ui";
 import { ThemeProvider, ThemeToggle } from "@descope-trust-center/ui/theme";
@@ -90,13 +92,45 @@ const jsonLd = {
   ],
 };
 
-export default function RootLayout(props: { children: React.ReactNode }) {
+export default async function RootLayout(props: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <link
+          rel="alternate"
+          hrefLang="en"
+          href="https://trust.descope.com/en"
+        />
+        <link
+          rel="alternate"
+          hrefLang="de"
+          href="https://trust.descope.com/de"
+        />
+        <link
+          rel="alternate"
+          hrefLang="es"
+          href="https://trust.descope.com/es"
+        />
+        <link
+          rel="alternate"
+          hrefLang="fr"
+          href="https://trust.descope.com/fr"
+        />
+        <link
+          rel="alternate"
+          hrefLang="ja"
+          href="https://trust.descope.com/ja"
+        />
+        <link
+          rel="alternate"
+          hrefLang="x-default"
+          href="https://trust.descope.com/en"
         />
       </head>
       <body
@@ -106,19 +140,21 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           geistMono.variable,
         )}
       >
-        <AuthProvider projectId={env.NEXT_PUBLIC_DESCOPE_PROJECT_ID}>
-          <ThemeProvider>
-            <TRPCReactProvider>
-              <Header />
-              <div className="flex-1">{props.children}</div>
-              <Footer />
-            </TRPCReactProvider>
-            <div className="fixed right-4 bottom-4 z-50">
-              <ThemeToggle />
-            </div>
-            <Toaster />
-          </ThemeProvider>
-        </AuthProvider>
+        <NextIntlClientProvider messages={messages}>
+          <AuthProvider projectId={env.NEXT_PUBLIC_DESCOPE_PROJECT_ID}>
+            <ThemeProvider>
+              <TRPCReactProvider>
+                <Header />
+                <div className="flex-1">{props.children}</div>
+                <Footer />
+              </TRPCReactProvider>
+              <div className="fixed right-4 bottom-4 z-50">
+                <ThemeToggle />
+              </div>
+              <Toaster />
+            </ThemeProvider>
+          </AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

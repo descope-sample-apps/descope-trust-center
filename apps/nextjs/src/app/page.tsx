@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
 
 import { ComplianceGrid } from "./_components/compliance-grid";
 import { ContactForm } from "./_components/contact-form";
@@ -17,7 +18,8 @@ import { SubprocessorsList } from "./_components/subprocessors-list";
  * All sections are composed here with proper semantic spacing.
  * Interactive components are wrapped in Suspense for streaming.
  */
-export default function TrustCenterPage() {
+export default async function TrustCenterPage() {
+  const t = await getTranslations("page");
   return (
     <main className="flex flex-col">
       {/* Hero - First impression with trust badges and stats */}
@@ -28,7 +30,7 @@ export default function TrustCenterPage() {
         <Suspense
           fallback={
             <div className="flex h-64 items-center justify-center">
-              Loading certifications...
+              {t("loading.certifications")}
             </div>
           }
         >
@@ -44,7 +46,7 @@ export default function TrustCenterPage() {
         <Suspense
           fallback={
             <div className="flex h-64 items-center justify-center">
-              Loading documents...
+              {t("loading.documents")}
             </div>
           }
         >
@@ -57,7 +59,7 @@ export default function TrustCenterPage() {
         <Suspense
           fallback={
             <div className="flex h-64 items-center justify-center">
-              Loading subprocessors...
+              {t("loading.subprocessors")}
             </div>
           }
         >
@@ -65,11 +67,10 @@ export default function TrustCenterPage() {
           <div className="container mt-8">
             <div className="mx-auto max-w-xl rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800/50">
               <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
-                Stay Informed
+                {t("subscription.title")}
               </h3>
               <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
-                Subscribe to receive notifications when we add or update
-                subprocessors
+                {t("subscription.description")}
               </p>
               <SubprocessorSubscription />
             </div>
@@ -82,7 +83,7 @@ export default function TrustCenterPage() {
         <Suspense
           fallback={
             <div className="flex h-64 items-center justify-center">
-              Loading FAQs...
+              {t("loading.faq")}
             </div>
           }
         >
@@ -95,7 +96,7 @@ export default function TrustCenterPage() {
         <Suspense
           fallback={
             <div className="flex h-64 items-center justify-center">
-              Loading contact form...
+              {t("loading.contact")}
             </div>
           }
         >
