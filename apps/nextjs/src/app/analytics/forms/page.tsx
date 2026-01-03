@@ -248,6 +248,7 @@ export default function FormSubmissionsPage() {
                   <select
                     value={submission.status}
                     onChange={(e) => {
+                      e.stopPropagation();
                       const newStatus = e.target.value as Status;
                       if (
                         newStatus !== submission.status &&
