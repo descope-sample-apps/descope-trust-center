@@ -1,0 +1,42 @@
+{
+  "hero": {
+    "badge": "SOC 2 Type II 認定",
+    "headline": "Descope でのセキュリティとコンプライアンス",
+    "subheadline": "あなたの信頼が私たちの基盤です。私たちは厳格なセキュリティ基準とコンプライアンス認定を維持し、あなたのデータが常に保護されることを保証します。",
+    "cta1": "認定を確認する",
+    "cta2": "セキュリティドキュメントを閲覧",
+    "trustedCertifications": "信頼できる認定",
+    "stats": {
+      "uptime": "稼働時間 SLA",
+      "breaches": "データ侵害",
+      "monitoring": "セキュリティ監視"
+    }
+  },
+  "header": {
+    "certifications": "認定",
+    "documents": "ドキュメント",
+    "subprocessors": "サブプロセッサー",
+    "faq": "FAQ",
+    "contact": "連絡先",
+    "signIn": "サインイン",
+    "signOut": "サインアウト",
+    "visitDescope": "Descope を訪問"
+  },
+  "footer": {
+    "trustCenter": "トラストセンター",
+    "company": "会社",
+    "legal": "法的",
+    "description": "モダンなアプリケーション向けのエンタープライズグレードの認証とユーザー管理。SOC 2 Type II 認定。",
+    "github": "GitHub",
+    "twitter": "Twitter",
+    "linkedin": "LinkedIn",
+    "aboutDescope": "Descope について",
+    "engineeringBlog": "エンジニアリングブログ",
+    "documentation": "ドキュメント",
+    "contact": "連絡先",
+    "privacyPolicy": "プライバシーポリシー",
+    "termsOfService": "利用規約",
+    "securityCompliance": "セキュリティとコンプライアンス",
+    "copyright": "© {year} Descope, Inc. 全著作権所有。"
+  }
+}

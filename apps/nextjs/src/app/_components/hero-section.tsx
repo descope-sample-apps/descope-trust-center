@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 
 import type { Certification } from "@descope-trust-center/validators";
 import { cn } from "@descope-trust-center/ui";
@@ -10,23 +12,16 @@ import certificationsData from "~/app/data/certifications.json";
 /** Key trust badges to display (filter for active/featured certifications) */
 const FEATURED_CERTIFICATION_IDS = ["soc2-type2", "iso27001", "gdpr", "hipaa"];
 
-/** Stats displayed in the hero section */
-const TRUST_STATS = [
-  { value: "99.99%", label: "Uptime SLA" },
-  { value: "Zero", label: "Data Breaches" },
-  { value: "24/7", label: "Security Monitoring" },
-] as const;
-
 /**
  * Hero Section for the Trust Center landing page.
  * Displays headline, trust badges, key stats, and CTA.
  *
  * @remarks
- * This is a Server Component - no client-side JavaScript required.
+ * This is a Client Component using next-intl for translations.
  * Certifications are loaded from static JSON at build time.
  */
-export async function HeroSection() {
-  const t = await getTranslations("hero");
+export function HeroSection() {
+  const t = useTranslations("hero");
   const certifications = certificationsData as Certification[];
 
   const featuredCertifications = certifications.filter((cert) =>

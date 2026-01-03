@@ -11,5 +11,32 @@
       "breaches": "Data Breaches",
       "monitoring": "Security Monitoring"
     }
+  },
+  "header": {
+    "certifications": "Certifications",
+    "documents": "Documents",
+    "subprocessors": "Subprocessors",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "visitDescope": "Visit Descope"
+  },
+  "footer": {
+    "trustCenter": "Trust Center",
+    "company": "Company",
+    "legal": "Legal",
+    "description": "Enterprise-grade authentication and user management for modern applications. SOC 2 Type II certified.",
+    "github": "GitHub",
+    "twitter": "Twitter",
+    "linkedin": "LinkedIn",
+    "aboutDescope": "About Descope",
+    "engineeringBlog": "Engineering Blog",
+    "documentation": "Documentation",
+    "contact": "Contact",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "securityCompliance": "Security & Compliance",
+    "copyright": "© {year} Descope, Inc. All rights reserved."
   }
 }

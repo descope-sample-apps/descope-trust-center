@@ -4,28 +4,31 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@descope-trust-center/ui";
 import { Button, buttonVariants } from "@descope-trust-center/ui/button";
 
 import { useDescope, useSession, useUser } from "~/auth/client";
+import { LanguageSwitcher } from "./language-switcher";
 import { LoginModal } from "./login-modal";
 
-const NAV_ITEMS = [
-  { href: "#certifications", label: "Certifications" },
-  { href: "#documents", label: "Documents" },
-  { href: "#subprocessors", label: "Subprocessors" },
-  { href: "#faq", label: "FAQ" },
-  { href: "#contact", label: "Contact" },
-] as const;
-
 export function Header() {
+  const t = useTranslations("header");
   const router = useRouter();
   const { isAuthenticated, isSessionLoading } = useSession();
   const { user } = useUser();
   const { logout } = useDescope();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const NAV_ITEMS = [
+    { href: "#certifications", label: t("certifications") },
+    { href: "#documents", label: t("documents") },
+    { href: "#subprocessors", label: t("subprocessors") },
+    { href: "#faq", label: t("faq") },
+    { href: "#contact", label: t("contact") },
+  ] as const;
 
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
@@ -105,6 +108,7 @@ export function Header() {
 
           {/* Auth & CTA - Desktop */}
           <div className="hidden items-center gap-3 md:flex">
+            <LanguageSwitcher />
             {isSessionLoading ? (
               <div className="h-11 w-20 animate-pulse rounded-md bg-slate-200 dark:bg-slate-700" />
             ) : isAuthenticated ? (
@@ -117,7 +121,7 @@ export function Header() {
                   onClick={handleLogout}
                   className="min-h-[44px] px-4"
                 >
-                  Sign out
+                  {t("signOut")}
                 </Button>
               </>
             ) : (
@@ -126,7 +130,7 @@ export function Header() {
                 onClick={() => setShowLoginModal(true)}
                 className="min-h-[44px] px-4"
               >
-                Sign in
+                {t("signIn")}
               </Button>
             )}
             <Link
@@ -138,7 +142,7 @@ export function Header() {
                 "hidden min-h-[44px] px-4 lg:inline-flex",
               )}
             >
-              Visit Descope
+              {t("visitDescope")}
             </Link>
           </div>
         </div>
@@ -193,6 +197,9 @@ export function Header() {
                     Sign in
                   </Button>
                 )}
+                <div className="mt-4">
+                  <LanguageSwitcher />
+                </div>
                 <Link
                   href="https://www.descope.com"
                   target="_blank"

@@ -11,5 +11,32 @@
       "breaches": "Brechas de Datos",
       "monitoring": "Monitoreo de Seguridad"
     }
+  },
+  "header": {
+    "certifications": "Certificaciones",
+    "documents": "Documentos",
+    "subprocessors": "Subprocesadores",
+    "faq": "Preguntas Frecuentes",
+    "contact": "Contacto",
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "visitDescope": "Visitar Descope"
+  },
+  "footer": {
+    "trustCenter": "Centro de Confianza",
+    "company": "Empresa",
+    "legal": "Legal",
+    "description": "Autenticación y gestión de usuarios de nivel empresarial para aplicaciones modernas. Certificado SOC 2 Tipo II.",
+    "github": "GitHub",
+    "twitter": "Twitter",
+    "linkedin": "LinkedIn",
+    "aboutDescope": "Acerca de Descope",
+    "engineeringBlog": "Blog de Ingeniería",
+    "documentation": "Documentación",
+    "contact": "Contacto",
+    "privacyPolicy": "Política de Privacidad",
+    "termsOfService": "Términos de Servicio",
+    "securityCompliance": "Seguridad y Cumplimiento",
+    "copyright": "© {year} Descope, Inc. Todos los derechos reservados."
   }
 }

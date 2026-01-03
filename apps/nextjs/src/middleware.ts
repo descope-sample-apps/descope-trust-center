@@ -1,8 +1,22 @@
+import { NextRequest } from "next/server";
 import { authMiddleware } from "@descope/nextjs-sdk/server";
+import createMiddleware from "next-intl/middleware";
 
-export default authMiddleware({
-  publicRoutes: ["/", "/api/trpc/*"],
+const intlMiddleware = createMiddleware({
+  locales: ["en", "de", "es", "fr", "ja"],
+  defaultLocale: "en",
+  localePrefix: "always",
 });
+
+export default function middleware(request: NextRequest) {
+  const intlResponse = intlMiddleware(request);
+  if (intlResponse.status !== 200) {
+    return intlResponse;
+  }
+  return authMiddleware({
+    publicRoutes: ["/", "/api/trpc/*"],
+  })(request);
+}
 
 export const config = {
   // Match all routes except:

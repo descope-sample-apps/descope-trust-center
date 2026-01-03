@@ -1,0 +1,42 @@
+{
+  "hero": {
+    "badge": "Certifié SOC 2 Type II",
+    "headline": "Sécurité et Conformité chez Descope",
+    "subheadline": "Votre confiance est notre fondation. Nous maintenons des normes de sécurité rigoureuses et des certifications de conformité pour assurer que vos données sont toujours protégées.",
+    "cta1": "Voir Nos Certifications",
+    "cta2": "Parcourir les Documents de Sécurité",
+    "trustedCertifications": "Certifications de Confiance",
+    "stats": {
+      "uptime": "SLA de Disponibilité",
+      "breaches": "Fuites de Données",
+      "monitoring": "Surveillance de Sécurité"
+    }
+  },
+  "header": {
+    "certifications": "Certifications",
+    "documents": "Documents",
+    "subprocessors": "Sous-traitants",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "visitDescope": "Visiter Descope"
+  },
+  "footer": {
+    "trustCenter": "Centre de Confiance",
+    "company": "Entreprise",
+    "legal": "Légal",
+    "description": "Authentification et gestion des utilisateurs de niveau entreprise pour les applications modernes. Certifié SOC 2 Type II.",
+    "github": "GitHub",
+    "twitter": "Twitter",
+    "linkedin": "LinkedIn",
+    "aboutDescope": "À propos de Descope",
+    "engineeringBlog": "Blog d'Ingénierie",
+    "documentation": "Documentation",
+    "contact": "Contact",
+    "privacyPolicy": "Politique de Confidentialité",
+    "termsOfService": "Conditions d'Utilisation",
+    "securityCompliance": "Sécurité et Conformité",
+    "copyright": "© {year} Descope, Inc. Tous droits réservés."
+  }
+}
