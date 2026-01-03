@@ -21,13 +21,11 @@ export default function AuditLogPage() {
               Track all system events for compliance and security monitoring.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Suspense fallback={<CleanButtonSkeleton />}>
-              <CleanButton />
-            </Suspense>
+          <div className="flex items-center gap-4">
             <Suspense fallback={<ExportButtonSkeleton />}>
               <ExportButton />
             </Suspense>
+            <CleanButton />
           </div>
         </div>
 
