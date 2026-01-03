@@ -1,5 +1,8 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import { createJiti } from "jiti";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin();
 
 const jiti = createJiti(import.meta.url);
 
@@ -18,7 +21,7 @@ const config = {
   typescript: { ignoreBuildErrors: true },
 };
 
-export default withSentryConfig(config, {
+export default withSentryConfig(withNextIntl(config), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,

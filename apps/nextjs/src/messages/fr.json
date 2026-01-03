@@ -1,0 +1,192 @@
+{
+  "hero": {
+    "badge": "Certifié SOC 2 Type II",
+    "headline": "Sécurité et Conformité chez Descope",
+    "subheadline": "Votre confiance est notre fondation. Nous maintenons des normes de sécurité rigoureuses et des certifications de conformité pour assurer que vos données sont toujours protégées.",
+    "cta1": "Voir Nos Certifications",
+    "cta2": "Parcourir les Documents de Sécurité",
+    "trustedCertifications": "Certifications de Confiance",
+    "stats": {
+      "uptime": "SLA de Disponibilité",
+      "breaches": "Fuites de Données",
+      "monitoring": "Surveillance de Sécurité"
+    }
+  },
+  "header": {
+    "certifications": "Certifications",
+    "documents": "Documents",
+    "subprocessors": "Sous-traitants",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "visitDescope": "Visiter Descope"
+  },
+  "footer": {
+    "trustCenter": "Centre de Confiance",
+    "company": "Entreprise",
+    "legal": "Légal",
+    "description": "Authentification et gestion des utilisateurs de niveau entreprise pour les applications modernes. Certifié SOC 2 Type II.",
+    "github": "GitHub",
+    "twitter": "Twitter",
+    "linkedin": "LinkedIn",
+    "aboutDescope": "À propos de Descope",
+    "engineeringBlog": "Blog d'Ingénierie",
+    "documentation": "Documentation",
+    "contact": "Contact",
+    "privacyPolicy": "Politique de Confidentialité",
+    "termsOfService": "Conditions d'Utilisation",
+    "securityCompliance": "Sécurité et Conformité",
+    "copyright": "© {year} Descope, Inc. Tous droits réservés.",
+    "certifications": "Certifications",
+    "documents": "Documents",
+    "subprocessors": "Sous-traitants",
+    "faq": "FAQ"
+  },
+  "page": {
+    "loading": {
+      "certifications": "Chargement des certifications...",
+      "documents": "Chargement des documents...",
+      "subprocessors": "Chargement des sous-traitants...",
+      "faq": "Chargement de la FAQ...",
+      "contact": "Chargement du formulaire de contact..."
+    },
+    "subscription": {
+      "title": "Restez Informé",
+      "description": "Recevez des notifications lorsqu&apos;de nouveaux sous-traitants sont ajoutés ou mis à jour."
+    }
+  },
+  "compliance": {
+    "filters": {
+      "all": "Tous",
+      "active": "Actif",
+      "inProgress": "En Cours",
+      "expired": "Expiré"
+    },
+    "status": {
+      "active": "Actif",
+      "inProgress": "En Cours",
+      "expired": "Expiré",
+      "pendingRenewal": "Renouvellement en Attente"
+    },
+    "actions": {
+      "showDetails": "Voir les Détails",
+      "showLess": "Voir Moins"
+    }
+  },
+  "contact": {
+    "title": "Contactez Notre Équipe de Sécurité",
+    "subtitle": "Vous avez une question de sécurité ou besoin d&apos;accès à la documentation ? Nous sommes là pour vous aider.",
+    "requestTypes": {
+      "general": "Demande Générale",
+      "compliance": "Question de Conformité",
+      "securityReport": "Rapport de Sécurité",
+      "partnership": "Partenariat",
+      "other": "Autre"
+    },
+    "fields": {
+      "name": "Nom",
+      "email": "E-mail",
+      "company": "Entreprise",
+      "requestType": "Type de Demande",
+      "message": "Message"
+    },
+    "placeholders": {
+      "name": "Jane Doe",
+      "company": "Acme Corp",
+      "message": "Veuillez décrire votre question de sécurité ou demande..."
+    },
+    "validation": {
+      "nameRequired": "Le nom doit contenir au moins 2 caractères",
+      "nameTooLong": "Le nom doit contenir 100 caractères ou moins",
+      "emailInvalid": "Veuillez saisir une adresse e-mail valide",
+      "companyRequired": "L&apos;entreprise est requise",
+      "companyTooLong": "L&apos;entreprise doit contenir 100 caractères ou moins",
+      "requestTypeRequired": "Veuillez sélectionner un type de demande",
+      "messageTooShort": "Veuillez fournir plus de détails (au moins 10 caractères)",
+      "messageTooLong": "Le message doit contenir 5000 caractères ou moins"
+    },
+    "messages": {
+      "success": "Merci pour votre demande !",
+      "successDescription": "Nous avons reçu votre demande et répondrons dans les 1 jour ouvrable.",
+      "error": "Une erreur s&apos;est produite. Veuillez réessayer ou nous envoyer un e-mail à security@descope.com",
+      "sendAnother": "Envoyer un autre message"
+    },
+    "buttons": {
+      "submit": "Envoyer la Demande",
+      "submitting": "Envoi en cours..."
+    },
+    "urgent": "Pour les questions de sécurité urgentes, veuillez nous envoyer un e-mail directement à"
+  },
+  "faq": {
+    "categories": {
+      "all": "Tous",
+      "security": "Sécurité",
+      "compliance": "Conformité",
+      "privacy": "Confidentialité",
+      "dataHandling": "Gestion des Données",
+      "authentication": "Authentification",
+      "general": "Général"
+    }
+  },
+  "documents": {
+    "filters": {
+      "all": "Tous les Documents",
+      "securityPolicy": "Politiques de Sécurité",
+      "compliance": "Conformité",
+      "legal": "Juridique",
+      "questionnaire": "Questionnaires",
+      "auditReport": "Rapports d&apos;Audit",
+      "technical": "Technique"
+    },
+    "access": {
+      "public": "Public",
+      "loginRequired": "Connexion Requise",
+      "ndaRequired": "NDA Requis"
+    },
+    "search": "Rechercher des documents",
+    "clearSearch": "Effacer la recherche",
+    "noResults": "Aucun document trouvé"
+  },
+  "subprocessors": {
+    "filters": {
+      "all": "Tous",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "underReview": "En Révision"
+    }
+  },
+  "subscription": {
+    "emailPlaceholder": "Entrez votre adresse e-mail",
+    "button": "S&apos;abonner",
+    "submitting": "Abonnement en cours...",
+    "validation": {
+      "emailInvalid": "Veuillez saisir une adresse e-mail valide"
+    }
+  },
+  "security": {
+    "features": [
+      "Sauvegardes chiffrées avec clés séparées",
+      "Principe du moindre privilège appliqué",
+      "Journalisation d&apos;audit complète",
+      "Notification immédiate du client",
+      "Conforme au RGPD",
+      "Conforme à la CCPA",
+      "Contrôles de rétention des données",
+      "Support du droit à l&apos;effacement",
+      "Programme de primes aux bogues",
+      "Analyse de sécurité continue"
+    ],
+    "sections": {
+      "accessControls": "Contrôles d&apos;Accès",
+      "infrastructureSecurity": "Sécurité de l&apos;Infrastructure",
+      "incidentResponse": "Réponse aux Incidents",
+      "dataPrivacy": "Protection des Données",
+      "vulnerabilityManagement": "Gestion des Vulnérabilités"
+    }
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Page non trouvée"
+  }
+}

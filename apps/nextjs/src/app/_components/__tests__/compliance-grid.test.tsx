@@ -12,13 +12,17 @@ describe("ComplianceGrid", () => {
 
   it("displays filter buttons", () => {
     render(<ComplianceGrid />);
-    expect(screen.getByRole("button", { name: /All/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Active/i })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /In Progress/i }),
+      screen.getByRole("button", { name: /filters\.all/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Expired/i }),
+      screen.getByRole("button", { name: /filters\.active/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /filters\.inProgress/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /filters\.expired/i }),
     ).toBeInTheDocument();
   });
 
@@ -32,7 +36,9 @@ describe("ComplianceGrid", () => {
     const user = userEvent.setup();
     render(<ComplianceGrid />);
 
-    const activeButton = screen.getByRole("button", { name: /Active/i });
+    const activeButton = screen.getByRole("button", {
+      name: /filters\.active/i,
+    });
     await user.click(activeButton);
 
     expect(activeButton).toHaveAttribute("aria-pressed", "true");
@@ -43,17 +49,17 @@ describe("ComplianceGrid", () => {
     render(<ComplianceGrid />);
 
     const showDetailsButtons = screen.queryAllByRole("button", {
-      name: /Show Details/i,
+      name: /actions\.showDetails/i,
     });
 
     if (showDetailsButtons.length > 0) {
       const firstButton = showDetailsButtons[0]!;
       await user.click(firstButton);
 
-      expect(firstButton).toHaveAttribute("aria-expanded", "true");
-      expect(
-        screen.getByRole("button", { name: /Show Less/i }),
-      ).toBeInTheDocument();
+      const updatedButton = screen.getByRole("button", {
+        name: /actions\.showLess/i,
+      });
+      expect(updatedButton).toHaveAttribute("aria-expanded", "true");
     }
   });
 
@@ -61,7 +67,9 @@ describe("ComplianceGrid", () => {
     const user = userEvent.setup();
     render(<ComplianceGrid />);
 
-    const expiredButton = screen.getByRole("button", { name: /Expired/i });
+    const expiredButton = screen.getByRole("button", {
+      name: /filters\.expired/i,
+    });
     await user.click(expiredButton);
 
     expect(expiredButton).toHaveAttribute("aria-pressed", "true");

@@ -7,6 +7,24 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 
+vi.mock("next-intl", () => ({
+  useTranslations: vi.fn(() => (key: string) => {
+    const translations = {
+      header: {
+        certifications: "Certifications",
+        documents: "Documents",
+        subprocessors: "Subprocessors",
+        faq: "FAQ",
+        contact: "Contact",
+        signIn: "Sign in",
+        signOut: "Sign out",
+        visitDescope: "Visit Descope",
+      },
+    };
+    return translations.header[key as keyof typeof translations.header] || key;
+  }),
+}));
+
 vi.mock("~/auth/client", () => ({
   useSession: () => ({ isAuthenticated: false, isSessionLoading: false }),
   useUser: () => ({ user: { name: null, email: null } }),
@@ -15,6 +33,10 @@ vi.mock("~/auth/client", () => ({
 
 vi.mock("../login-modal", () => ({
   LoginModal: () => null,
+}));
+
+vi.mock("../language-switcher", () => ({
+  LanguageSwitcher: () => <div>Language Switcher</div>,
 }));
 
 beforeEach(() => {

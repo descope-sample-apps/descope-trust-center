@@ -1,0 +1,192 @@
+{
+  "hero": {
+    "badge": "SOC 2 Type II 認定",
+    "headline": "Descope でのセキュリティとコンプライアンス",
+    "subheadline": "あなたの信頼が私たちの基盤です。私たちは厳格なセキュリティ基準とコンプライアンス認定を維持し、あなたのデータが常に保護されることを保証します。",
+    "cta1": "認定を確認する",
+    "cta2": "セキュリティドキュメントを閲覧",
+    "trustedCertifications": "信頼できる認定",
+    "stats": {
+      "uptime": "稼働時間 SLA",
+      "breaches": "データ侵害",
+      "monitoring": "セキュリティ監視"
+    }
+  },
+  "header": {
+    "certifications": "認定",
+    "documents": "ドキュメント",
+    "subprocessors": "サブプロセッサー",
+    "faq": "FAQ",
+    "contact": "連絡先",
+    "signIn": "サインイン",
+    "signOut": "サインアウト",
+    "visitDescope": "Descope を訪問"
+  },
+  "footer": {
+    "trustCenter": "トラストセンター",
+    "company": "会社",
+    "legal": "法的",
+    "description": "モダンなアプリケーション向けのエンタープライズグレードの認証とユーザー管理。SOC 2 Type II 認定。",
+    "github": "GitHub",
+    "twitter": "Twitter",
+    "linkedin": "LinkedIn",
+    "aboutDescope": "Descope について",
+    "engineeringBlog": "エンジニアリングブログ",
+    "documentation": "ドキュメント",
+    "contact": "連絡先",
+    "privacyPolicy": "プライバシーポリシー",
+    "termsOfService": "利用規約",
+    "securityCompliance": "セキュリティとコンプライアンス",
+    "copyright": "© {year} Descope, Inc. 全著作権所有。",
+    "certifications": "認定",
+    "documents": "ドキュメント",
+    "subprocessors": "サブプロセッサー",
+    "faq": "FAQ"
+  },
+  "page": {
+    "loading": {
+      "certifications": "認定を読み込み中...",
+      "documents": "ドキュメントを読み込み中...",
+      "subprocessors": "サブプロセッサーを読み込み中...",
+      "faq": "FAQを読み込み中...",
+      "contact": "お問い合わせフォームを読み込み中..."
+    },
+    "subscription": {
+      "title": "最新情報を入手",
+      "description": "新しいサブプロセッサーが追加または更新されたときに通知を受け取ります。"
+    }
+  },
+  "compliance": {
+    "filters": {
+      "all": "すべて",
+      "active": "アクティブ",
+      "inProgress": "進行中",
+      "expired": "期限切れ"
+    },
+    "status": {
+      "active": "アクティブ",
+      "inProgress": "進行中",
+      "expired": "期限切れ",
+      "pendingRenewal": "更新待ち"
+    },
+    "actions": {
+      "showDetails": "詳細を表示",
+      "showLess": "詳細を隠す"
+    }
+  },
+  "contact": {
+    "title": "セキュリティチームにお問い合わせください",
+    "subtitle": "セキュリティに関する質問がある場合、またはドキュメントへのアクセスが必要ですか？ お手伝いします。",
+    "requestTypes": {
+      "general": "一般的なお問い合わせ",
+      "compliance": "コンプライアンスに関する質問",
+      "securityReport": "セキュリティレポート",
+      "partnership": "パートナーシップ",
+      "other": "その他"
+    },
+    "fields": {
+      "name": "名前",
+      "email": "メール",
+      "company": "会社",
+      "requestType": "お問い合わせの種類",
+      "message": "メッセージ"
+    },
+    "placeholders": {
+      "name": "Jane Doe",
+      "company": "Acme Corp",
+      "message": "セキュリティに関する質問やリクエストについて説明してください..."
+    },
+    "validation": {
+      "nameRequired": "名前は2文字以上で入力してください",
+      "nameTooLong": "名前は100文字以内で入力してください",
+      "emailInvalid": "有効なメールアドレスを入力してください",
+      "companyRequired": "会社は必須です",
+      "companyTooLong": "会社は100文字以内で入力してください",
+      "requestTypeRequired": "お問い合わせの種類を選択してください",
+      "messageTooShort": "詳細を入力してください（最低10文字）",
+      "messageTooLong": "メッセージは5000文字以内で入力してください"
+    },
+    "messages": {
+      "success": "お問い合わせありがとうございます！",
+      "successDescription": "リクエストを受け取りました。1営業日以内に回答いたします。",
+      "error": "エラーが発生しました。再度お試しいただくか、security@descope.comまでメールをお送りください",
+      "sendAnother": "別のメッセージを送る"
+    },
+    "buttons": {
+      "submit": "リクエストを送信",
+      "submitting": "送信中..."
+    },
+    "urgent": "緊急のセキュリティ問題については、直接メールをお送りください"
+  },
+  "faq": {
+    "categories": {
+      "all": "すべて",
+      "security": "セキュリティ",
+      "compliance": "コンプライアンス",
+      "privacy": "プライバシー",
+      "dataHandling": "データ処理",
+      "authentication": "認証",
+      "general": "一般"
+    }
+  },
+  "documents": {
+    "filters": {
+      "all": "すべてのドキュメント",
+      "securityPolicy": "セキュリティポリシー",
+      "compliance": "コンプライアンス",
+      "legal": "法的",
+      "questionnaire": "アンケート",
+      "auditReport": "監査レポート",
+      "technical": "技術的"
+    },
+    "access": {
+      "public": "公開",
+      "loginRequired": "ログインが必要",
+      "ndaRequired": "NDAが必要"
+    },
+    "search": "ドキュメントを検索",
+    "clearSearch": "検索をクリア",
+    "noResults": "ドキュメントが見つかりません"
+  },
+  "subprocessors": {
+    "filters": {
+      "all": "すべて",
+      "active": "アクティブ",
+      "inactive": "非アクティブ",
+      "underReview": "審査中"
+    }
+  },
+  "subscription": {
+    "emailPlaceholder": "メールアドレスを入力",
+    "button": "購読",
+    "submitting": "購読中...",
+    "validation": {
+      "emailInvalid": "有効なメールアドレスを入力してください"
+    }
+  },
+  "security": {
+    "features": [
+      "別々のキーによる暗号化バックアップ",
+      "最小権限の原則が適用",
+      "包括的な監査ログ",
+      "即時の顧客通知",
+      "GDPR準拠",
+      "CCPA準拠",
+      "データ保持コントロール",
+      "削除権利のサポート",
+      "バグバウンティプログラム",
+      "継続的なセキュリティスキャン"
+    ],
+    "sections": {
+      "accessControls": "アクセスコントロール",
+      "infrastructureSecurity": "インフラセキュリティ",
+      "incidentResponse": "インシデント対応",
+      "dataPrivacy": "データプライバシー",
+      "vulnerabilityManagement": "脆弱性管理"
+    }
+  },
+  "notFound": {
+    "title": "404",
+    "message": "ページが見つかりません"
+  }
+}
