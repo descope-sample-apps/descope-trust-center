@@ -3,18 +3,11 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 
 /**
- * Footer link structure.
- */
-interface FooterLink {
-  href: string;
-  label: string;
-  external?: boolean;
-}
-
-/**
  * Footer links organized by category.
  */
-function getFooterLinks(t: (key: string) => string) {
+function getFooterLinks(
+  t: (key: string) => string,
+): Record<string, { href: string; label: string; external?: boolean }[]> {
   return {
     security: [
       { href: "#certifications", label: t("certifications") },

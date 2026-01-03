@@ -3,8 +3,15 @@ import "@testing-library/jest-dom/vitest";
 // Mock next-intl globally
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn(() => (key: string) => {
-    const getNestedValue = (obj: any, path: string) => {
-      return path.split(".").reduce((current, k) => current?.[k], obj);
+    const getNestedValue = (
+      obj: Record<string, unknown>,
+      path: string,
+    ): unknown => {
+      return path.split(".").reduce((current: unknown, k: string) => {
+        return typeof current === "object" && current !== null && k in current
+          ? (current as Record<string, unknown>)[k]
+          : undefined;
+      }, obj);
     };
     const translations = {
       hero: {
@@ -64,11 +71,18 @@ vi.mock("next-intl", () => ({
         },
       },
     };
-    return getNestedValue(translations, key) || key;
+    return getNestedValue(translations, key) ?? key;
   }),
   getTranslations: vi.fn(() => (key: string) => {
-    const getNestedValue = (obj: any, path: string) => {
-      return path.split(".").reduce((current, k) => current?.[k], obj);
+    const getNestedValue = (
+      obj: Record<string, unknown>,
+      path: string,
+    ): unknown => {
+      return path.split(".").reduce((current: unknown, k: string) => {
+        return typeof current === "object" && current !== null && k in current
+          ? (current as Record<string, unknown>)[k]
+          : undefined;
+      }, obj);
     };
     const translations = {
       page: {
@@ -86,6 +100,6 @@ vi.mock("next-intl", () => ({
         },
       },
     };
-    return getNestedValue(translations, key) || key;
+    return getNestedValue(translations, key) ?? key;
   }),
 }));

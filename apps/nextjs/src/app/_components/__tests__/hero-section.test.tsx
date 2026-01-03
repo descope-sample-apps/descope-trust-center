@@ -5,26 +5,19 @@ import { HeroSection } from "../hero-section";
 
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn(() => (key: string) => {
-    const getNestedValue = (obj: any, path: string) => {
-      return path.split(".").reduce((current, k) => current?.[k], obj);
+    const translations: Record<string, string> = {
+      badge: "SOC 2 Type II Certified",
+      headline: "Security & Compliance at Descope",
+      subheadline:
+        "Your trust is our foundation. We maintain rigorous security standards and compliance certifications to ensure your data is always protected.",
+      cta1: "View Our Certifications",
+      cta2: "Browse Security Docs",
+      trustedCertifications: "Trusted Certifications",
+      "stats.uptime": "Uptime SLA",
+      "stats.breaches": "Data Breaches",
+      "stats.monitoring": "Security Monitoring",
     };
-    const translations = {
-      hero: {
-        badge: "SOC 2 Type II Certified",
-        headline: "Security & Compliance at Descope",
-        subheadline:
-          "Your trust is our foundation. We maintain rigorous security standards and compliance certifications to ensure your data is always protected.",
-        cta1: "View Our Certifications",
-        cta2: "Browse Security Docs",
-        trustedCertifications: "Trusted Certifications",
-        stats: {
-          uptime: "Uptime SLA",
-          breaches: "Data Breaches",
-          monitoring: "Security Monitoring",
-        },
-      },
-    };
-    return getNestedValue(translations.hero, key) || key;
+    return translations[key] ?? key;
   }),
 }));
 

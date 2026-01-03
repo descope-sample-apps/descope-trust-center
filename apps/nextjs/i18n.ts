@@ -9,7 +9,7 @@ import ja from "./src/messages/ja.json";
 const messages = { en, de, es, fr, ja };
 
 export default getRequestConfig(({ locale }) => {
-  const resolvedLocale = locale || "en";
+  const resolvedLocale = locale ?? "en";
   return {
     locale: resolvedLocale,
     messages: messages[resolvedLocale as keyof typeof messages],

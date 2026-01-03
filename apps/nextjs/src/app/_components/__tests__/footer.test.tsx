@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { Footer } from "../footer";
 
 vi.mock("next-intl", () => ({
-  useTranslations: vi.fn(() => (key: string, params?: any) => {
-    const translations = {
-      footer: {
+  useTranslations: vi.fn(
+    () => (key: string, params?: Record<string, string | number>) => {
+      const translations: Record<string, string> = {
         trustCenter: "Trust Center",
         company: "Company",
         legal: "Legal",
@@ -22,22 +22,21 @@ vi.mock("next-intl", () => ({
         privacyPolicy: "Privacy Policy",
         termsOfService: "Terms of Service",
         securityCompliance: "Security & Compliance",
-        copyright: "© 2026 Descope, Inc. All rights reserved.",
+        copyright: "© {year} Descope, Inc. All rights reserved.",
         certifications: "Certifications",
         documents: "Security Documents",
         subprocessors: "Subprocessors",
         faq: "FAQ",
-      },
-    };
-    let result =
-      translations.footer[key as keyof typeof translations.footer] || key;
-    if (params) {
-      Object.keys(params).forEach((p) => {
-        result = result.replace(`{${p}}`, params[p]);
-      });
-    }
-    return result;
-  }),
+      };
+      let result = translations[key] ?? key;
+      if (params) {
+        Object.keys(params).forEach((p) => {
+          result = result.replace(`{${p}}`, String(params[p]));
+        });
+      }
+      return result;
+    },
+  ),
 }));
 
 describe("Footer", () => {
