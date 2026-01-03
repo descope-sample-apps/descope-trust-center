@@ -20,6 +20,7 @@ import {
 } from "@descope-trust-center/validators";
 
 import { emailTemplates, sendEmail } from "../email";
+import { env } from "../env";
 import { publicProcedure } from "../trpc";
 
 /**
@@ -301,4 +302,43 @@ export const trustCenterRouter = {
           "You're subscribed! We'll notify you when our subprocessor list changes.",
       };
     }),
+
+  /**
+   * Returns current status page information
+   */
+  getStatusPage: publicProcedure.query(async () => {
+    const statusPageUrl = env.STATUS_PAGE_URL;
+
+    if (!statusPageUrl) {
+      return {
+        page: {
+          name: "Descope",
+          url: "https://status.descope.com",
+          status: "UP" as const,
+        },
+        activeIncidents: [],
+        activeMaintenances: [],
+      };
+    }
+
+    try {
+      const response = await fetch(`${statusPageUrl}/summary.json`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Failed to fetch status page:", error);
+      return {
+        page: {
+          name: "Descope",
+          url: statusPageUrl,
+          status: "UNKNOWN" as const,
+        },
+        activeIncidents: [],
+        activeMaintenances: [],
+      };
+    }
+  }),
 } satisfies TRPCRouterRecord;

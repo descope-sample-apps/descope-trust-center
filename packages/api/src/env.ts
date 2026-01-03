@@ -7,6 +7,7 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    STATUS_PAGE_URL: z.string().url().optional(),
   },
   runtimeEnv: process.env,
   skipValidation:
