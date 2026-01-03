@@ -1,8 +1,23 @@
 "use client";
 
+import type { DefinedInitialDataOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "~/trpc/react";
+
+interface Incident {
+  id: string;
+  name: string;
+  status: string;
+  body?: string;
+}
+
+interface Maintenance {
+  id: string;
+  name: string;
+  status: string;
+  body?: string;
+}
 
 interface StatusPageData {
   page: {
@@ -10,39 +25,20 @@ interface StatusPageData {
     url: string;
     status: "UP" | "DOWN" | "UNKNOWN";
   };
-  activeIncidents: Array<{
-    id: string;
-    name: string;
-    status: string;
-    body?: string;
-  }>;
-  activeMaintenances: Array<{
-    id: string;
-    name: string;
-    status: string;
-    body?: string;
-  }>;
+  activeIncidents: Incident[];
+  activeMaintenances: Maintenance[];
 }
 
 export default function StatusPage() {
   const trpc = useTRPC();
 
-  const { data, isLoading, error } = useQuery(
-    trpc.trustCenter.getStatusPage.queryOptions() as any,
+  const { data, error } = useQuery(
+    trpc.trustCenter.getStatusPage.queryOptions() as DefinedInitialDataOptions<
+      StatusPageData,
+      Error,
+      StatusPageData
+    >,
   );
-
-  if (isLoading) {
-    return (
-      <main className="container mx-auto px-4 py-8">
-        <div className="mx-auto max-w-4xl">
-          <h1 className="mb-8 text-3xl font-bold">System Status</h1>
-          <div className="flex h-64 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"></div>
-          </div>
-        </div>
-      </main>
-    );
-  }
 
   if (error) {
     return (
@@ -62,11 +58,7 @@ export default function StatusPage() {
     );
   }
 
-  if (!data) {
-    return null;
-  }
-
-  const typedData = data as StatusPageData;
+  const typedData = data;
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -109,7 +101,7 @@ export default function StatusPage() {
               Active Incidents
             </h2>
             <div className="space-y-4">
-              {typedData.activeIncidents.map((incident: any) => (
+              {typedData.activeIncidents.map((incident: Incident) => (
                 <div
                   key={incident.id}
                   className="rounded-lg border border-red-200 bg-red-50 p-4"
@@ -134,7 +126,7 @@ export default function StatusPage() {
               Scheduled Maintenance
             </h2>
             <div className="space-y-4">
-              {typedData.activeMaintenances.map((maintenance: any) => (
+              {typedData.activeMaintenances.map((maintenance: Maintenance) => (
                 <div
                   key={maintenance.id}
                   className="rounded-lg border border-yellow-200 bg-yellow-50 p-4"

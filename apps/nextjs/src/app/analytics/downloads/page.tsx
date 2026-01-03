@@ -81,9 +81,7 @@ export default function DownloadsAnalyticsPage() {
           item.totalDownloads,
           item.downloadsThisMonth,
           item.downloadsThisWeek,
-          item.lastDownloadAt
-            ? new Date(item.lastDownloadAt).toLocaleDateString()
-            : "",
+          new Date(item.lastDownloadAt).toLocaleDateString(),
           item.lastDownloadUser ? `"${item.lastDownloadUser}"` : "",
           item.lastDownloadCompany ? `"${item.lastDownloadCompany}"` : "",
         ].join(","),
@@ -234,20 +232,14 @@ export default function DownloadsAnalyticsPage() {
                   {item.downloadsThisWeek}
                 </td>
                 <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-                  {item.lastDownloadAt ? (
-                    <div>
-                      {new Date(item.lastDownloadAt).toLocaleDateString()}
-                      <div className="text-xs text-gray-500">
-                        {item.lastDownloadUser && item.lastDownloadCompany
-                          ? `${item.lastDownloadUser} (${item.lastDownloadCompany})`
-                          : (item.lastDownloadUser ??
-                            item.lastDownloadCompany ??
-                            "Unknown")}
-                      </div>
+                  <div>
+                    {new Date(item.lastDownloadAt).toLocaleDateString()}
+                    <div className="text-xs text-gray-500">
+                      {item.lastDownloadUser ||
+                        item.lastDownloadCompany ||
+                        "Unknown"}
                     </div>
-                  ) : (
-                    "Never"
-                  )}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={getAccessBadge(item.accessLevel)}>
@@ -296,19 +288,19 @@ export default function DownloadsAnalyticsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {historyData?.map((download) => (
+                {historyData.map((download) => (
                   <tr key={download.id}>
                     <td className="px-4 py-2 text-sm">
                       {new Date(download.createdAt).toLocaleString()}
                     </td>
                     <td className="px-4 py-2 text-sm">
-                      {download.userName || download.userEmail || "Anonymous"}
+                      {download.userName ?? download.userEmail ?? "Anonymous"}
                     </td>
                     <td className="px-4 py-2 text-sm">
-                      {download.company || "N/A"}
+                      {download.company ?? "N/A"}
                     </td>
                     <td className="px-4 py-2 text-sm">
-                      {download.ipAddress || "N/A"}
+                      {download.ipAddress ?? "N/A"}
                     </td>
                   </tr>
                 ))}
