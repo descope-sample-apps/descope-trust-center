@@ -247,6 +247,7 @@ export default function FormSubmissionsPage() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <select
                     value={submission.status}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={(e) => {
                       e.stopPropagation();
                       const newStatus = e.target.value as Status;
