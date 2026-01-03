@@ -5,53 +5,49 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "~/trpc/react";
 
-type FormSubmission = {
+interface FormSubmission {
   id: string;
   type: string;
   email: string;
   name: string | null;
   company: string | null;
   status: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   respondedAt: Date | null;
   respondedBy: string | null;
   responseNotes: string | null;
   ipAddress: string | null;
   createdAt: Date;
   updatedAt: Date | null;
-};
+}
 
 type Status = "new" | "responded" | "closed";
 
-type SortField = "type" | "email" | "createdAt" | "status" | "respondedAt";
-type SortDirection = "asc" | "desc";
+type FilterValue = Status | "all";
 
 export default function FormSubmissionsPage() {
   const trpc = useTRPC();
-  const [typeFilter, setTypeFilter] = useState<string | "all">("all");
-  const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
+  const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
+  const [statusFilter, setStatusFilter] = useState<FilterValue>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedSubmission, setSelectedSubmission] =
     useState<FormSubmission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data, refetch } = useSuspenseQuery(
     trpc.analytics.getFormStats.queryOptions({
-      type:
-        typeFilter === "all"
-          ? undefined
-          : (typeFilter as
-              | "contact"
-              | "document_request"
-              | "subprocessor_subscription"),
-      status: statusFilter === "all" ? undefined : statusFilter,
-      searchTerm: searchTerm || undefined,
-      dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
+      ...(typeFilter !== "all" && {
+        type: typeFilter as
+          | "contact"
+          | "document_request"
+          | "subprocessor_subscription",
+      }),
+      ...(statusFilter !== "all" && { status: statusFilter }),
+      ...(searchTerm && { searchTerm }),
+      ...(dateFrom && { dateFrom }),
+      ...(dateTo && { dateTo }),
     }),
   );
 
@@ -61,25 +57,7 @@ export default function FormSubmissionsPage() {
     }),
   );
 
-  const filteredSubmissions = data.submissions.sort((a, b) => {
-    let aValue: any = a[sortField];
-    let bValue: any = b[sortField];
-
-    if (sortField === "respondedAt") {
-      aValue = a.respondedAt ? new Date(a.respondedAt).getTime() : 0;
-      bValue = b.respondedAt ? new Date(b.respondedAt).getTime() : 0;
-    } else if (sortField === "createdAt") {
-      aValue = new Date(a.createdAt).getTime();
-      bValue = new Date(b.createdAt).getTime();
-    } else if (typeof aValue === "string") {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
-    }
-
-    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    return 0;
-  });
+  const filteredSubmissions = data.submissions;
 
   const getStatusBadge = (status: string) => {
     const baseClasses =
@@ -111,7 +89,7 @@ export default function FormSubmissionsPage() {
   const totalSubmissions = data.total;
   const typeBreakdown = data.submissions.reduce(
     (acc, sub) => {
-      acc[sub.type] = (acc[sub.type] || 0) + 1;
+      acc[sub.type] = (acc[sub.type] ?? 0) + 1;
       return acc;
     },
     {} as Record<string, number>,
@@ -131,7 +109,7 @@ export default function FormSubmissionsPage() {
           <h3 className="text-muted-foreground text-sm font-medium">
             Contact Forms
           </h3>
-          <p className="text-3xl font-bold">{typeBreakdown.contact || 0}</p>
+          <p className="text-3xl font-bold">{typeBreakdown.contact ?? 0}</p>
         </div>
 
         <div className="rounded-lg border p-6">
@@ -139,7 +117,7 @@ export default function FormSubmissionsPage() {
             Document Requests
           </h3>
           <p className="text-3xl font-bold">
-            {typeBreakdown.document_request || 0}
+            {typeBreakdown.document_request ?? 0}
           </p>
         </div>
 
@@ -178,7 +156,7 @@ export default function FormSubmissionsPage() {
           />
           <select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+            onChange={(e) => setTypeFilter(e.target.value as FilterValue)}
             className="rounded-md border border-gray-300 px-3 py-2 text-sm"
           >
             <option value="all">All Types</option>
@@ -242,7 +220,7 @@ export default function FormSubmissionsPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
-                    {submission.name || "Anonymous"}
+                    {submission.name ?? "Anonymous"}
                   </div>
                   <div className="text-sm text-gray-500">
                     {submission.email}
@@ -337,7 +315,7 @@ export default function FormSubmissionsPage() {
                     Name
                   </label>
                   <p className="mt-1 text-sm text-gray-900">
-                    {selectedSubmission.name || "Anonymous"}
+                    {selectedSubmission.name ?? "Anonymous"}
                   </p>
                 </div>
                 <div>
@@ -353,7 +331,7 @@ export default function FormSubmissionsPage() {
                     Company
                   </label>
                   <p className="mt-1 text-sm text-gray-900">
-                    {selectedSubmission.company || "N/A"}
+                    {selectedSubmission.company ?? "N/A"}
                   </p>
                 </div>
                 <div>
@@ -381,16 +359,21 @@ export default function FormSubmissionsPage() {
                   )}
                 </div>
               )}
-              {selectedSubmission.metadata?.message && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Message
-                  </label>
-                  <div className="mt-1 max-h-40 overflow-y-auto rounded border p-3 text-sm text-gray-900">
-                    {selectedSubmission.metadata.message}
-                  </div>
-                </div>
-              )}
+              {(() => {
+                const message = selectedSubmission.metadata.message;
+                return (
+                  typeof message === "string" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Message
+                      </label>
+                      <div className="mt-1 max-h-40 overflow-y-auto rounded border p-3 text-sm text-gray-900">
+                        {message}
+                      </div>
+                    </div>
+                  )
+                );
+              })()}
             </div>
             <div className="mt-6 flex justify-end">
               <button
