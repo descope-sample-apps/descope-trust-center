@@ -235,6 +235,9 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.8.1(typescript@5.9.3)
+      react:
+        specifier: catalog:react19
+        version: 19.1.4
       resend:
         specifier: ^4.0.0
         version: 4.8.0(react-dom@19.1.4(react@19.1.4))(react@19.1.4)
