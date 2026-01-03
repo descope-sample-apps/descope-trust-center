@@ -76,7 +76,7 @@ type FieldErrors = Partial<Record<keyof ContactFormData, string>>;
  * The mutation currently logs to console; email integration to be added.
  */
 export function ContactForm() {
-  const t = useTranslations("contact");
+  const _t = useTranslations("contact");
   const formId = useId();
   const successRef = useRef<HTMLDivElement>(null);
 
