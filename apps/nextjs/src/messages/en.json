@@ -1,0 +1,15 @@
+{
+  "hero": {
+    "badge": "SOC 2 Type II Certified",
+    "headline": "Security & Compliance at Descope",
+    "subheadline": "Your trust is our foundation. We maintain rigorous security standards and compliance certifications to ensure your data is always protected.",
+    "cta1": "View Our Certifications",
+    "cta2": "Browse Security Docs",
+    "trustedCertifications": "Trusted Certifications",
+    "stats": {
+      "uptime": "Uptime SLA",
+      "breaches": "Data Breaches",
+      "monitoring": "Security Monitoring"
+    }
+  }
+}
