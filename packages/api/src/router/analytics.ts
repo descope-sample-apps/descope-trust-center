@@ -1,9 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import type { VercelPgDatabase } from "drizzle-orm/vercel-postgres";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import type * as schema from "@descope-trust-center/db/schema";
 import {
   and,
   AuditLog,

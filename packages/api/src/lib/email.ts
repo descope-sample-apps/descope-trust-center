@@ -1,4 +1,4 @@
-import React from "react";
+import type { CreateEmailOptions } from "resend";
 import { Resend } from "resend";
 
 interface EmailServiceOptions {
@@ -9,8 +9,8 @@ interface EmailServiceOptions {
 
 interface CreateEmailServiceOptions {
   apiKey?: string;
-  fromEmail?: string;
-  notificationEmail?: string;
+  fromEmail: string;
+  notificationEmail: string;
 }
 
 /**
@@ -74,11 +74,9 @@ export class EmailService {
           emailData.replyTo = params.replyTo;
         }
 
-<<<<<<< HEAD
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-=======
->>>>>>> 86156cd (fix: address review comments for email service)
-        const result = await this.resend.emails.send(emailData as any);
+        const result = await this.resend.emails.send(
+          emailData as unknown as CreateEmailOptions,
+        );
 
         console.log(
           `[Email Service] Email sent successfully on attempt ${attempt}:`,
@@ -181,11 +179,7 @@ export class EmailService {
     };
 
     try {
-<<<<<<< HEAD
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-=======
->>>>>>> 86156cd (fix: address review comments for email service)
-      await this.resend.emails.send(alertData as any);
+      await this.resend.emails.send(alertData as unknown as CreateEmailOptions);
       console.log(
         `[Email Service] Failure alert sent to admin: ${this.notificationEmail}`,
       );

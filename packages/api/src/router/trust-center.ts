@@ -26,8 +26,10 @@ import { protectedProcedure, publicProcedure } from "../trpc";
 // Create email service instance
 const emailService = createEmailService({
   apiKey: env.RESEND_API_KEY,
-  fromEmail: env.TRUST_CENTER_FROM_EMAIL,
-  notificationEmail: env.TRUST_CENTER_NOTIFICATION_EMAIL,
+  fromEmail:
+    env.TRUST_CENTER_FROM_EMAIL ?? "Trust Center <noreply@descope.com>",
+  notificationEmail:
+    env.TRUST_CENTER_NOTIFICATION_EMAIL ?? "security@descope.com",
 });
 
 /**
