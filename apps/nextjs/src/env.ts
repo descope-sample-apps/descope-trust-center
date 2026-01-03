@@ -3,7 +3,7 @@ import { neonVercel, vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { z } from "zod/v4";
 
 export const env = createEnv({
-  extends: [vercel(), neonVercel()],
+  extends: [vercel()],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -11,6 +11,7 @@ export const env = createEnv({
   },
   server: {
     POSTGRES_URL: z.url(),
+    DATABASE_URL: z.url().optional(),
     SENTRY_ORG: z.string().optional(),
     SENTRY_PROJECT: z.string().optional(),
     SENTRY_AUTH_TOKEN: z.string().optional(),
@@ -29,5 +30,7 @@ export const env = createEnv({
     NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
   },
   skipValidation:
-    !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+    !!process.env.CI ||
+    process.env.npm_lifecycle_event === "lint" ||
+    !process.env.DATABASE_URL,
 });

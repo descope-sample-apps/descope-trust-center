@@ -84,17 +84,14 @@ export const AuditLog = pgTable(
   ],
 );
 
-export const CreateAuditLogSchema = createInsertSchema(AuditLog, {
-  action: z.enum(auditActionEnum),
-  entityType: z.string().optional(),
-  entityId: z.string().optional(),
-  userId: z.string().optional(),
-  userEmail: z.string().email().optional(),
-  userName: z.string().optional(),
-  details: z.any().optional(),
-  ipAddress: z.string().optional(),
-  userAgent: z.string().optional(),
-}).omit({ id: true, createdAt: true });
+export const CreateAuditLogSchema = createInsertSchema(AuditLog)
+  .omit({
+    id: true,
+    createdAt: true,
+  })
+  .extend({
+    action: z.enum(auditActionEnum),
+  });
 
 export const DocumentDownload = pgTable("document_download", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -287,23 +284,3 @@ export const CreateFaqSchema = createInsertSchema(Faq, {
     "authentication",
   ]),
 }).omit({ createdAt: true, updatedAt: true });
-
-export const AuditLog = pgTable("audit_log", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  userId: t.varchar({ length: 256 }),
-  action: t.varchar({ length: 100 }).notNull(),
-  resource: t.varchar({ length: 256 }),
-  details: t.jsonb(),
-  ipAddress: t.varchar({ length: 45 }),
-  userAgent: t.text(),
-  createdAt: t.timestamp().defaultNow().notNull(),
-}));
-
-export const CreateAuditLogSchema = createInsertSchema(AuditLog, {
-  userId: z.string().optional(),
-  action: z.string().min(1),
-  resource: z.string().optional(),
-  details: z.any().optional(),
-  ipAddress: z.string().optional(),
-  userAgent: z.string().optional(),
-}).omit({ id: true, createdAt: true });
