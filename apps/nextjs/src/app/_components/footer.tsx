@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 /**
  * Footer links organized by category.
  */
-function getFooterLinks(
-  t: (key: string) => string,
-): Record<string, { href: string; label: string; external?: boolean }[]> {
+function getFooterLinks(t: (key: string) => string): {
+  security: { href: string; label: string; external?: boolean }[];
+  company: { href: string; label: string; external?: boolean }[];
+  legal: { href: string; label: string; external?: boolean }[];
+} {
   return {
     security: [
       { href: "#certifications", label: t("certifications") },

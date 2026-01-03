@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "next-intl";
+
 import { usePathname, useRouter } from "~/i18n/routing";
 
 const LANGUAGES = [
@@ -13,6 +15,7 @@ const LANGUAGES = [
 export function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
+  const currentLocale = useLocale();
 
   const switchLocale = (locale: string) => {
     router.replace(pathname, { locale });
@@ -24,7 +27,11 @@ export function LanguageSwitcher() {
         <button
           key={lang.code}
           onClick={() => switchLocale(lang.code)}
-          className="text-muted-foreground hover:text-foreground rounded px-2 py-1 text-sm"
+          className={`rounded px-2 py-1 text-sm ${
+            currentLocale === lang.code
+              ? "bg-accent text-accent-foreground font-medium"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
           {lang.name}
         </button>
