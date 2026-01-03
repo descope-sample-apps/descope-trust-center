@@ -33,6 +33,7 @@
     "@descope-trust-center/tsconfig": "workspace:*",
     "@testcontainers/postgresql": "^11.11.0",
     "@types/pg": "^8.16.0",
+    "@types/react": "^18.3.12",
     "drizzle-orm": "^0.44.7",
     "eslint": "catalog:",
     "pg": "^8.16.3",

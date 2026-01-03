@@ -1,3 +1,4 @@
+import React from "react";
 import { Resend } from "resend";
 
 interface EmailServiceOptions {
@@ -56,7 +57,7 @@ export class EmailService {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         // Build the email data object for Resend API
-        const emailData: any = {
+        const emailData: Record<string, unknown> = {
           from: params.from,
           to: params.to,
           subject: params.subject,
@@ -75,7 +76,7 @@ export class EmailService {
           emailData.replyTo = params.replyTo;
         }
 
-        const result = await this.resend.emails.send(emailData);
+        const result = await this.resend.emails.send(emailData as any);
 
         console.log(
           `[Email Service] Email sent successfully on attempt ${attempt}:`,
@@ -170,7 +171,7 @@ export class EmailService {
     `;
 
     // Send alert to the notification email (admin)
-    const alertData: any = {
+    const alertData = {
       from: this.fromEmail,
       to: this.notificationEmail,
       subject: "Email Delivery Failure Alert - Trust Center",
@@ -178,7 +179,7 @@ export class EmailService {
     };
 
     try {
-      await this.resend.emails.send(alertData);
+      await this.resend.emails.send(alertData as any);
       console.log(
         `[Email Service] Failure alert sent to admin: ${this.notificationEmail}`,
       );
