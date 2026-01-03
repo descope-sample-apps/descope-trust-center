@@ -4,6 +4,12 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
+  CreateAuditLogSchema as _CreateAuditLogSchema,
+  AuditLog,
+  DocumentAccessRequest,
+  FormSubmission,
+} from "@descope-trust-center/db";
+import {
   CertificationsSchema,
   DocumentCategorySchema,
   DocumentsSchema,
@@ -13,6 +19,8 @@ import {
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
 
+import { emailTemplates, sendEmail } from "../email";
+import { env } from "../env";
 import { publicProcedure } from "../trpc";
 
 /**
@@ -123,18 +131,60 @@ export const trustCenterRouter = {
 
   /**
    * Submits a security inquiry contact form
-   * For v1: logs to console (no email/database integration)
+   * Sends confirmation email to user and notification to internal team
    */
   submitContactForm: publicProcedure
     .input(ContactFormSchema)
-    .mutation(({ input }) => {
-      // v1: Log to console - email/database integration to be added later
-      console.log("[Trust Center] Contact form submission:", {
+    .mutation(async ({ ctx, input }) => {
+      // Log audit event
+      await ctx.db.insert(AuditLog).values({
+        action: "create",
+        entityType: "form_submission",
+        entityId: undefined, // Will be set after insertion if needed
+        userEmail: input.email,
+        userName: input.name,
+        details: {
+          type: "contact",
+          company: input.company,
+          message: input.message,
+        },
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+      });
+
+      // Also save to form_submissions table for admin review
+      await ctx.db.insert(FormSubmission).values({
+        type: "contact",
+        email: input.email,
+        name: input.name,
+        company: input.company,
+        metadata: { message: input.message },
+        ipAddress: ctx.ipAddress,
+      });
+
+      // Send confirmation email to user
+      const userEmailTemplate = emailTemplates.contactFormConfirmation(
+        input.name,
+      );
+      await sendEmail({
+        to: input.email,
+        subject: userEmailTemplate.subject,
+        html: userEmailTemplate.html,
+        text: userEmailTemplate.text,
+      });
+
+      // Send notification email to internal team
+      const internalEmailTemplate = emailTemplates.contactFormNotification({
         name: input.name,
         email: input.email,
         company: input.company,
         message: input.message,
-        timestamp: new Date().toISOString(),
+      });
+      await sendEmail({
+        to: "security@descope.com", // Internal email address
+        subject: internalEmailTemplate.subject,
+        html: internalEmailTemplate.html,
+        text: internalEmailTemplate.text,
       });
 
       return {
@@ -146,19 +196,64 @@ export const trustCenterRouter = {
 
   /**
    * Requests access to an NDA-required document
-   * For v1: logs to console (no email/database integration)
+   * Sends confirmation email to user and notification to internal team
    */
   requestDocument: publicProcedure
     .input(DocumentRequestSchema)
-    .mutation(({ input }) => {
-      // v1: Log to console - email/database integration to be added later
-      console.log("[Trust Center] Document access request:", {
+    .mutation(async ({ ctx, input }) => {
+      // Log audit event
+      await ctx.db.insert(AuditLog).values({
+        action: "create",
+        entityType: "document_access_request",
+        entityId: input.documentId,
+        userEmail: input.email,
+        userName: input.name,
+        details: {
+          company: input.company,
+          reason: input.reason,
+        },
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+      });
+
+      // Also save to document_access_request table for admin review
+      await ctx.db.insert(DocumentAccessRequest).values({
         documentId: input.documentId,
+        documentTitle: "", // TODO: fetch from document table
+        email: input.email,
+        name: input.name,
+        company: input.company,
+        reason: input.reason,
+        ipAddress: ctx.ipAddress,
+      });
+
+      // Send confirmation email to user
+      const userEmailTemplate = emailTemplates.documentRequestConfirmation({
         name: input.name,
         email: input.email,
         company: input.company,
         reason: input.reason,
-        timestamp: new Date().toISOString(),
+      });
+      await sendEmail({
+        to: input.email,
+        subject: userEmailTemplate.subject,
+        html: userEmailTemplate.html,
+        text: userEmailTemplate.text,
+      });
+
+      // Send notification email to internal team
+      const internalEmailTemplate = emailTemplates.documentRequestNotification({
+        name: input.name,
+        email: input.email,
+        company: input.company,
+        reason: input.reason,
+        documentId: input.documentId,
+      });
+      await sendEmail({
+        to: "security@descope.com", // Internal email address
+        subject: internalEmailTemplate.subject,
+        html: internalEmailTemplate.html,
+        text: internalEmailTemplate.text,
       });
 
       return {
@@ -170,10 +265,35 @@ export const trustCenterRouter = {
 
   subscribeToSubprocessorUpdates: publicProcedure
     .input(SubprocessorSubscriptionSchema)
-    .mutation(({ input }) => {
-      console.log("[Trust Center] Subprocessor subscription:", {
+    .mutation(async ({ ctx, input }) => {
+      // Log audit event
+      await ctx.db.insert(AuditLog).values({
+        action: "create",
+        entityType: "form_submission",
+        userEmail: input.email,
+        details: {
+          type: "subprocessor_subscription",
+        },
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+      });
+
+      // Also save to form_submissions table
+      await ctx.db.insert(FormSubmission).values({
+        type: "subprocessor_subscription",
         email: input.email,
-        timestamp: new Date().toISOString(),
+        metadata: {},
+        ipAddress: ctx.ipAddress,
+      });
+
+      // Send confirmation email to user
+      const confirmationTemplate =
+        emailTemplates.subprocessorSubscriptionConfirmation(input.email);
+      await sendEmail({
+        to: input.email,
+        subject: confirmationTemplate.subject,
+        html: confirmationTemplate.html,
+        text: confirmationTemplate.text,
       });
 
       return {
@@ -182,4 +302,43 @@ export const trustCenterRouter = {
           "You're subscribed! We'll notify you when our subprocessor list changes.",
       };
     }),
+
+  /**
+   * Returns current status page information
+   */
+  getStatusPage: publicProcedure.query(async () => {
+    const statusPageUrl = env.STATUS_PAGE_URL;
+
+    if (!statusPageUrl) {
+      return {
+        page: {
+          name: "Descope",
+          url: "https://status.descope.com",
+          status: "UP" as const,
+        },
+        activeIncidents: [],
+        activeMaintenances: [],
+      };
+    }
+
+    try {
+      const response = await fetch(`${statusPageUrl}/summary.json`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Failed to fetch status page:", error);
+      return {
+        page: {
+          name: "Descope",
+          url: statusPageUrl,
+          status: "UNKNOWN" as const,
+        },
+        activeIncidents: [],
+        activeMaintenances: [],
+      };
+    }
+  }),
 } satisfies TRPCRouterRecord;
