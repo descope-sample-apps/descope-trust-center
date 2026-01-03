@@ -34,18 +34,12 @@ export const Post = pgTable("post", (t) => ({
 }));
 
 export const CreatePostSchema = createInsertSchema(Post, {
-  title: z.string().max(256),
-  content: z.string().max(256),
+  title: z.string().min(1).max(256),
+  content: z.string().min(1),
 }).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  status: true,
-  approvedBy: true,
-  approvedAt: true,
-  denialReason: true,
-  deniedBy: true,
-  deniedAt: true,
 });
 
 export const auditActionEnum = [
