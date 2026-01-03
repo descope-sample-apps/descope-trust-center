@@ -37,7 +37,11 @@
     "privacyPolicy": "プライバシーポリシー",
     "termsOfService": "利用規約",
     "securityCompliance": "セキュリティとコンプライアンス",
-    "copyright": "© {year} Descope, Inc. 全著作権所有。"
+    "copyright": "© {year} Descope, Inc. 全著作権所有。",
+    "certifications": "認定",
+    "documents": "ドキュメント",
+    "subprocessors": "サブプロセッサー",
+    "faq": "FAQ"
   },
   "page": {
     "loading": {

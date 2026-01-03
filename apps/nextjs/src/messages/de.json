@@ -37,7 +37,11 @@
     "privacyPolicy": "Datenschutzrichtlinie",
     "termsOfService": "Nutzungsbedingungen",
     "securityCompliance": "Sicherheit und Compliance",
-    "copyright": "© {year} Descope, Inc. Alle Rechte vorbehalten."
+    "copyright": "© {year} Descope, Inc. Alle Rechte vorbehalten.",
+    "certifications": "Zertifizierungen",
+    "documents": "Dokumente",
+    "subprocessors": "Subunternehmer",
+    "faq": "FAQ"
   },
   "page": {
     "loading": {
