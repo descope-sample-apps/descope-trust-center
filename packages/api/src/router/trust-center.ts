@@ -4,6 +4,12 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
+  CreateAuditLogSchema as _CreateAuditLogSchema,
+  AuditLog,
+  DocumentAccessRequest,
+  FormSubmission,
+} from "@descope-trust-center/db";
+import {
   CertificationsSchema,
   DocumentCategorySchema,
   DocumentsSchema,
@@ -128,7 +134,33 @@ export const trustCenterRouter = {
    */
   submitContactForm: publicProcedure
     .input(ContactFormSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Log audit event
+      await ctx.db.insert(AuditLog).values({
+        action: "create",
+        entityType: "form_submission",
+        entityId: undefined, // Will be set after insertion if needed
+        userEmail: input.email,
+        userName: input.name,
+        details: {
+          type: "contact",
+          company: input.company,
+          message: input.message,
+        },
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+      });
+
+      // Also save to form_submissions table for admin review
+      await ctx.db.insert(FormSubmission).values({
+        type: "contact",
+        email: input.email,
+        name: input.name,
+        company: input.company,
+        metadata: { message: input.message },
+        ipAddress: ctx.ipAddress,
+      });
+
       // Send confirmation email to user
       const userEmailTemplate = emailTemplates.contactFormConfirmation(
         input.name,
@@ -154,14 +186,6 @@ export const trustCenterRouter = {
         text: internalEmailTemplate.text,
       });
 
-      console.log("[Trust Center] Contact form submission:", {
-        name: input.name,
-        email: input.email,
-        company: input.company,
-        message: input.message,
-        timestamp: new Date().toISOString(),
-      });
-
       return {
         success: true,
         message:
@@ -175,7 +199,33 @@ export const trustCenterRouter = {
    */
   requestDocument: publicProcedure
     .input(DocumentRequestSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Log audit event
+      await ctx.db.insert(AuditLog).values({
+        action: "create",
+        entityType: "document_access_request",
+        entityId: input.documentId,
+        userEmail: input.email,
+        userName: input.name,
+        details: {
+          company: input.company,
+          reason: input.reason,
+        },
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+      });
+
+      // Also save to document_access_request table for admin review
+      await ctx.db.insert(DocumentAccessRequest).values({
+        documentId: input.documentId,
+        documentTitle: "", // TODO: fetch from document table
+        email: input.email,
+        name: input.name,
+        company: input.company,
+        reason: input.reason,
+        ipAddress: ctx.ipAddress,
+      });
+
       // Send confirmation email to user
       const userEmailTemplate = emailTemplates.documentRequestConfirmation({
         name: input.name,
@@ -205,15 +255,6 @@ export const trustCenterRouter = {
         text: internalEmailTemplate.text,
       });
 
-      console.log("[Trust Center] Document access request:", {
-        documentId: input.documentId,
-        name: input.name,
-        email: input.email,
-        company: input.company,
-        reason: input.reason,
-        timestamp: new Date().toISOString(),
-      });
-
       return {
         success: true,
         message:
@@ -223,7 +264,27 @@ export const trustCenterRouter = {
 
   subscribeToSubprocessorUpdates: publicProcedure
     .input(SubprocessorSubscriptionSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Log audit event
+      await ctx.db.insert(AuditLog).values({
+        action: "create",
+        entityType: "form_submission",
+        userEmail: input.email,
+        details: {
+          type: "subprocessor_subscription",
+        },
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+      });
+
+      // Also save to form_submissions table
+      await ctx.db.insert(FormSubmission).values({
+        type: "subprocessor_subscription",
+        email: input.email,
+        metadata: {},
+        ipAddress: ctx.ipAddress,
+      });
+
       // Send confirmation email to user
       const confirmationTemplate =
         emailTemplates.subprocessorSubscriptionConfirmation(input.email);
@@ -232,11 +293,6 @@ export const trustCenterRouter = {
         subject: confirmationTemplate.subject,
         html: confirmationTemplate.html,
         text: confirmationTemplate.text,
-      });
-
-      console.log("[Trust Center] Subprocessor subscription:", {
-        email: input.email,
-        timestamp: new Date().toISOString(),
       });
 
       return {

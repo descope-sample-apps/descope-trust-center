@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
+  AuditLog,
   CreateDocumentAccessRequestSchema,
   CreateDocumentDownloadSchema,
   CreateFormSubmissionSchema,
@@ -16,19 +17,10 @@ import {
 
 import { emailTemplates, sendEmail } from "../email";
 import { protectedProcedure, publicProcedure } from "../trpc";
-
-const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(",") ?? [];
-const ADMIN_DOMAINS = ["descope.com"];
-
-function isAdmin(email: string | undefined | null): boolean {
-  if (!email) return false;
-  if (ADMIN_EMAILS.includes(email)) return true;
-  const domain = email.split("@")[1];
-  return domain ? ADMIN_DOMAINS.includes(domain) : false;
-}
+import { isAdmin, logAuditEvent } from "../utils/admin";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (!isAdmin(ctx.session.user.email)) {
+  if (!isAdmin(ctx.session.user.email, ctx.session.user.roles)) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Admin access required",
@@ -45,6 +37,20 @@ export const analyticsRouter = {
         .insert(DocumentDownload)
         .values(input)
         .returning();
+
+      await logAuditEvent(
+        ctx,
+        "download",
+        "document_download",
+        input.documentId,
+        {
+          documentTitle: input.documentTitle,
+          userEmail: input.userEmail,
+          userName: input.userName,
+          company: input.company,
+        },
+      );
+
       return download;
     }),
 
@@ -55,6 +61,14 @@ export const analyticsRouter = {
         .insert(FormSubmission)
         .values(input)
         .returning();
+
+      await logAuditEvent(ctx, "create", "form_submission", input.type, {
+        email: input.email,
+        name: input.name,
+        company: input.company,
+        status: input.status,
+      });
+
       return submission;
     }),
 
@@ -65,6 +79,21 @@ export const analyticsRouter = {
         .insert(DocumentAccessRequest)
         .values(input)
         .returning();
+
+      await logAuditEvent(
+        ctx,
+        "create",
+        "document_access_request",
+        input.documentId,
+        {
+          documentTitle: input.documentTitle,
+          email: input.email,
+          name: input.name,
+          company: input.company,
+          reason: input.reason,
+        },
+      );
+
       return {
         id: request?.id,
         message:
@@ -196,6 +225,21 @@ export const analyticsRouter = {
           message: "Access request not found",
         });
 
+      await logAuditEvent(
+        ctx,
+        "approve",
+        "document_access_request",
+        input.requestId,
+        {
+          approvedBy: adminEmail,
+          documentId: updated.documentId,
+          documentTitle: updated.documentTitle,
+          email: updated.email,
+          name: updated.name,
+          company: updated.company,
+        },
+      );
+
       // Send approval email to requester
       const approvalTemplate = emailTemplates.documentRequestApproved({
         name: updated.name,
@@ -216,7 +260,10 @@ export const analyticsRouter = {
 
   denyAccess: adminProcedure
     .input(
-      z.object({ requestId: z.string().uuid(), reason: z.string().min(10) }),
+      z.object({
+        requestId: z.string().uuid(),
+        reason: z.string().min(1),
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const adminEmail = ctx.session.user.email ?? "unknown";
@@ -225,8 +272,9 @@ export const analyticsRouter = {
         .set({
           status: "denied",
           deniedBy: adminEmail,
-          deniedAt: sql`CURRENT_TIMESTAMP`,
           denialReason: input.reason,
+          // Use sql template to bypass drizzle's mapToDriverValue which fails with Date across module boundaries
+          deniedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(DocumentAccessRequest.id, input.requestId))
         .returning();
@@ -235,6 +283,22 @@ export const analyticsRouter = {
           code: "NOT_FOUND",
           message: "Access request not found",
         });
+
+      await logAuditEvent(
+        ctx,
+        "deny",
+        "document_access_request",
+        input.requestId,
+        {
+          deniedBy: adminEmail,
+          denialReason: input.reason,
+          documentId: updated.documentId,
+          documentTitle: updated.documentTitle,
+          email: updated.email,
+          name: updated.name,
+          company: updated.company,
+        },
+      );
 
       // Send denial email to requester
       const denialTemplate = emailTemplates.documentRequestDenied({
@@ -254,18 +318,21 @@ export const analyticsRouter = {
     }),
 
   getDashboardSummary: adminProcedure.query(async ({ ctx }) => {
-    const [downloadCount, formCount, pendingRequests] = await Promise.all([
-      ctx.db.select({ count: sql<number>`count(*)` }).from(DocumentDownload),
-      ctx.db.select({ count: sql<number>`count(*)` }).from(FormSubmission),
-      ctx.db
-        .select({ count: sql<number>`count(*)` })
-        .from(DocumentAccessRequest)
-        .where(eq(DocumentAccessRequest.status, "pending")),
-    ]);
+    const [downloadCount, formCount, pendingRequests, auditCount] =
+      await Promise.all([
+        ctx.db.select({ count: sql<number>`count(*)` }).from(DocumentDownload),
+        ctx.db.select({ count: sql<number>`count(*)` }).from(FormSubmission),
+        ctx.db
+          .select({ count: sql<number>`count(*)` })
+          .from(DocumentAccessRequest)
+          .where(eq(DocumentAccessRequest.status, "pending")),
+        ctx.db.select({ count: sql<number>`count(*)` }).from(AuditLog),
+      ]);
     return {
       totalDownloads: Number(downloadCount[0]?.count ?? 0),
       totalFormSubmissions: Number(formCount[0]?.count ?? 0),
       pendingAccessRequests: Number(pendingRequests[0]?.count ?? 0),
+      totalAuditLogs: Number(auditCount[0]?.count ?? 0),
     };
   }),
 } satisfies TRPCRouterRecord;
