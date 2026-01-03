@@ -89,145 +89,6 @@ function isExpiringSoon(dateString: string | undefined): boolean {
   return expiryDate <= ninetyDaysFromNow && expiryDate > now;
 }
 
-
-
-/**
- * Individual certification card component with expand/collapse functionality
- */
-function CertificationCard({
-  certification,
-  isExpanded,
-  onToggleExpand,
-}: CertificationCardProps) {
-  const lastAuditFormatted = formatDate(certification.lastAuditDate);
-  const expiryFormatted = formatDate(certification.expiryDate);
-  const expiringSoon = isExpiringSoon(certification.expiryDate);
-  const hasDetails =
-    lastAuditFormatted ??
-    expiryFormatted ??
-    (certification.standards && certification.standards.length > 0);
-
-  return (
-    <article
-      className={cn(
-        "group bg-card relative flex flex-col rounded-lg border p-6 shadow-sm transition-all",
-        "focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2 hover:shadow-md",
-        isExpanded && "ring-primary ring-2",
-      )}
-      aria-labelledby={`cert-name-${certification.id}`}
-    >
-      {/* Header: Logo placeholder + Name + Status */}
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {/* Logo placeholder - uses first letter as fallback */}
-          <div
-            className="bg-muted text-muted-foreground flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-lg font-semibold"
-            aria-hidden="true"
-          >
-            {certification.name.charAt(0).toUpperCase()}
-          </div>
-          <h3
-            id={`cert-name-${certification.id}`}
-            className="text-lg leading-tight font-semibold"
-          >
-            {certification.name}
-          </h3>
-        </div>
-        <span
-          className={getStatusBadgeStyles(certification.status)}
-          role="status"
-          aria-label={`Status: ${getStatusLabel(certification.status, t)}`}
-        >
-          {getStatusLabel(certification.status, t)}
-        </span>
-      </div>
-
-      {/* Description */}
-      <p className="text-muted-foreground mb-4 flex-1 text-sm">
-        {certification.description}
-      </p>
-
-      {/* Expandable details section */}
-      {hasDetails && (
-        <div
-          id={`cert-details-${certification.id}`}
-          className={cn(
-            "overflow-hidden transition-all duration-200",
-            isExpanded ? "mb-4 max-h-96 opacity-100" : "max-h-0 opacity-0",
-          )}
-          aria-hidden={!isExpanded}
-        >
-          <div className="space-y-2 border-t pt-4">
-            {lastAuditFormatted && (
-              <p className="text-sm">
-                <span className="font-medium">Last Audited:</span>{" "}
-                <span className="text-muted-foreground">
-                  {lastAuditFormatted}
-                </span>
-              </p>
-            )}
-            {expiryFormatted && (
-              <p className="text-sm">
-                <span className="font-medium">Expires:</span>{" "}
-                <span
-                  className={cn(
-                    "text-muted-foreground",
-                    expiringSoon &&
-                      "font-medium text-yellow-600 dark:text-yellow-400",
-                  )}
-                >
-                  {expiryFormatted}
-                  {expiringSoon && " (Expiring Soon)"}
-                </span>
-              </p>
-            )}
-            {certification.standards && certification.standards.length > 0 && (
-              <div className="text-sm">
-                <span className="font-medium">Standards:</span>{" "}
-                <span className="text-muted-foreground">
-                  {certification.standards.join(", ")}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex flex-wrap items-center gap-2">
-        {hasDetails && (
-          <Button
-            variant="ghost"
-            onClick={onToggleExpand}
-            aria-expanded={isExpanded}
-            aria-controls={`cert-details-${certification.id}`}
-            className="min-h-[44px] px-4"
-          >
-            {isExpanded ? "Show Less" : "Show Details"}
-          </Button>
-        )}
-        {certification.certificateUrl ? (
-          <Button variant="outline" asChild className="min-h-[44px] px-4">
-            <a
-              href={certification.certificateUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`View Certificate for ${certification.name}`}
-            >
-              View Certificate
-              <span className="sr-only">(opens in new tab)</span>
-            </a>
-          </Button>
-        ) : certification.status === "in-progress" ? (
-          <Button variant="outline" className="min-h-[44px] px-4">
-            Request Access
-          </Button>
-        ) : null}
-      </div>
-    </article>
-  );
-}
-
 /**
  * Compliance Grid component displaying certification cards with filtering
  *
@@ -257,7 +118,12 @@ export function ComplianceGrid() {
 
   const sortedCertifications = [...filteredCertifications].sort((a, b) => {
     // Active first, then in-progress, then others
-    const statusOrder = { active: 0, "in-progress": 1, "pending-renewal": 2, expired: 3 };
+    const statusOrder = {
+      active: 0,
+      "in-progress": 1,
+      "pending-renewal": 2,
+      expired: 3,
+    };
     const aOrder = statusOrder[a.status] ?? 4;
     const bOrder = statusOrder[b.status] ?? 4;
     if (aOrder !== bOrder) return aOrder - bOrder;
@@ -283,19 +149,24 @@ export function ComplianceGrid() {
     certification,
     isExpanded,
     onToggleExpand,
+    t,
   }: {
     certification: Certification;
     isExpanded: boolean;
     onToggleExpand: () => void;
+    t: (key: string) => string;
   }) {
-    const hasDetails = certification.lastAuditDate || certification.expiryDate || certification.standards?.length;
-    const isExpiringSoon = isExpiringSoonFunc(certification.expiryDate);
+    const hasDetails =
+      certification.lastAuditDate ||
+      certification.expiryDate ||
+      certification.standards?.length;
+    const expiringSoon = isExpiringSoon(certification.expiryDate);
 
     return (
       <article
         className={cn(
-          "group relative rounded-lg border bg-card p-6 shadow-sm transition-all hover:shadow-md",
-          isExpiringSoon && "border-orange-200 dark:border-orange-800",
+          "group bg-card relative rounded-lg border p-6 shadow-sm transition-all hover:shadow-md",
+          expiringSoon && "border-orange-200 dark:border-orange-800",
         )}
         aria-labelledby={`cert-name-${certification.id}`}
       >
@@ -311,7 +182,7 @@ export function ComplianceGrid() {
                 />
               </div>
             ) : (
-              <div className="flex size-8 shrink-0 items-center justify-center rounded bg-muted text-xs font-medium">
+              <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded text-xs font-medium">
                 {certification.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -348,7 +219,7 @@ export function ComplianceGrid() {
             <dl className="space-y-2 text-sm">
               {certification.lastAuditDate && (
                 <div>
-                  <dt className="font-medium text-foreground">Last Audit:</dt>
+                  <dt className="text-foreground font-medium">Last Audit:</dt>
                   <dd className="text-muted-foreground">
                     {formatDate(certification.lastAuditDate)}
                   </dd>
@@ -356,24 +227,28 @@ export function ComplianceGrid() {
               )}
               {certification.expiryDate && (
                 <div>
-                  <dt className="font-medium text-foreground">Expires:</dt>
-                  <dd className={cn(
-                    "text-muted-foreground",
-                    isExpiringSoon && "font-medium text-orange-600 dark:text-orange-400",
-                  )}>
+                  <dt className="text-foreground font-medium">Expires:</dt>
+                  <dd
+                    className={cn(
+                      "text-muted-foreground",
+                      expiringSoon &&
+                        "font-medium text-orange-600 dark:text-orange-400",
+                    )}
+                  >
                     {formatDate(certification.expiryDate)}
-                    {isExpiringSoon && " (Expiring Soon)"}
+                    {expiringSoon && " (Expiring Soon)"}
                   </dd>
                 </div>
               )}
-              {certification.standards && certification.standards.length > 0 && (
-                <div>
-                  <dt className="font-medium text-foreground">Standards:</dt>
-                  <dd className="text-muted-foreground">
-                    {certification.standards.join(", ")}
-                  </dd>
-                </div>
-              )}
+              {certification.standards &&
+                certification.standards.length > 0 && (
+                  <div>
+                    <dt className="text-foreground font-medium">Standards:</dt>
+                    <dd className="text-muted-foreground">
+                      {certification.standards.join(", ")}
+                    </dd>
+                  </div>
+                )}
             </dl>
           </div>
         )}
@@ -393,12 +268,7 @@ export function ComplianceGrid() {
             </Button>
           )}
           {certification.certificateUrl && (
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="ml-auto"
-            >
+            <Button asChild variant="outline" size="sm" className="ml-auto">
               <a
                 href={certification.certificateUrl}
                 target="_blank"
@@ -413,23 +283,6 @@ export function ComplianceGrid() {
       </article>
     );
   }
-    const aOrder = statusOrder[a.status] ?? 4;
-    const bOrder = statusOrder[b.status] ?? 4;
-    if (aOrder !== bOrder) return aOrder - bOrder;
-    return a.name.localeCompare(b.name);
-  });
-
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
 
   return (
     <section aria-labelledby="compliance-grid-heading">

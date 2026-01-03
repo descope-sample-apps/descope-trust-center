@@ -43,152 +43,150 @@
     "subprocessors": "Subprocesadores",
     "faq": "Preguntas Frecuentes"
   },
-   "page": {
-     "loading": {
-       "certifications": "Cargando certificaciones...",
-       "documents": "Cargando documentos...",
-       "subprocessors": "Cargando subprocesadores...",
-       "faq": "Cargando FAQ...",
-       "contact": "Cargando formulario de contacto..."
-     },
-     "subscription": {
-       "title": "Mantente Actualizado",
-       "description": "Recibe notificaciones cuando se agreguen o actualicen nuevos subprocesadores."
-     }
-   },
-   "compliance": {
-     "filters": {
-       "all": "Todos",
-       "active": "Activo",
-       "inProgress": "En Progreso",
-       "expired": "Expirado"
-     },
-     "status": {
-       "active": "Activo",
-       "inProgress": "En Progreso",
-       "expired": "Expirado",
-       "pendingRenewal": "Renovación Pendiente"
-     },
-     "actions": {
-       "showDetails": "Mostrar Detalles",
-       "showLess": "Mostrar Menos"
-     }
-   },
-   "contact": {
-     "title": "Contacta a Nuestro Equipo de Seguridad",
-     "subtitle": "¿Tienes una pregunta de seguridad o necesitas acceso a documentación? Estamos aquí para ayudar.",
-     "requestTypes": {
-       "general": "Consulta General",
-       "compliance": "Pregunta de Cumplimiento",
-       "securityReport": "Reporte de Seguridad",
-       "partnership": "Asociación",
-       "other": "Otro"
-     },
-     "fields": {
-       "name": "Nombre",
-       "email": "Correo Electrónico",
-       "company": "Empresa",
-       "requestType": "Tipo de Solicitud",
-       "message": "Mensaje"
-     },
-     "placeholders": {
-       "name": "Jane Doe",
-       "company": "Acme Corp",
-       "message": "Por favor describe tu pregunta de seguridad o solicitud..."
-     },
-     "validation": {
-       "nameRequired": "El nombre debe tener al menos 2 caracteres",
-       "nameTooLong": "El nombre debe tener 100 caracteres o menos",
-       "emailInvalid": "Por favor ingresa una dirección de correo electrónico válida",
-       "companyRequired": "La empresa es requerida",
-       "companyTooLong": "La empresa debe tener 100 caracteres o menos",
-       "requestTypeRequired": "Por favor selecciona un tipo de solicitud",
-       "messageTooShort": "Por favor proporciona más detalle (al menos 10 caracteres)",
-       "messageTooLong": "El mensaje debe tener 5000 caracteres o menos"
-     },
-     "messages": {
-       "success": "¡Gracias por tu consulta!",
-       "successDescription": "Hemos recibido tu solicitud y responderemos dentro de 1 día hábil.",
-       "error": "Algo salió mal. Por favor intenta de nuevo o envíanos un correo a security@descope.com",
-       "sendAnother": "Enviar otro mensaje"
-     },
-     "buttons": {
-       "submit": "Enviar Solicitud",
-       "submitting": "Enviando..."
-     },
-     "urgent": "Para asuntos de seguridad urgentes, por favor envíanos un correo directamente a"
-   },
-   "faq": {
-     "categories": {
-       "all": "Todos",
-       "security": "Seguridad",
-       "compliance": "Cumplimiento",
-       "privacy": "Privacidad",
-       "dataHandling": "Manejo de Datos",
-       "authentication": "Autenticación",
-       "general": "General"
-     }
-   },
-   "documents": {
-     "filters": {
-       "all": "Todos los Documentos",
-       "securityPolicy": "Políticas de Seguridad",
-       "compliance": "Cumplimiento",
-       "legal": "Legal",
-       "questionnaire": "Cuestionarios",
-       "auditReport": "Reportes de Auditoría",
-       "technical": "Técnico"
-     },
-     "access": {
-       "public": "Público",
-       "loginRequired": "Inicio de Sesión Requerido",
-       "ndaRequired": "NDA Requerido"
-     },
-     "search": "Buscar documentos",
-     "clearSearch": "Limpiar búsqueda",
-     "noResults": "No se encontraron documentos"
-   },
-   "subprocessors": {
-     "filters": {
-       "all": "Todos",
-       "active": "Activo",
-       "inactive": "Inactivo",
-       "underReview": "En Revisión"
-     }
-   },
-   "subscription": {
-     "emailPlaceholder": "Ingresa tu dirección de correo electrónico",
-     "button": "Suscribirse",
-     "submitting": "Suscribiendo...",
-     "validation": {
-       "emailInvalid": "Por favor ingresa una dirección de correo electrónico válida"
-     }
-   },
-   "security": {
-     "features": [
-       "Copias de seguridad encriptadas con claves separadas",
-       "Principio de menor privilegio aplicado",
-       "Registro de auditoría completo",
-       "Notificación inmediata al cliente",
-       "Compatible con GDPR",
-       "Compatible con CCPA",
-       "Controles de retención de datos",
-       "Soporte para derecho de eliminación",
-       "Programa de recompensas por errores",
-       "Escaneo continuo de seguridad"
-     ],
-     "sections": {
-       "accessControls": "Controles de Acceso",
-       "infrastructureSecurity": "Seguridad de Infraestructura",
-       "incidentResponse": "Respuesta a Incidentes",
-       "dataPrivacy": "Privacidad de Datos",
-       "vulnerabilityManagement": "Gestión de Vulnerabilidades"
-     }
-   },
-   "notFound": {
-     "title": "404",
-     "message": "Página no encontrada"
-   }
- }
+  "page": {
+    "loading": {
+      "certifications": "Cargando certificaciones...",
+      "documents": "Cargando documentos...",
+      "subprocessors": "Cargando subprocesadores...",
+      "faq": "Cargando FAQ...",
+      "contact": "Cargando formulario de contacto..."
+    },
+    "subscription": {
+      "title": "Mantente Actualizado",
+      "description": "Recibe notificaciones cuando se agreguen o actualicen nuevos subprocesadores."
+    }
+  },
+  "compliance": {
+    "filters": {
+      "all": "Todos",
+      "active": "Activo",
+      "inProgress": "En Progreso",
+      "expired": "Expirado"
+    },
+    "status": {
+      "active": "Activo",
+      "inProgress": "En Progreso",
+      "expired": "Expirado",
+      "pendingRenewal": "Renovación Pendiente"
+    },
+    "actions": {
+      "showDetails": "Mostrar Detalles",
+      "showLess": "Mostrar Menos"
+    }
+  },
+  "contact": {
+    "title": "Contacta a Nuestro Equipo de Seguridad",
+    "subtitle": "¿Tienes una pregunta de seguridad o necesitas acceso a documentación? Estamos aquí para ayudar.",
+    "requestTypes": {
+      "general": "Consulta General",
+      "compliance": "Pregunta de Cumplimiento",
+      "securityReport": "Reporte de Seguridad",
+      "partnership": "Asociación",
+      "other": "Otro"
+    },
+    "fields": {
+      "name": "Nombre",
+      "email": "Correo Electrónico",
+      "company": "Empresa",
+      "requestType": "Tipo de Solicitud",
+      "message": "Mensaje"
+    },
+    "placeholders": {
+      "name": "Jane Doe",
+      "company": "Acme Corp",
+      "message": "Por favor describe tu pregunta de seguridad o solicitud..."
+    },
+    "validation": {
+      "nameRequired": "El nombre debe tener al menos 2 caracteres",
+      "nameTooLong": "El nombre debe tener 100 caracteres o menos",
+      "emailInvalid": "Por favor ingresa una dirección de correo electrónico válida",
+      "companyRequired": "La empresa es requerida",
+      "companyTooLong": "La empresa debe tener 100 caracteres o menos",
+      "requestTypeRequired": "Por favor selecciona un tipo de solicitud",
+      "messageTooShort": "Por favor proporciona más detalle (al menos 10 caracteres)",
+      "messageTooLong": "El mensaje debe tener 5000 caracteres o menos"
+    },
+    "messages": {
+      "success": "¡Gracias por tu consulta!",
+      "successDescription": "Hemos recibido tu solicitud y responderemos dentro de 1 día hábil.",
+      "error": "Algo salió mal. Por favor intenta de nuevo o envíanos un correo a security@descope.com",
+      "sendAnother": "Enviar otro mensaje"
+    },
+    "buttons": {
+      "submit": "Enviar Solicitud",
+      "submitting": "Enviando..."
+    },
+    "urgent": "Para asuntos de seguridad urgentes, por favor envíanos un correo directamente a"
+  },
+  "faq": {
+    "categories": {
+      "all": "Todos",
+      "security": "Seguridad",
+      "compliance": "Cumplimiento",
+      "privacy": "Privacidad",
+      "dataHandling": "Manejo de Datos",
+      "authentication": "Autenticación",
+      "general": "General"
+    }
+  },
+  "documents": {
+    "filters": {
+      "all": "Todos los Documentos",
+      "securityPolicy": "Políticas de Seguridad",
+      "compliance": "Cumplimiento",
+      "legal": "Legal",
+      "questionnaire": "Cuestionarios",
+      "auditReport": "Reportes de Auditoría",
+      "technical": "Técnico"
+    },
+    "access": {
+      "public": "Público",
+      "loginRequired": "Inicio de Sesión Requerido",
+      "ndaRequired": "NDA Requerido"
+    },
+    "search": "Buscar documentos",
+    "clearSearch": "Limpiar búsqueda",
+    "noResults": "No se encontraron documentos"
+  },
+  "subprocessors": {
+    "filters": {
+      "all": "Todos",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "underReview": "En Revisión"
+    }
+  },
+  "subscription": {
+    "emailPlaceholder": "Ingresa tu dirección de correo electrónico",
+    "button": "Suscribirse",
+    "submitting": "Suscribiendo...",
+    "validation": {
+      "emailInvalid": "Por favor ingresa una dirección de correo electrónico válida"
+    }
+  },
+  "security": {
+    "features": [
+      "Copias de seguridad encriptadas con claves separadas",
+      "Principio de menor privilegio aplicado",
+      "Registro de auditoría completo",
+      "Notificación inmediata al cliente",
+      "Compatible con GDPR",
+      "Compatible con CCPA",
+      "Controles de retención de datos",
+      "Soporte para derecho de eliminación",
+      "Programa de recompensas por errores",
+      "Escaneo continuo de seguridad"
+    ],
+    "sections": {
+      "accessControls": "Controles de Acceso",
+      "infrastructureSecurity": "Seguridad de Infraestructura",
+      "incidentResponse": "Respuesta a Incidentes",
+      "dataPrivacy": "Privacidad de Datos",
+      "vulnerabilityManagement": "Gestión de Vulnerabilidades"
+    }
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Página no encontrada"
   }
 }

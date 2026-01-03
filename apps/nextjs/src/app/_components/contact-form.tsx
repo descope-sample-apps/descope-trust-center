@@ -18,6 +18,14 @@ import { Input } from "@descope-trust-center/ui/input";
 
 import { useTRPC } from "~/trpc/react";
 
+const REQUEST_TYPES = [
+  { value: "general", label: "General Inquiry" },
+  { value: "compliance", label: "Compliance Question" },
+  { value: "security-report", label: "Security Report" },
+  { value: "partnership", label: "Partnership" },
+  { value: "other", label: "Other" },
+] as const;
+
 type _RequestType = (typeof REQUEST_TYPES)[number]["value"];
 
 /**
