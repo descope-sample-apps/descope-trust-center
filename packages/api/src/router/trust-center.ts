@@ -20,12 +20,12 @@ import {
 } from "@descope-trust-center/validators";
 
 import { env } from "../env";
-import { createEmailService } from "../lib/email";
+import { EmailService } from "../lib/email";
 import { protectedProcedure, publicProcedure } from "../trpc";
 
 // Create email service instance - only if API key is available
 const emailService = env.RESEND_API_KEY
-  ? createEmailService({
+  ? new EmailService({
       apiKey: env.RESEND_API_KEY,
       fromEmail: env.TRUST_CENTER_FROM_EMAIL,
       notificationEmail: env.TRUST_CENTER_NOTIFICATION_EMAIL,
