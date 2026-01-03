@@ -185,3 +185,125 @@ export const CreateDocumentAccessRequestSchema = createInsertSchema(
   deniedBy: true,
   deniedAt: true,
 });
+
+export const Certification = pgTable("certification", (t) => ({
+  id: t.varchar({ length: 256 }).notNull().primaryKey(),
+  name: t.varchar({ length: 256 }).notNull(),
+  logo: t.varchar({ length: 512 }).notNull(),
+  status: t.varchar({ length: 50 }).notNull().default("active"),
+  lastAuditDate: t.date(),
+  expiryDate: t.date(),
+  certificateUrl: t.varchar({ length: 512 }),
+  description: t.text().notNull(),
+  standards: t.jsonb().notNull(),
+  createdAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t.timestamp({ withTimezone: true }),
+}));
+
+export const CreateCertificationSchema = createInsertSchema(Certification, {
+  id: z.string().min(1),
+  name: z.string().min(1),
+  logo: z.string().url(),
+  status: z.enum(["active", "in-progress", "expired"]).default("active"),
+  lastAuditDate: z.string().optional(),
+  expiryDate: z.string().optional(),
+  certificateUrl: z.string().url().optional(),
+  description: z.string().min(1),
+  standards: z.array(z.string()).min(1),
+}).omit({ createdAt: true, updatedAt: true });
+
+export const Document = pgTable("document", (t) => ({
+  id: t.varchar({ length: 256 }).notNull().primaryKey(),
+  title: t.varchar({ length: 512 }).notNull(),
+  category: t.varchar({ length: 100 }).notNull(),
+  description: t.text().notNull(),
+  accessLevel: t.varchar({ length: 50 }).notNull().default("public"),
+  fileUrl: t.varchar({ length: 512 }),
+  fileSize: t.varchar({ length: 50 }),
+  updatedAt: t.timestamp().defaultNow().notNull(),
+  tags: t.jsonb().notNull(),
+  createdAt: t.timestamp().defaultNow().notNull(),
+}));
+
+export const CreateDocumentSchema = createInsertSchema(Document, {
+  id: z.string().min(1),
+  title: z.string().min(1),
+  category: z.enum([
+    "security-policy",
+    "audit-report",
+    "legal",
+    "questionnaire",
+  ]),
+  description: z.string().min(1),
+  accessLevel: z
+    .enum(["public", "login-required", "nda-required"])
+    .default("public"),
+  fileUrl: z.string().url().optional(),
+  fileSize: z.string().optional(),
+  updatedAt: z.string().datetime().optional(),
+  tags: z.array(z.string()).default([]),
+}).omit({ createdAt: true });
+
+export const Subprocessor = pgTable("subprocessor", (t) => ({
+  id: t.varchar({ length: 256 }).notNull().primaryKey(),
+  name: t.varchar({ length: 256 }).notNull(),
+  purpose: t.text().notNull(),
+  dataProcessed: t.jsonb().notNull(),
+  location: t.varchar({ length: 256 }).notNull(),
+  contractUrl: t.varchar({ length: 512 }).notNull(),
+  status: t.varchar({ length: 50 }).notNull().default("active"),
+  createdAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t.timestamp({ withTimezone: true }),
+}));
+
+export const CreateSubprocessorSchema = createInsertSchema(Subprocessor, {
+  id: z.string().min(1),
+  name: z.string().min(1),
+  purpose: z.string().min(1),
+  dataProcessed: z.array(z.string()).min(1),
+  location: z.string().min(1),
+  contractUrl: z.string().url(),
+  status: z.enum(["active", "inactive"]).default("active"),
+}).omit({ createdAt: true, updatedAt: true });
+
+export const Faq = pgTable("faq", (t) => ({
+  id: t.varchar({ length: 256 }).notNull().primaryKey(),
+  question: t.varchar({ length: 512 }).notNull(),
+  answer: t.text().notNull(),
+  category: t.varchar({ length: 100 }).notNull(),
+  createdAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t.timestamp({ withTimezone: true }),
+}));
+
+export const CreateFaqSchema = createInsertSchema(Faq, {
+  id: z.string().min(1),
+  question: z.string().min(1),
+  answer: z.string().min(1),
+  category: z.enum([
+    "security",
+    "compliance",
+    "privacy",
+    "data-handling",
+    "authentication",
+  ]),
+}).omit({ createdAt: true, updatedAt: true });
+
+export const AuditLog = pgTable("audit_log", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  userId: t.varchar({ length: 256 }),
+  action: t.varchar({ length: 100 }).notNull(),
+  resource: t.varchar({ length: 256 }),
+  details: t.jsonb(),
+  ipAddress: t.varchar({ length: 45 }),
+  userAgent: t.text(),
+  createdAt: t.timestamp().defaultNow().notNull(),
+}));
+
+export const CreateAuditLogSchema = createInsertSchema(AuditLog, {
+  userId: z.string().optional(),
+  action: z.string().min(1),
+  resource: z.string().optional(),
+  details: z.any().optional(),
+  ipAddress: z.string().optional(),
+  userAgent: z.string().optional(),
+}).omit({ id: true, createdAt: true });

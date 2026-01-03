@@ -17,6 +17,7 @@ export interface DescopeUser {
   email?: string;
   name?: string;
   verifiedEmail?: boolean;
+  roles: string[];
 }
 
 export interface DescopeJwtClaims {

@@ -1,0 +1,122 @@
+name: OpenCode Agent
+
+on:
+  schedule:
+    - cron: "0 * * * *" # Every hour at minute 0
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Specific task to work on"
+        required: false
+        type: string
+      task_base64:
+        description: "Base64-encoded task (for programmatic dispatch)"
+        required: false
+        type: string
+      wave_count:
+        description: "Current wave number (for chained runs)"
+        required: false
+        type: number
+        default: 0
+  repository_dispatch:
+    types: [run-agent]
+
+# Handle both workflow_dispatch inputs and repository_dispatch client_payload
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write # To trigger workflow dispatches
+
+concurrency:
+  group: opencode-agent-${{ inputs.wave_count || github.event.client_payload.wave_count || '0' }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+env:
+  FORCE_COLOR: 3
+
+jobs:
+  agent:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 55
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup mise
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
+        with:
+          install: true
+          cache: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Copy env
+        run: cp .env.example .env
+
+      - name: Configure Git
+        run: |
+          git config user.name "opencode-agent[bot]"
+          git config user.email "opencode-agent[bot]@users.noreply.github.com"
+
+      - name: Run OpenCode Agent
+        id: run-agent
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          AGENT_WAVE_COUNT: ${{ inputs.wave_count || github.event.client_payload.wave_count || '0' }}
+          MAX_CONCURRENT_AGENTS: "5"
+        run: |
+          WAVE_COUNT="${{ inputs.wave_count || github.event.client_payload.wave_count || '0' }}"
+          echo "🤖 Starting OpenCode agent (wave ${WAVE_COUNT})..."
+
+          # Handle task from workflow_dispatch inputs OR repository_dispatch client_payload
+          TASK_BASE64="${{ inputs.task_base64 || github.event.client_payload.task_base64 || '' }}"
+          TASK="${{ inputs.task || github.event.client_payload.task || '' }}"
+
+          if [ -n "${TASK_BASE64}" ]; then
+            export CUSTOM_TASK=$(echo "${TASK_BASE64}" | base64 --decode)
+            echo "📋 Task: $CUSTOM_TASK"
+          elif [ -n "${TASK}" ]; then
+            export CUSTOM_TASK="${TASK}"
+            echo "📋 Task: $CUSTOM_TASK"
+          fi
+
+          npx tsx .github/scripts/run-agent.ts
+
+      - name: Report Status
+        if: always()
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          echo "📊 Agent run completed"
+          echo "Job status: ${{ job.status }}"
+          echo "Wave: ${{ inputs.wave_count || github.event.client_payload.wave_count || '0' }}"
+
+          # Get the app's bot username for filtering
+          APP_SLUG="${{ steps.app-token.outputs.app-slug }}"
+          BOT_AUTHOR="${APP_SLUG}[bot]"
+
+          # Check for any PRs created by the app
+          recent_prs=$(gh pr list --state open --author "$BOT_AUTHOR" --json number,title,url --jq '.[] | "PR #\(.number): \(.title) - \(.url)"' 2>/dev/null || echo "")
+          if [ -n "$recent_prs" ]; then
+            echo "📬 Recent PRs by agent:"
+            echo "$recent_prs"
+          fi
+
+          # Check for high-priority issues (use search for OR logic)
+          open_p0=$(gh issue list --state open --label "P0-critical" --json number --jq 'length' 2>/dev/null || echo "0")
+          open_p1=$(gh issue list --state open --label "P1-high" --json number --jq 'length' 2>/dev/null || echo "0")
+          echo "📋 Remaining high-priority issues: P0=$open_p0, P1=$open_p1"

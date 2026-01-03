@@ -1,4 +1,10 @@
 [tools]
+# Core runtime and package manager
 node = "22"
-opencode = "latest"
 pnpm = "10"
+
+# AI agent CLI - using "latest" for dev/CI (version 1.0.200 does not exist in mise registry)
+opencode = "latest"
+
+# Development tools
+gh = "2.63.2"          # GitHub CLI for issue/PR management

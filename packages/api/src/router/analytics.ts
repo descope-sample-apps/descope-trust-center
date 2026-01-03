@@ -19,7 +19,7 @@ import { protectedProcedure, publicProcedure } from "../trpc";
 import { isAdmin, logAuditEvent } from "../utils/admin";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (!isAdmin(ctx.session.user.email)) {
+  if (!isAdmin(ctx.session.user.email, ctx.session.user.roles)) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Admin access required",
