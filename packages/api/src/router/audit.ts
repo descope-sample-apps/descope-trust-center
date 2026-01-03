@@ -8,9 +8,11 @@ import {
   CreateAuditLogSchema,
   desc,
   eq,
+  lt,
   sql,
 } from "@descope-trust-center/db";
 
+import { env } from "../env";
 import { protectedProcedure, publicProcedure } from "../trpc";
 import { isAdmin } from "../utils/admin";
 
@@ -181,5 +183,26 @@ export const auditRouter = {
       }
 
       return { data: JSON.stringify(logs, null, 2), format: "json" };
+    }),
+
+  clean: adminProcedure
+    .input(
+      z.object({
+        days: z
+          .number()
+          .min(1)
+          .max(365 * 10)
+          .default(env.AUDIT_LOG_RETENTION_DAYS),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - input.days);
+
+      const result = await ctx.db
+        .delete(AuditLog)
+        .where(lt(AuditLog.createdAt, cutoffDate));
+
+      return { deletedCount: result.rowCount };
     }),
 } satisfies TRPCRouterRecord;

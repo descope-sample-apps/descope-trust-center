@@ -17,6 +17,7 @@ export const env = createEnv({
       .string()
       .email()
       .default("security@descope.com"),
+    AUDIT_LOG_RETENTION_DAYS: z.coerce.number().default(90),
   },
   runtimeEnv: process.env,
   skipValidation:

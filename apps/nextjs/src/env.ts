@@ -16,6 +16,7 @@ export const env = createEnv({
     SENTRY_PROJECT: z.string().optional(),
     SENTRY_AUTH_TOKEN: z.string().optional(),
     RESEND_API_KEY: z.string().min(1),
+    AUDIT_LOG_RETENTION_DAYS: z.coerce.number().default(90),
   },
 
   client: {

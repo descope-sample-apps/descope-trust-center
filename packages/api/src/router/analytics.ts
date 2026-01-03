@@ -1,8 +1,11 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import type { VercelPgDatabase } from "drizzle-orm/vercel-postgres";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
+import type * as schema from "@descope-trust-center/db/schema";
 import {
+  and,
   AuditLog,
   CreateDocumentAccessRequestSchema,
   CreateDocumentDownloadSchema,
@@ -13,6 +16,9 @@ import {
   DocumentDownload,
   eq,
   FormSubmission,
+  gte,
+  lt,
+  lte,
   sql,
 } from "@descope-trust-center/db";
 
@@ -80,6 +86,20 @@ export const analyticsRouter = {
         .insert(DocumentAccessRequest)
         .values(input)
         .returning();
+
+      await logAuditEvent(
+        ctx,
+        "create",
+        "document_access_request",
+        input.documentId,
+        {
+          documentTitle: input.documentTitle,
+          email: input.email,
+          name: input.name,
+          company: input.company,
+          reason: input.reason,
+        },
+      );
 
       await logAuditEvent(
         ctx,
@@ -345,6 +365,165 @@ export const analyticsRouter = {
       return { success: true, request: updated };
     }),
 
+  getAuditLogs: adminProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().min(1).max(100).default(50),
+          offset: z.number().min(0).default(0),
+          userEmail: z.string().optional(),
+          action: z.string().optional(),
+          entityType: z.string().optional(),
+          fromDate: z.string().datetime().optional(),
+          toDate: z.string().datetime().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 50;
+      const offset = input?.offset ?? 0;
+
+      const conditions = [];
+      if (input?.userEmail)
+        conditions.push(eq(AuditLog.userEmail, input.userEmail));
+      if (input?.action)
+        conditions.push(sql`${AuditLog.action} LIKE ${`%${input.action}%`}`);
+      if (input?.entityType)
+        conditions.push(
+          sql`${AuditLog.entityType} LIKE ${`%${input.entityType}%`}`,
+        );
+      if (input?.fromDate)
+        conditions.push(gte(AuditLog.createdAt, new Date(input.fromDate)));
+      if (input?.toDate)
+        conditions.push(lte(AuditLog.createdAt, new Date(input.toDate)));
+
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
+
+      const logs = await ctx.db
+        .select()
+        .from(AuditLog)
+        .where(whereClause)
+        .orderBy(desc(AuditLog.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      const [countResult] = await ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(AuditLog)
+        .where(whereClause);
+      const total = Number(countResult?.count ?? 0);
+
+      return {
+        logs,
+        total,
+        hasMore: offset + logs.length < total,
+      };
+    }),
+
+  exportAuditLogs: adminProcedure
+    .input(
+      z
+        .object({
+          format: z.enum(["csv", "json"]).default("csv"),
+          userEmail: z.string().optional(),
+          action: z.string().optional(),
+          entityType: z.string().optional(),
+          fromDate: z.string().datetime().optional(),
+          toDate: z.string().datetime().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const conditions = [];
+      if (input?.userEmail)
+        conditions.push(eq(AuditLog.userEmail, input.userEmail));
+      if (input?.action)
+        conditions.push(sql`${AuditLog.action} LIKE ${`%${input.action}%`}`);
+      if (input?.entityType)
+        conditions.push(
+          sql`${AuditLog.entityType} LIKE ${`%${input.entityType}%`}`,
+        );
+      if (input?.fromDate)
+        conditions.push(gte(AuditLog.createdAt, new Date(input.fromDate)));
+      if (input?.toDate)
+        conditions.push(lte(AuditLog.createdAt, new Date(input.toDate)));
+
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
+
+      const logs = await ctx.db
+        .select()
+        .from(AuditLog)
+        .where(whereClause)
+        .orderBy(desc(AuditLog.createdAt));
+
+      if (input?.format === "json") {
+        return {
+          data: logs,
+          format: "json",
+        };
+      }
+
+      // Generate CSV
+      const headers = [
+        "ID",
+        "User Email",
+        "Action",
+        "Entity Type",
+        "Details",
+        "IP Address",
+        "User Agent",
+        "Created At",
+      ];
+
+      const csvRows = [
+        headers.join(","),
+        ...logs.map((log) =>
+          [
+            log.id,
+            log.userEmail ?? "",
+            log.action,
+            log.entityType ?? "",
+            JSON.stringify(log.details ?? {}, null, 0)
+              .replace(/\n/g, " ")
+              .replace(/"/g, '""'), // Escape quotes and newlines in JSON
+            log.ipAddress ?? "",
+            (log.userAgent ?? "").replace(/"/g, '""'), // Escape quotes
+            log.createdAt.toISOString(),
+          ]
+            .map((field) => `"${field}"`)
+            .join(","),
+        ), // Wrap all fields in quotes
+      ];
+
+      return {
+        data: csvRows.join("\n"),
+        format: "csv",
+        filename: `audit-logs-${new Date().toISOString().split("T")[0]}.csv`,
+      };
+    }),
+
+  cleanAuditLogs: adminProcedure
+    .input(
+      z.object({
+        daysOld: z.number().min(1).max(3650).default(90), // Default 90 days
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - input.daysOld);
+
+      const result = await ctx.db
+        .delete(AuditLog)
+        .where(lt(AuditLog.createdAt, cutoffDate));
+
+      return {
+        deletedCount: result.rowCount,
+        cutoffDate: cutoffDate.toISOString(),
+      };
+    }),
+
   getTopDownloads: adminProcedure.query(async ({ ctx }) => {
     const topDownloads = await ctx.db
       .select({
@@ -450,6 +629,7 @@ export const analyticsRouter = {
 
       return { success: true, submission: updated };
     }),
+
   getDashboardSummary: adminProcedure.query(async ({ ctx }) => {
     const [downloadCount, formCount, pendingRequests, auditCount] =
       await Promise.all([

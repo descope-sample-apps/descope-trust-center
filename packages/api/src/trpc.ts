@@ -49,10 +49,17 @@ export interface DescopeSession {
  * @see https://trpc.io/docs/server/context
  */
 
+export interface TRPCContext {
+  session: DescopeSession | null;
+  db: typeof db;
+  ipAddress: string;
+  userAgent: string;
+}
+
 export const createTRPCContext = (opts: {
   headers: Headers;
   session: DescopeSession | null;
-}) => {
+}): TRPCContext => {
   const ipAddress =
     opts.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     opts.headers.get("x-real-ip") ??
@@ -74,7 +81,7 @@ export type Context = ReturnType<typeof createTRPCContext>;
  * This is where the trpc api is initialized, connecting the context and
  * transformer
  */
-const t = initTRPC.context<typeof createTRPCContext>().create({
+const t = initTRPC.context<TRPCContext>().create({
   transformer: superjson,
   errorFormatter: ({ shape, error }) => ({
     ...shape,
