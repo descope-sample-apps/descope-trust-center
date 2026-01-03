@@ -1,9 +1,6 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod/v4";
 
-// In test environment, make email-related env vars optional
-const isTest = process.env.NODE_ENV === "test";
-
 export const env = createEnv({
   server: {
     ADMIN_EMAILS: z.string().optional(),
@@ -15,8 +12,7 @@ export const env = createEnv({
     TRUST_CENTER_FROM_EMAIL: z
       .string()
       .email()
-      .default("Trust Center <noreply@descope.com>")
-      .optional(),
+      .default("Trust Center <noreply@descope.com>"),
     TRUST_CENTER_NOTIFICATION_EMAIL: z
       .string()
       .email()

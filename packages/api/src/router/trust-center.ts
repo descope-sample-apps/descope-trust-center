@@ -228,7 +228,7 @@ export const trustCenterRouter = {
       // Also save to document_access_request table for admin review
       await ctx.db.insert(DocumentAccessRequest).values({
         documentId: input.documentId,
-        documentTitle: document?.title || "Unknown Document",
+        documentTitle: document?.title ?? "Unknown Document",
         name: input.name,
         email: input.email,
         company: input.company,
