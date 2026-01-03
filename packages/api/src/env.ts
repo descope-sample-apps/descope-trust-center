@@ -7,6 +7,16 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    STATUS_PAGE_URL: z.string().url().optional(),
+    RESEND_API_KEY: z.string().optional(),
+    TRUST_CENTER_FROM_EMAIL: z
+      .string()
+      .email()
+      .default("Trust Center <noreply@descope.com>"),
+    TRUST_CENTER_NOTIFICATION_EMAIL: z
+      .string()
+      .email()
+      .default("security@descope.com"),
   },
   runtimeEnv: process.env,
   skipValidation:
