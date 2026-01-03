@@ -1,4 +1,3 @@
-import React from "react";
 import { Resend } from "resend";
 
 interface EmailServiceOptions {
@@ -26,13 +25,8 @@ interface SendEmailParams {
   subject: string;
   html?: string;
   text?: string;
-  react?: React.ReactElement;
   replyTo?: string;
 }
-
-// Resend requires at least one of html, text, or react
-type ResendEmailData = SendEmailParams &
-  ({ html: string } | { text: string } | { react: React.ReactElement });
 
 /**
  * Email service for sending transactional emails
@@ -51,7 +45,7 @@ export class EmailService {
   /**
    * Send an email using Resend with retry logic
    */
-  async sendEmail(params: SendEmailParams, maxRetries: number = 3) {
+  async sendEmail(params: SendEmailParams, maxRetries = 3) {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -69,13 +63,11 @@ export class EmailService {
         if (params.text) {
           emailData.text = params.text;
         }
-        if (params.react) {
-          emailData.react = params.react;
-        }
         if (params.replyTo) {
           emailData.replyTo = params.replyTo;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
         const result = await this.resend.emails.send(emailData as any);
 
         console.log(
@@ -179,6 +171,7 @@ export class EmailService {
     };
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
       await this.resend.emails.send(alertData as any);
       console.log(
         `[Email Service] Failure alert sent to admin: ${this.notificationEmail}`,
