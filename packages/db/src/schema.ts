@@ -111,8 +111,11 @@ export const FormSubmission = pgTable("form_submission", (t) => ({
   email: t.varchar({ length: 256 }).notNull(),
   name: t.varchar({ length: 256 }),
   company: t.varchar({ length: 256 }),
-  status: t.varchar({ length: 50 }).notNull().default("pending"),
+  status: t.varchar({ length: 50 }).notNull().default("new"),
   metadata: t.jsonb(),
+  respondedAt: t.timestamp(),
+  respondedBy: t.varchar({ length: 256 }),
+  responseNotes: t.text(),
   ipAddress: t.varchar({ length: 45 }),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp({ withTimezone: true }),
@@ -156,10 +159,15 @@ export const CreateFormSubmissionSchema = createInsertSchema(FormSubmission, {
   email: z.string().email(),
   name: z.string().optional(),
   company: z.string().optional(),
-  status: z
-    .enum(["pending", "approved", "denied", "completed"])
-    .default("pending"),
-}).omit({ id: true, createdAt: true, updatedAt: true });
+  status: z.enum(["new", "responded", "closed"]).default("new"),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  respondedAt: true,
+  respondedBy: true,
+  responseNotes: true,
+});
 
 export const CreateDocumentAccessRequestSchema = createInsertSchema(
   DocumentAccessRequest,
