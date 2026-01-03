@@ -138,9 +138,10 @@ export const analyticsRouter = {
           type: z
             .enum(["contact", "document_request", "subprocessor_subscription"])
             .optional(),
-          status: z
-            .enum(["pending", "approved", "denied", "completed"])
-            .optional(),
+          status: z.enum(["new", "responded", "closed"]).optional(),
+          dateFrom: z.string().datetime().optional(),
+          dateTo: z.string().datetime().optional(),
+          searchTerm: z.string().optional(),
           limit: z.number().min(1).max(100).default(50),
           offset: z.number().min(0).default(0),
         })
@@ -149,22 +150,48 @@ export const analyticsRouter = {
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 50;
       const offset = input?.offset ?? 0;
-      let query = ctx.db.select().from(FormSubmission);
+
+      // Build where conditions
+      const whereConditions = [];
       if (input?.type)
-        query = query.where(
-          eq(FormSubmission.type, input.type),
-        ) as typeof query;
+        whereConditions.push(eq(FormSubmission.type, input.type));
       if (input?.status)
-        query = query.where(
-          eq(FormSubmission.status, input.status),
-        ) as typeof query;
-      const submissions = await query
+        whereConditions.push(eq(FormSubmission.status, input.status));
+      if (input?.dateFrom)
+        whereConditions.push(
+          sql`${FormSubmission.createdAt} >= ${input.dateFrom}`,
+        );
+      if (input?.dateTo)
+        whereConditions.push(
+          sql`${FormSubmission.createdAt} <= ${input.dateTo}`,
+        );
+      if (input?.searchTerm) {
+        const term = `%${input.searchTerm}%`;
+        whereConditions.push(
+          sql`(${FormSubmission.email} ILIKE ${term} OR ${FormSubmission.name} ILIKE ${term} OR ${FormSubmission.company} ILIKE ${term})`,
+        );
+      }
+
+      // Get count with filters
+      const countQuery = ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(FormSubmission);
+      const [countResult] =
+        whereConditions.length > 0
+          ? await countQuery.where(sql`${sql.join(whereConditions, " AND ")}`)
+          : await countQuery;
+
+      // Get submissions with filters
+      const submissionsQuery = ctx.db.select().from(FormSubmission);
+      const submissions = await (
+        whereConditions.length > 0
+          ? submissionsQuery.where(sql`${sql.join(whereConditions, " AND ")}`)
+          : submissionsQuery
+      )
         .orderBy(desc(FormSubmission.createdAt))
         .limit(limit)
         .offset(offset);
-      const [countResult] = await ctx.db
-        .select({ count: sql<number>`count(*)` })
-        .from(FormSubmission);
+
       const total = Number(countResult?.count ?? 0);
       return {
         submissions,
@@ -316,6 +343,42 @@ export const analyticsRouter = {
       });
 
       return { success: true, request: updated };
+    }),
+
+  updateFormSubmissionStatus: adminProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        status: z.enum(["responded", "closed"]),
+        responseNotes: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const adminEmail = ctx.session.user.email ?? "unknown";
+      const [updated] = await ctx.db
+        .update(FormSubmission)
+        .set({
+          status: input.status,
+          respondedAt: sql`CURRENT_TIMESTAMP`,
+          respondedBy: adminEmail,
+          responseNotes: input.responseNotes,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        })
+        .where(eq(FormSubmission.id, input.id))
+        .returning();
+      if (!updated)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Form submission not found",
+        });
+
+      await logAuditEvent(ctx, "update", "form_submission", input.id, {
+        status: input.status,
+        respondedBy: adminEmail,
+        responseNotes: input.responseNotes,
+      });
+
+      return { success: true, submission: updated };
     }),
 
   getDashboardSummary: adminProcedure.query(async ({ ctx }) => {

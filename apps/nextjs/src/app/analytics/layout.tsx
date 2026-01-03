@@ -36,7 +36,7 @@ export default function AnalyticsLayout({
 
   const navItems = [
     { href: "/analytics", label: "Overview" },
-    { href: "/analytics/downloads", label: "Downloads" },
+    { href: "/analytics/forms", label: "Form Submissions" },
     { href: "/analytics/access-requests", label: "Access Requests" },
   ];
 

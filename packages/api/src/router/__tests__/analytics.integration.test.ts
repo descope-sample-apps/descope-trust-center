@@ -79,7 +79,7 @@ describe.skipIf(!runIntegrationTests)(
         expect(result).toMatchObject({
           type: "contact",
           email: "contact@example.com",
-          status: "pending",
+          status: "new",
         });
       });
 
