@@ -6,7 +6,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/react";
 
 type FormType = "contact" | "document_request" | "subprocessor_subscription";
-type FormStatus = "pending" | "approved" | "denied" | "completed";
+type FormStatus = "new" | "responded" | "closed";
 
 export function FormAnalytics() {
   const trpc = useTRPC();
@@ -33,10 +33,9 @@ export function FormAnalytics() {
   ];
 
   const statusOptions: { value: FormStatus; label: string }[] = [
-    { value: "pending", label: "Pending" },
-    { value: "approved", label: "Approved" },
-    { value: "denied", label: "Denied" },
-    { value: "completed", label: "Completed" },
+    { value: "new", label: "New" },
+    { value: "responded", label: "Responded" },
+    { value: "closed", label: "Closed" },
   ];
 
   return (
