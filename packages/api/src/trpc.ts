@@ -17,6 +17,7 @@ export interface DescopeUser {
   email?: string;
   name?: string;
   verifiedEmail?: boolean;
+  roles: string[];
 }
 
 export interface DescopeJwtClaims {
@@ -58,7 +59,11 @@ export interface TRPCContext {
 export const createTRPCContext = (opts: {
   headers: Headers;
   session: DescopeSession | null;
+<<<<<<< HEAD
 }): TRPCContext => {
+=======
+}) => {
+>>>>>>> origin/main
   const ipAddress =
     opts.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     opts.headers.get("x-real-ip") ??
@@ -72,6 +77,8 @@ export const createTRPCContext = (opts: {
     userAgent,
   };
 };
+
+export type Context = ReturnType<typeof createTRPCContext>;
 /**
  * 2. INITIALIZATION
  *

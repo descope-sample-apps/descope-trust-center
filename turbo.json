@@ -58,7 +58,8 @@
     "NEXT_PUBLIC_SENTRY_DSN",
     "SENTRY_ORG",
     "SENTRY_PROJECT",
-    "SENTRY_AUTH_TOKEN"
+    "SENTRY_AUTH_TOKEN",
+    "RESEND_API_KEY"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",

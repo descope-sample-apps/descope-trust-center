@@ -15,6 +15,21 @@ export function mapDescopeSession(
 ): DescopeSession | null {
   if (!info) return null;
 
+  // Extract roles from all tenants
+  const roles: string[] = [];
+  if (info.token.tenants && typeof info.token.tenants === "object") {
+    const tenants = info.token.tenants as Record<string, { roles?: unknown }>;
+    for (const tenant of Object.values(tenants)) {
+      const tenantRoles = tenant.roles;
+      if (
+        Array.isArray(tenantRoles) &&
+        tenantRoles.every((r): r is string => typeof r === "string")
+      ) {
+        roles.push(...tenantRoles);
+      }
+    }
+  }
+
   return {
     token: {
       jwt: info.jwt,
@@ -29,6 +44,7 @@ export function mapDescopeSession(
         typeof info.token.email_verified === "boolean"
           ? info.token.email_verified
           : undefined,
+      roles,
     },
   };
 }
