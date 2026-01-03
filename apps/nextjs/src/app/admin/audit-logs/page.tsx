@@ -42,8 +42,7 @@ export default function AuditLogsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-  const { data: auditData } = (trpc.analytics as any).getAuditLogs.useQuery({
+  const { data: auditData } = trpc.analytics.getAuditLogs.useQuery({
     ...filters,
     limit: 50,
     offset: currentPage * 50,

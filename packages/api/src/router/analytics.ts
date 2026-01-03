@@ -21,15 +21,8 @@ import {
   sql,
 } from "@descope-trust-center/db";
 
-import type { DescopeSession } from "../trpc";
+import type { DescopeSession, TRPCContext } from "../trpc";
 import { protectedProcedure, publicProcedure } from "../trpc";
-
-interface ExtendedCtx {
-  db: Database;
-  ipAddress: string;
-  userAgent: string;
-  session: DescopeSession | null;
-}
 
 type Database = VercelPgDatabase<typeof schema>;
 
@@ -44,12 +37,7 @@ function isAdmin(email: string | undefined | null): boolean {
 }
 
 async function logAuditEvent(
-  ctx: {
-    db: Database;
-    ipAddress: string;
-    userAgent: string;
-    session: DescopeSession | null;
-  },
+  ctx: TRPCContext,
   action: string,
   entityType: string,
   entityId?: string,
@@ -86,18 +74,12 @@ export const analyticsRouter = {
         .values(input)
         .returning();
 
-      await logAuditEvent(
-        ctx as unknown as ExtendedCtx,
-        "download",
-        "document",
-        input.documentId,
-        {
-          documentTitle: input.documentTitle,
-          userEmail: input.userEmail,
-          userName: input.userName,
-          company: input.company,
-        },
-      );
+      await logAuditEvent(ctx, "download", "document", input.documentId, {
+        documentTitle: input.documentTitle,
+        userEmail: input.userEmail,
+        userName: input.userName,
+        company: input.company,
+      });
 
       return download;
     }),
@@ -110,18 +92,12 @@ export const analyticsRouter = {
         .values(input)
         .returning();
 
-      await logAuditEvent(
-        ctx as unknown as ExtendedCtx,
-        "submit",
-        "form",
-        input.type,
-        {
-          email: input.email,
-          name: input.name,
-          company: input.company,
-          status: input.status,
-        },
-      );
+      await logAuditEvent(ctx, "submit", "form", input.type, {
+        email: input.email,
+        name: input.name,
+        company: input.company,
+        status: input.status,
+      });
 
       return submission;
     }),
@@ -134,19 +110,13 @@ export const analyticsRouter = {
         .values(input)
         .returning();
 
-      await logAuditEvent(
-        ctx as unknown as ExtendedCtx,
-        "request",
-        "document",
-        input.documentId,
-        {
-          documentTitle: input.documentTitle,
-          email: input.email,
-          name: input.name,
-          company: input.company,
-          reason: input.reason,
-        },
-      );
+      await logAuditEvent(ctx, "request", "document", input.documentId, {
+        documentTitle: input.documentTitle,
+        email: input.email,
+        name: input.name,
+        company: input.company,
+        reason: input.reason,
+      });
 
       return {
         id: request?.id,
@@ -279,20 +249,14 @@ export const analyticsRouter = {
           message: "Access request not found",
         });
 
-      await logAuditEvent(
-        ctx as unknown as ExtendedCtx,
-        "approve",
-        "access_request",
-        input.requestId,
-        {
-          approvedBy: adminEmail,
-          documentId: updated.documentId,
-          documentTitle: updated.documentTitle,
-          email: updated.email,
-          name: updated.name,
-          company: updated.company,
-        },
-      );
+      await logAuditEvent(ctx, "approve", "access_request", input.requestId, {
+        approvedBy: adminEmail,
+        documentId: updated.documentId,
+        documentTitle: updated.documentTitle,
+        email: updated.email,
+        name: updated.name,
+        company: updated.company,
+      });
 
       return { success: true, request: updated };
     }),
@@ -319,21 +283,15 @@ export const analyticsRouter = {
           message: "Access request not found",
         });
 
-      await logAuditEvent(
-        ctx as unknown as ExtendedCtx,
-        "deny",
-        "access_request",
-        input.requestId,
-        {
-          deniedBy: adminEmail,
-          documentId: updated.documentId,
-          documentTitle: updated.documentTitle,
-          email: updated.email,
-          name: updated.name,
-          company: updated.company,
-          denialReason: input.reason,
-        },
-      );
+      await logAuditEvent(ctx, "deny", "access_request", input.requestId, {
+        deniedBy: adminEmail,
+        documentId: updated.documentId,
+        documentTitle: updated.documentTitle,
+        email: updated.email,
+        name: updated.name,
+        company: updated.company,
+        denialReason: input.reason,
+      });
 
       return { success: true, request: updated };
     }),
