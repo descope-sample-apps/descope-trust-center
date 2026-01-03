@@ -1,8 +1,20 @@
 import * as fs from "fs";
 import * as path from "path";
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
+import {
+  Certification,
+  CreateCertificationSchema,
+  CreateDocumentSchema,
+  CreateFaqSchema,
+  CreateSubprocessorSchema,
+  Document,
+  Faq,
+  Subprocessor,
+} from "@descope-trust-center/db";
 import {
   CertificationsSchema,
   DocumentCategorySchema,
@@ -13,7 +25,18 @@ import {
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
 
-import { publicProcedure } from "../trpc";
+import { protectedProcedure, publicProcedure } from "../trpc";
+import { isAdmin, logAuditEvent } from "../utils/admin";
+
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!isAdmin(ctx.session.user.email)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
+  }
+  return next({ ctx });
+});
 
 /**
  * Reads and parses a JSON data file from the Next.js app data directory
@@ -181,5 +204,207 @@ export const trustCenterRouter = {
         message:
           "You're subscribed! We'll notify you when our subprocessor list changes.",
       };
+    }),
+
+  // ==================== Admin Content Management ====================
+
+  createCertification: adminProcedure
+    .input(CreateCertificationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [certification] = await ctx.db
+        .insert(Certification)
+        .values(input)
+        .returning();
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "create",
+        resource: "certification",
+        details: { certificationId: certification?.id },
+      });
+      return certification;
+    }),
+
+  updateCertification: adminProcedure
+    .input(CreateCertificationSchema.partial().extend({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const [certification] = await ctx.db
+        .update(Certification)
+        .set(data)
+        .where(eq(Certification.id, id))
+        .returning();
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "update",
+        resource: "certification",
+        details: { certificationId: id },
+      });
+      return certification;
+    }),
+
+  deleteCertification: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(Certification).where(eq(Certification.id, input.id));
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "delete",
+        resource: "certification",
+        details: { certificationId: input.id },
+      });
+      return { success: true };
+    }),
+
+  createDocument: adminProcedure
+    .input(CreateDocumentSchema.omit({ updatedAt: true }))
+    .mutation(async ({ ctx, input }) => {
+      const [document] = await ctx.db
+        .insert(Document)
+        .values(input)
+        .returning();
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "create",
+        resource: "document",
+        details: { documentId: document?.id },
+      });
+      return document;
+    }),
+
+  updateDocument: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        category: z
+          .enum(["security-policy", "audit-report", "legal", "questionnaire"])
+          .optional(),
+        accessLevel: z
+          .enum(["public", "login-required", "nda-required"])
+          .optional(),
+        fileUrl: z.string().url().optional(),
+        fileSize: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const [document] = await ctx.db
+        .update(Document)
+        .set({ ...data, updatedAt: sql`CURRENT_TIMESTAMP` })
+        .where(eq(Document.id, id))
+        .returning();
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "update",
+        resource: "document",
+        details: { documentId: id },
+      });
+      return document;
+    }),
+
+  deleteDocument: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(Document).where(eq(Document.id, input.id));
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "delete",
+        resource: "document",
+        details: { documentId: input.id },
+      });
+      return { success: true };
+    }),
+
+  createFaq: adminProcedure
+    .input(CreateFaqSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [faq] = await ctx.db.insert(Faq).values(input).returning();
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "create",
+        resource: "faq",
+        details: { faqId: faq?.id },
+      });
+      return faq;
+    }),
+
+  updateFaq: adminProcedure
+    .input(CreateFaqSchema.partial().extend({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const [faq] = await ctx.db
+        .update(Faq)
+        .set(data)
+        .where(eq(Faq.id, id))
+        .returning();
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "update",
+        resource: "faq",
+        details: { faqId: id },
+      });
+      return faq;
+    }),
+
+  deleteFaq: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(Faq).where(eq(Faq.id, input.id));
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "delete",
+        resource: "faq",
+        details: { faqId: input.id },
+      });
+      return { success: true };
+    }),
+
+  createSubprocessor: adminProcedure
+    .input(CreateSubprocessorSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [subprocessor] = await ctx.db
+        .insert(Subprocessor)
+        .values(input)
+        .returning();
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "create",
+        resource: "subprocessor",
+        details: { subprocessorId: subprocessor?.id },
+      });
+      return subprocessor;
+    }),
+
+  updateSubprocessor: adminProcedure
+    .input(CreateSubprocessorSchema.partial().extend({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const [subprocessor] = await ctx.db
+        .update(Subprocessor)
+        .set(data)
+        .where(eq(Subprocessor.id, id))
+        .returning();
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "update",
+        resource: "subprocessor",
+        details: { subprocessorId: id },
+      });
+      return subprocessor;
+    }),
+
+  deleteSubprocessor: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(Subprocessor).where(eq(Subprocessor.id, input.id));
+      await logAuditEvent({
+        userId: ctx.session.user.id,
+        action: "delete",
+        resource: "subprocessor",
+        details: { subprocessorId: input.id },
+      });
+      return { success: true };
     }),
 } satisfies TRPCRouterRecord;
