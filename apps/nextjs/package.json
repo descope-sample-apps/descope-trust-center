@@ -30,6 +30,7 @@
     "next-intl": "^4.7.0",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "recharts": "^3.6.0",
     "superjson": "2.2.3",
     "zod": "catalog:"
   },
@@ -44,6 +45,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
+    "@types/recharts": "^1.8.29",
     "@vitejs/plugin-react": "catalog:",
     "eslint": "catalog:",
     "jiti": "^2.5.1",
