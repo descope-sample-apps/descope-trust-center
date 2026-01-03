@@ -2,6 +2,7 @@
 
 import { useCallback, useId, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { z } from "zod/v4";
 
 import { cn } from "@descope-trust-center/ui";
@@ -16,17 +17,6 @@ import {
 import { Input } from "@descope-trust-center/ui/input";
 
 import { useTRPC } from "~/trpc/react";
-
-/**
- * Request type options for the contact form dropdown
- */
-const REQUEST_TYPES = [
-  { value: "general", label: "General Inquiry" },
-  { value: "compliance", label: "Compliance Question" },
-  { value: "security-report", label: "Security Report" },
-  { value: "partnership", label: "Partnership" },
-  { value: "other", label: "Other" },
-] as const;
 
 type _RequestType = (typeof REQUEST_TYPES)[number]["value"];
 
@@ -78,6 +68,7 @@ type FieldErrors = Partial<Record<keyof ContactFormData, string>>;
  * The mutation currently logs to console; email integration to be added.
  */
 export function ContactForm() {
+  const t = useTranslations("contact");
   const formId = useId();
   const successRef = useRef<HTMLDivElement>(null);
 

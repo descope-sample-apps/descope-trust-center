@@ -55,5 +55,138 @@
       "title": "Stay Updated",
       "description": "Get notified when new subprocessors are added or updated."
     }
+  },
+  "compliance": {
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "inProgress": "In Progress",
+      "expired": "Expired"
+    },
+    "status": {
+      "active": "Active",
+      "inProgress": "In Progress",
+      "expired": "Expired",
+      "pendingRenewal": "Pending Renewal"
+    },
+    "actions": {
+      "showDetails": "Show Details",
+      "showLess": "Show Less"
+    }
+  },
+  "contact": {
+    "title": "Contact Our Security Team",
+    "subtitle": "Have a security question or need access to documentation? We're here to help.",
+    "requestTypes": {
+      "general": "General Inquiry",
+      "compliance": "Compliance Question",
+      "securityReport": "Security Report",
+      "partnership": "Partnership",
+      "other": "Other"
+    },
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "company": "Company",
+      "requestType": "Request Type",
+      "message": "Message"
+    },
+    "placeholders": {
+      "name": "Jane Doe",
+      "company": "Acme Corp",
+      "message": "Please describe your security question or request..."
+    },
+    "validation": {
+      "nameRequired": "Name must be at least 2 characters",
+      "nameTooLong": "Name must be 100 characters or less",
+      "emailInvalid": "Please enter a valid email address",
+      "companyRequired": "Company is required",
+      "companyTooLong": "Company must be 100 characters or less",
+      "requestTypeRequired": "Please select a request type",
+      "messageTooShort": "Please provide more detail (at least 10 characters)",
+      "messageTooLong": "Message must be 5000 characters or less"
+    },
+    "messages": {
+      "success": "Thank you for your inquiry!",
+      "successDescription": "We've received your request and will respond within 1 business day.",
+      "error": "Something went wrong. Please try again or email us at security@descope.com",
+      "sendAnother": "Send another message"
+    },
+    "buttons": {
+      "submit": "Send Request",
+      "submitting": "Submitting..."
+    },
+    "urgent": "For urgent security matters, please email us directly at"
+  },
+  "faq": {
+    "categories": {
+      "all": "All",
+      "security": "Security",
+      "compliance": "Compliance",
+      "privacy": "Privacy",
+      "dataHandling": "Data Handling",
+      "authentication": "Authentication",
+      "general": "General"
+    }
+  },
+  "documents": {
+    "filters": {
+      "all": "All Documents",
+      "securityPolicy": "Security Policies",
+      "compliance": "Compliance",
+      "legal": "Legal",
+      "questionnaire": "Questionnaires",
+      "auditReport": "Audit Reports",
+      "technical": "Technical"
+    },
+    "access": {
+      "public": "Public",
+      "loginRequired": "Login Required",
+      "ndaRequired": "NDA Required"
+    },
+    "search": "Search documents",
+    "clearSearch": "Clear search",
+    "noResults": "No documents found"
+  },
+  "subprocessors": {
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "underReview": "Under Review"
+    }
+  },
+  "subscription": {
+    "emailPlaceholder": "Enter your email address",
+    "button": "Subscribe",
+    "submitting": "Subscribing...",
+    "validation": {
+      "emailInvalid": "Please enter a valid email address"
+    }
+  },
+  "security": {
+    "features": [
+      "Encrypted backups with separate keys",
+      "Least privilege principle enforced",
+      "Comprehensive audit logging",
+      "Immediate customer notification",
+      "GDPR compliant",
+      "CCPA compliant",
+      "Data retention controls",
+      "Right to deletion support",
+      "Bug bounty program",
+      "Continuous security scanning"
+    ],
+    "sections": {
+      "accessControls": "Access Controls",
+      "infrastructureSecurity": "Infrastructure Security",
+      "incidentResponse": "Incident Response",
+      "dataPrivacy": "Data Privacy",
+      "vulnerabilityManagement": "Vulnerability Management"
+    }
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Page not found"
   }
 }
