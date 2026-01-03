@@ -53,11 +53,21 @@ export const createTRPCContext = (opts: {
   headers: Headers;
   session: DescopeSession | null;
 }) => {
+  const ipAddress =
+    opts.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    opts.headers.get("x-real-ip") ??
+    "unknown";
+  const userAgent = opts.headers.get("user-agent") ?? "unknown";
+
   return {
     session: opts.session,
     db,
+    ipAddress,
+    userAgent,
   };
 };
+
+export type Context = ReturnType<typeof createTRPCContext>;
 /**
  * 2. INITIALIZATION
  *
