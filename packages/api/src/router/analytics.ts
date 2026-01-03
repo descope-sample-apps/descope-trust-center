@@ -8,6 +8,7 @@ import {
   CreateDocumentDownloadSchema,
   CreateFormSubmissionSchema,
   desc,
+  Document,
   DocumentAccessRequest,
   DocumentDownload,
   eq,
@@ -335,4 +336,52 @@ export const analyticsRouter = {
       totalAuditLogs: Number(auditCount[0]?.count ?? 0),
     };
   }),
+
+  getDocumentDownloadAnalytics: adminProcedure.query(async ({ ctx }) => {
+    const results = await ctx.db
+      .select({
+        documentId: Document.id,
+        documentTitle: Document.title,
+        category: Document.category,
+        accessLevel: Document.accessLevel,
+        totalDownloads: sql<number>`count(${DocumentDownload.id})`,
+        downloadsThisMonth: sql<number>`count(case when ${DocumentDownload.createdAt} >= date_trunc('month', current_date) then ${DocumentDownload.id} end)`,
+        downloadsThisWeek: sql<number>`count(case when ${DocumentDownload.createdAt} >= date_trunc('week', current_date) then ${DocumentDownload.id} end)`,
+        lastDownloadAt: sql<Date>`max(${DocumentDownload.createdAt})`,
+        lastDownloadUser: sql<string>`(array_agg(${DocumentDownload.userName} order by ${DocumentDownload.createdAt} desc))[1]`,
+        lastDownloadCompany: sql<string>`(array_agg(${DocumentDownload.company} order by ${DocumentDownload.createdAt} desc))[1]`,
+      })
+      .from(Document)
+      .innerJoin(DocumentDownload, eq(Document.id, DocumentDownload.documentId))
+      .groupBy(
+        Document.id,
+        Document.title,
+        Document.category,
+        Document.accessLevel,
+      )
+      .orderBy(sql`count(${DocumentDownload.id}) desc`);
+
+    return results.map((row) => ({
+      documentId: row.documentId,
+      documentTitle: row.documentTitle,
+      category: row.category,
+      accessLevel: row.accessLevel,
+      totalDownloads: row.totalDownloads,
+      downloadsThisMonth: row.downloadsThisMonth,
+      downloadsThisWeek: row.downloadsThisWeek,
+      lastDownloadAt: row.lastDownloadAt,
+      lastDownloadUser: row.lastDownloadUser,
+      lastDownloadCompany: row.lastDownloadCompany,
+    }));
+  }),
+
+  getDownloadHistory: adminProcedure
+    .input(z.object({ documentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select()
+        .from(DocumentDownload)
+        .where(eq(DocumentDownload.documentId, input.documentId))
+        .orderBy(desc(DocumentDownload.createdAt));
+    }),
 } satisfies TRPCRouterRecord;
