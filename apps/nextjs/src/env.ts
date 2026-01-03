@@ -10,8 +10,8 @@ export const env = createEnv({
       .default("development"),
   },
   server: {
-    POSTGRES_URL: z.url(),
     DATABASE_URL: z.url().optional(),
+    POSTGRES_URL: z.url(),
     SENTRY_ORG: z.string().optional(),
     SENTRY_PROJECT: z.string().optional(),
     SENTRY_AUTH_TOKEN: z.string().optional(),

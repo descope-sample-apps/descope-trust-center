@@ -165,7 +165,11 @@ test.describe("Trust Center E2E Tests", () => {
     const faqSection = page.locator("#faq");
     await faqSection.scrollIntoViewIfNeeded();
 
-    const firstAccordion = faqSection.locator("button").first();
+    // Find the first FAQ accordion button (skip category filter buttons)
+    const faqAccordion = faqSection.locator(
+      "div.divide-y button[aria-expanded]",
+    );
+    const firstAccordion = faqAccordion.first();
     await firstAccordion.click();
 
     await page.waitForTimeout(300);

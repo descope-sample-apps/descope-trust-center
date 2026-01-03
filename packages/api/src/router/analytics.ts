@@ -345,6 +345,76 @@ export const analyticsRouter = {
       return { success: true, request: updated };
     }),
 
+  getTopDownloads: adminProcedure.query(async ({ ctx }) => {
+    const topDownloads = await ctx.db
+      .select({
+        documentTitle: DocumentDownload.documentTitle,
+        count: sql<number>`count(*)`,
+      })
+      .from(DocumentDownload)
+      .groupBy(DocumentDownload.documentTitle)
+      .orderBy(sql`count(*) desc`)
+      .limit(5);
+    return topDownloads;
+  }),
+
+  getFormSummary: adminProcedure.query(async ({ ctx }) => {
+    const formSummary = await ctx.db
+      .select({
+        type: FormSubmission.type,
+        count: sql<number>`count(*)`,
+      })
+      .from(FormSubmission)
+      .groupBy(FormSubmission.type)
+      .orderBy(sql`count(*) desc`);
+    return formSummary;
+  }),
+
+  getRecentActivity: adminProcedure.query(async ({ ctx }) => {
+    // Get recent downloads and submissions, combine and sort by date
+    const [downloads, submissions] = await Promise.all([
+      ctx.db
+        .select({
+          id: DocumentDownload.id,
+          type: sql`'download'`,
+          title: DocumentDownload.documentTitle,
+          user: DocumentDownload.userName,
+          email: DocumentDownload.userEmail,
+          company: DocumentDownload.company,
+          createdAt: DocumentDownload.createdAt,
+        })
+        .from(DocumentDownload)
+        .orderBy(desc(DocumentDownload.createdAt))
+        .limit(10),
+      ctx.db
+        .select({
+          id: FormSubmission.id,
+          type: FormSubmission.type,
+          title: sql`'Form Submission'`,
+          user: FormSubmission.name,
+          email: FormSubmission.email,
+          company: FormSubmission.company,
+          createdAt: FormSubmission.createdAt,
+        })
+        .from(FormSubmission)
+        .orderBy(desc(FormSubmission.createdAt))
+        .limit(10),
+    ]);
+
+    // Combine and sort by createdAt desc
+    const activities = [
+      ...downloads.map((d) => ({ ...d, type: "download" as const })),
+      ...submissions.map((s) => ({ ...s, type: "submission" as const })),
+    ]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+      .slice(0, 10);
+
+    return activities;
+  }),
+
   updateFormSubmissionStatus: adminProcedure
     .input(
       z.object({
@@ -380,7 +450,6 @@ export const analyticsRouter = {
 
       return { success: true, submission: updated };
     }),
-
   getDashboardSummary: adminProcedure.query(async ({ ctx }) => {
     const [downloadCount, formCount, pendingRequests, auditCount] =
       await Promise.all([
