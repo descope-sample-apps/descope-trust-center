@@ -19,6 +19,7 @@ import {
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
 
+import { emailTemplates, sendEmail } from "../email";
 import { publicProcedure } from "../trpc";
 
 /**
@@ -129,7 +130,7 @@ export const trustCenterRouter = {
 
   /**
    * Submits a security inquiry contact form
-   * For v1: logs to console (no email/database integration)
+   * Sends confirmation email to user and notification to internal team
    */
   submitContactForm: publicProcedure
     .input(ContactFormSchema)
@@ -160,6 +161,31 @@ export const trustCenterRouter = {
         ipAddress: ctx.ipAddress,
       });
 
+      // Send confirmation email to user
+      const userEmailTemplate = emailTemplates.contactFormConfirmation(
+        input.name,
+      );
+      await sendEmail({
+        to: input.email,
+        subject: userEmailTemplate.subject,
+        html: userEmailTemplate.html,
+        text: userEmailTemplate.text,
+      });
+
+      // Send notification email to internal team
+      const internalEmailTemplate = emailTemplates.contactFormNotification({
+        name: input.name,
+        email: input.email,
+        company: input.company,
+        message: input.message,
+      });
+      await sendEmail({
+        to: "security@descope.com", // Internal email address
+        subject: internalEmailTemplate.subject,
+        html: internalEmailTemplate.html,
+        text: internalEmailTemplate.text,
+      });
+
       return {
         success: true,
         message:
@@ -169,7 +195,7 @@ export const trustCenterRouter = {
 
   /**
    * Requests access to an NDA-required document
-   * For v1: logs to console (no email/database integration)
+   * Sends confirmation email to user and notification to internal team
    */
   requestDocument: publicProcedure
     .input(DocumentRequestSchema)
@@ -200,6 +226,35 @@ export const trustCenterRouter = {
         ipAddress: ctx.ipAddress,
       });
 
+      // Send confirmation email to user
+      const userEmailTemplate = emailTemplates.documentRequestConfirmation({
+        name: input.name,
+        email: input.email,
+        company: input.company,
+        reason: input.reason,
+      });
+      await sendEmail({
+        to: input.email,
+        subject: userEmailTemplate.subject,
+        html: userEmailTemplate.html,
+        text: userEmailTemplate.text,
+      });
+
+      // Send notification email to internal team
+      const internalEmailTemplate = emailTemplates.documentRequestNotification({
+        name: input.name,
+        email: input.email,
+        company: input.company,
+        reason: input.reason,
+        documentId: input.documentId,
+      });
+      await sendEmail({
+        to: "security@descope.com", // Internal email address
+        subject: internalEmailTemplate.subject,
+        html: internalEmailTemplate.html,
+        text: internalEmailTemplate.text,
+      });
+
       return {
         success: true,
         message:
@@ -228,6 +283,16 @@ export const trustCenterRouter = {
         email: input.email,
         metadata: {},
         ipAddress: ctx.ipAddress,
+      });
+
+      // Send confirmation email to user
+      const confirmationTemplate =
+        emailTemplates.subprocessorSubscriptionConfirmation(input.email);
+      await sendEmail({
+        to: input.email,
+        subject: confirmationTemplate.subject,
+        html: confirmationTemplate.html,
+        text: confirmationTemplate.text,
       });
 
       return {

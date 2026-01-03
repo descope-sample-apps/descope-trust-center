@@ -15,6 +15,7 @@ import {
   sql,
 } from "@descope-trust-center/db";
 
+import { emailTemplates, sendEmail } from "../email";
 import { protectedProcedure, publicProcedure } from "../trpc";
 import { isAdmin, logAuditEvent } from "../utils/admin";
 
@@ -239,6 +240,21 @@ export const analyticsRouter = {
         },
       );
 
+      // Send approval email to requester
+      const approvalTemplate = emailTemplates.documentRequestApproved({
+        name: updated.name,
+        email: updated.email,
+        documentName: updated.documentTitle,
+        downloadLink:
+          "https://descope.com/trust-center/documents/" + updated.documentId, // Placeholder link
+      });
+      await sendEmail({
+        to: updated.email,
+        subject: approvalTemplate.subject,
+        html: approvalTemplate.html,
+        text: approvalTemplate.text,
+      });
+
       return { success: true, request: updated };
     }),
 
@@ -283,6 +299,20 @@ export const analyticsRouter = {
           company: updated.company,
         },
       );
+
+      // Send denial email to requester
+      const denialTemplate = emailTemplates.documentRequestDenied({
+        name: updated.name,
+        email: updated.email,
+        documentName: updated.documentTitle,
+        reason: input.reason,
+      });
+      await sendEmail({
+        to: updated.email,
+        subject: denialTemplate.subject,
+        html: denialTemplate.html,
+        text: denialTemplate.text,
+      });
 
       return { success: true, request: updated };
     }),
