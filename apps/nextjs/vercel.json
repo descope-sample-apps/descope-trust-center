@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/clean-audit-logs",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

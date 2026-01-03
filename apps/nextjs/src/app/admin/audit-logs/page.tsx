@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 
 import type { RouterOutputs } from "@descope-trust-center/api";
@@ -32,6 +33,7 @@ export const runtime = "edge";
 
 export default function AuditLogsPage() {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState({
     userEmail: "",
     action: "",
@@ -41,6 +43,7 @@ export default function AuditLogsPage() {
   });
   const [currentPage, setCurrentPage] = useState(0);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
+  const [exporting, setExporting] = useState(false);
 
   const { data: auditData } = trpc.analytics.getAuditLogs.useQuery({
     ...filters,
@@ -49,42 +52,47 @@ export default function AuditLogsPage() {
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-  const exportMutation = (trpc.analytics as any).exportAuditLogs.useMutation();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
   const cleanMutation = (trpc.analytics as any).cleanAuditLogs.useMutation();
 
   // Type assertions needed due to tRPC client typing issues with admin procedures
   const handleExportAsync = async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    const result = (await exportMutation.mutateAsync({
-      ...filters,
-      format: exportFormat,
-    })) as { format: string; data: string; filename?: string };
+    setExporting(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const result = (await queryClient.fetchQuery(
+        (trpc.analytics as any).exportAuditLogs.queryOptions({
+          ...filters,
+          format: exportFormat,
+        }),
+      )) as { format: string; data: string; filename?: string };
 
-    if (result.format === "csv") {
-      const blob = new Blob([result.data], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download =
-        result.filename ??
-        `audit-logs-${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } else {
-      const blob = new Blob([JSON.stringify(result.data, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `audit-logs-${new Date().toISOString().split("T")[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      if (result.format === "csv") {
+        const blob = new Blob([result.data], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download =
+          result.filename ??
+          `audit-logs-${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        const blob = new Blob([JSON.stringify(result.data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `audit-logs-${new Date().toISOString().split("T")[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -137,13 +145,8 @@ export default function AuditLogsPage() {
               <SelectItem value="json">JSON</SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            onClick={handleExport}
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-            disabled={exportMutation.isPending}
-          >
-            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */}
-            {exportMutation.isPending ? "Exporting..." : "Export"}
+          <Button onClick={handleExport} disabled={exporting}>
+            {exporting ? "Exporting..." : "Export"}
           </Button>
         </div>
       </div>
