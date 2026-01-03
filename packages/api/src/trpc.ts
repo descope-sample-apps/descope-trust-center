@@ -59,11 +59,7 @@ export interface TRPCContext {
 export const createTRPCContext = (opts: {
   headers: Headers;
   session: DescopeSession | null;
-<<<<<<< HEAD
 }): TRPCContext => {
-=======
-}) => {
->>>>>>> origin/main
   const ipAddress =
     opts.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     opts.headers.get("x-real-ip") ??

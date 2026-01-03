@@ -292,30 +292,3 @@ export const CreateFaqSchema = createInsertSchema(Faq, {
     "authentication",
   ]),
 }).omit({ createdAt: true, updatedAt: true });
-<<<<<<< HEAD
-
-export const AuditLog = pgTable("audit_log", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  userEmail: t.varchar({ length: 256 }),
-  userName: t.varchar({ length: 256 }),
-  action: t.varchar({ length: 100 }).notNull(),
-  entityType: t.varchar({ length: 100 }),
-  entityId: t.varchar({ length: 256 }),
-  details: t.jsonb(),
-  ipAddress: t.varchar({ length: 45 }),
-  userAgent: t.text(),
-  createdAt: t.timestamp().defaultNow().notNull(),
-}));
-
-export const CreateAuditLogSchema = createInsertSchema(AuditLog, {
-  userEmail: z.string().optional(),
-  userName: z.string().optional(),
-  action: z.string().min(1),
-  entityType: z.string().optional(),
-  entityId: z.string().optional(),
-  details: z.any().optional(),
-  ipAddress: z.string().optional(),
-  userAgent: z.string().optional(),
-}).omit({ id: true, createdAt: true });
-=======
->>>>>>> origin/main

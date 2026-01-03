@@ -26,8 +26,6 @@ import { emailTemplates, sendEmail } from "../email";
 import { protectedProcedure, publicProcedure } from "../trpc";
 import { isAdmin, logAuditEvent } from "../utils/admin";
 
-
-
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!isAdmin(ctx.session.user.email, ctx.session.user.roles)) {
     throw new TRPCError({
@@ -47,14 +45,6 @@ export const analyticsRouter = {
         .values(input)
         .returning();
 
-<<<<<<< HEAD
-      await logAuditEvent(ctx, "download", "document", input.documentId, {
-        documentTitle: input.documentTitle,
-        userEmail: input.userEmail,
-        userName: input.userName,
-        company: input.company,
-      });
-=======
       await logAuditEvent(
         ctx,
         "download",
@@ -67,7 +57,6 @@ export const analyticsRouter = {
           company: input.company,
         },
       );
->>>>>>> origin/main
 
       return download;
     }),
@@ -80,11 +69,7 @@ export const analyticsRouter = {
         .values(input)
         .returning();
 
-<<<<<<< HEAD
-      await logAuditEvent(ctx, "submit", "form", input.type, {
-=======
       await logAuditEvent(ctx, "create", "form_submission", input.type, {
->>>>>>> origin/main
         email: input.email,
         name: input.name,
         company: input.company,
@@ -102,15 +87,6 @@ export const analyticsRouter = {
         .values(input)
         .returning();
 
-<<<<<<< HEAD
-      await logAuditEvent(ctx, "request", "document", input.documentId, {
-        documentTitle: input.documentTitle,
-        email: input.email,
-        name: input.name,
-        company: input.company,
-        reason: input.reason,
-      });
-=======
       await logAuditEvent(
         ctx,
         "create",
@@ -124,7 +100,20 @@ export const analyticsRouter = {
           reason: input.reason,
         },
       );
->>>>>>> origin/main
+
+      await logAuditEvent(
+        ctx,
+        "create",
+        "document_access_request",
+        input.documentId,
+        {
+          documentTitle: input.documentTitle,
+          email: input.email,
+          name: input.name,
+          company: input.company,
+          reason: input.reason,
+        },
+      );
 
       return {
         id: request?.id,
@@ -284,15 +273,6 @@ export const analyticsRouter = {
           message: "Access request not found",
         });
 
-<<<<<<< HEAD
-      await logAuditEvent(ctx, "approve", "access_request", input.requestId, {
-        approvedBy: adminEmail,
-        documentId: updated.documentId,
-        documentTitle: updated.documentTitle,
-        email: updated.email,
-        name: updated.name,
-        company: updated.company,
-=======
       await logAuditEvent(
         ctx,
         "approve",
@@ -321,7 +301,6 @@ export const analyticsRouter = {
         subject: approvalTemplate.subject,
         html: approvalTemplate.html,
         text: approvalTemplate.text,
->>>>>>> origin/main
       });
 
       return { success: true, request: updated };
@@ -353,16 +332,6 @@ export const analyticsRouter = {
           message: "Access request not found",
         });
 
-<<<<<<< HEAD
-      await logAuditEvent(ctx, "deny", "access_request", input.requestId, {
-        deniedBy: adminEmail,
-        documentId: updated.documentId,
-        documentTitle: updated.documentTitle,
-        email: updated.email,
-        name: updated.name,
-        company: updated.company,
-        denialReason: input.reason,
-=======
       await logAuditEvent(
         ctx,
         "deny",
@@ -391,13 +360,11 @@ export const analyticsRouter = {
         subject: denialTemplate.subject,
         html: denialTemplate.html,
         text: denialTemplate.text,
->>>>>>> origin/main
       });
 
       return { success: true, request: updated };
     }),
 
-<<<<<<< HEAD
   getAuditLogs: adminProcedure
     .input(
       z
@@ -557,7 +524,6 @@ export const analyticsRouter = {
       };
     }),
 
-=======
   getTopDownloads: adminProcedure.query(async ({ ctx }) => {
     const topDownloads = await ctx.db
       .select({
@@ -663,7 +629,7 @@ export const analyticsRouter = {
 
       return { success: true, submission: updated };
     }),
->>>>>>> origin/main
+
   getDashboardSummary: adminProcedure.query(async ({ ctx }) => {
     const [downloadCount, formCount, pendingRequests, auditCount] =
       await Promise.all([

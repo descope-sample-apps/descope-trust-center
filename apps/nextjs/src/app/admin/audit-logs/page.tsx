@@ -51,8 +51,7 @@ export default function AuditLogsPage() {
     offset: currentPage * 50,
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-  const cleanMutation = (trpc.analytics as any).cleanAuditLogs.useMutation();
+  const cleanMutation = trpc.analytics.cleanAuditLogs.useMutation();
 
   // Type assertions needed due to tRPC client typing issues with admin procedures
   const handleExportAsync = async () => {
