@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import type {
@@ -124,8 +125,8 @@ export function ComplianceGrid() {
       "pending-renewal": 2,
       expired: 3,
     };
-    const aOrder = statusOrder[a.status] ?? 4;
-    const bOrder = statusOrder[b.status] ?? 4;
+    const aOrder = statusOrder[a.status];
+    const bOrder = statusOrder[b.status];
     if (aOrder !== bOrder) return aOrder - bOrder;
     return a.name.localeCompare(b.name);
   });
@@ -156,10 +157,11 @@ export function ComplianceGrid() {
     onToggleExpand: () => void;
     t: (key: string) => string;
   }) {
-    const hasDetails =
-      certification.lastAuditDate ||
-      certification.expiryDate ||
-      certification.standards?.length;
+    const hasDetails = [
+      certification.lastAuditDate,
+      certification.expiryDate,
+      certification.standards?.length,
+    ].some(Boolean);
     const expiringSoon = isExpiringSoon(certification.expiryDate);
 
     return (
@@ -175,9 +177,11 @@ export function ComplianceGrid() {
           <div className="flex items-center gap-3">
             {certification.logo ? (
               <div className="relative size-8 shrink-0 overflow-hidden rounded">
-                <img
+                <Image
                   src={certification.logo}
                   alt={`${certification.name} logo`}
+                  width={32}
+                  height={32}
                   className="size-full object-cover"
                 />
               </div>

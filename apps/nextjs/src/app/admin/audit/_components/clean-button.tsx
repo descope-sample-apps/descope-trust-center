@@ -15,10 +15,12 @@ export function CleanButton() {
       onSuccess: (result) => {
         alert(`Successfully deleted ${result.deletedCount} old audit logs.`);
         // Refresh the stats and list
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.audit.getStats.queryKey(),
         });
-        queryClient.invalidateQueries({ queryKey: trpc.audit.list.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.audit.list.queryKey(),
+        });
       },
       onError: (error) => {
         console.error("Clean failed:", error);

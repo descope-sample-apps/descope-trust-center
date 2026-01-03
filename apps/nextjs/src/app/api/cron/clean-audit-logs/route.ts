@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 import { AuditLog, lt } from "@descope-trust-center/db";
 import { db } from "@descope-trust-center/db/client";

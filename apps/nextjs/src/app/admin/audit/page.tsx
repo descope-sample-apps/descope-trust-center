@@ -77,6 +77,6 @@ function ExportButtonSkeleton() {
   return <div className="bg-muted h-10 w-24 animate-pulse rounded" />;
 }
 
-function CleanButtonSkeleton() {
+function _CleanButtonSkeleton() {
   return <div className="bg-muted h-10 w-32 animate-pulse rounded" />;
 }

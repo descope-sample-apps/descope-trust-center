@@ -19,9 +19,18 @@ import {
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
 
-import { emailTemplates, sendEmail } from "../email";
 import { env } from "../env";
-import { publicProcedure } from "../trpc";
+import { createEmailService } from "../lib/email";
+import { protectedProcedure, publicProcedure } from "../trpc";
+
+// Create email service instance
+const emailService = createEmailService({
+  apiKey: env.RESEND_API_KEY,
+  fromEmail:
+    env.TRUST_CENTER_FROM_EMAIL ?? "Trust Center <noreply@descope.com>",
+  notificationEmail:
+    env.TRUST_CENTER_NOTIFICATION_EMAIL ?? "security@descope.com",
+});
 
 /**
  * Reads and parses a JSON data file from the Next.js app data directory
@@ -162,30 +171,24 @@ export const trustCenterRouter = {
         ipAddress: ctx.ipAddress,
       });
 
-      // Send confirmation email to user
-      const userEmailTemplate = emailTemplates.contactFormConfirmation(
-        input.name,
-      );
-      await sendEmail({
-        to: input.email,
-        subject: userEmailTemplate.subject,
-        html: userEmailTemplate.html,
-        text: userEmailTemplate.text,
-      });
-
       // Send notification email to internal team
-      const internalEmailTemplate = emailTemplates.contactFormNotification({
-        name: input.name,
-        email: input.email,
-        company: input.company,
-        message: input.message,
-      });
-      await sendEmail({
-        to: "security@descope.com", // Internal email address
-        subject: internalEmailTemplate.subject,
-        html: internalEmailTemplate.html,
-        text: internalEmailTemplate.text,
-      });
+      if (emailService) {
+        try {
+          await emailService.sendContactFormNotification({
+            name: input.name,
+            email: input.email,
+            company: input.company,
+            message: input.message,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send contact form notification:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
+      }
 
       return {
         success: true,
@@ -216,45 +219,42 @@ export const trustCenterRouter = {
         userAgent: ctx.userAgent,
       });
 
+      // Fetch document title for the request
+      const documents = DocumentsSchema.parse(
+        readDataFile<unknown[]>("documents.json"),
+      );
+      const document = documents.find((doc) => doc.id === input.documentId);
+
       // Also save to document_access_request table for admin review
       await ctx.db.insert(DocumentAccessRequest).values({
         documentId: input.documentId,
-        documentTitle: "", // TODO: fetch from document table
-        email: input.email,
+        documentTitle: document?.title ?? "Unknown Document",
         name: input.name,
+        email: input.email,
         company: input.company,
         reason: input.reason,
         ipAddress: ctx.ipAddress,
       });
 
       // Send confirmation email to user
-      const userEmailTemplate = emailTemplates.documentRequestConfirmation({
-        name: input.name,
-        email: input.email,
-        company: input.company,
-        reason: input.reason,
-      });
-      await sendEmail({
-        to: input.email,
-        subject: userEmailTemplate.subject,
-        html: userEmailTemplate.html,
-        text: userEmailTemplate.text,
-      });
-
-      // Send notification email to internal team
-      const internalEmailTemplate = emailTemplates.documentRequestNotification({
-        name: input.name,
-        email: input.email,
-        company: input.company,
-        reason: input.reason,
-        documentId: input.documentId,
-      });
-      await sendEmail({
-        to: "security@descope.com", // Internal email address
-        subject: internalEmailTemplate.subject,
-        html: internalEmailTemplate.html,
-        text: internalEmailTemplate.text,
-      });
+      if (emailService) {
+        try {
+          await emailService.sendDocumentRequestConfirmation({
+            name: input.name,
+            email: input.email,
+            company: input.company,
+            documentId: input.documentId,
+            reason: input.reason,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send document request confirmation:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
+      }
 
       return {
         success: true,
@@ -286,15 +286,21 @@ export const trustCenterRouter = {
         ipAddress: ctx.ipAddress,
       });
 
-      // Send confirmation email to user
-      const confirmationTemplate =
-        emailTemplates.subprocessorSubscriptionConfirmation(input.email);
-      await sendEmail({
-        to: input.email,
-        subject: confirmationTemplate.subject,
-        html: confirmationTemplate.html,
-        text: confirmationTemplate.text,
-      });
+      // Send confirmation email to subscriber
+      if (emailService) {
+        try {
+          await emailService.sendSubprocessorSubscriptionConfirmation({
+            email: input.email,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send subscription confirmation:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
+      }
 
       return {
         success: true,
@@ -307,7 +313,7 @@ export const trustCenterRouter = {
    * Returns current status page information
    */
   getStatusPage: publicProcedure.query(async () => {
-    const statusPageUrl = env.STATUS_PAGE_URL;
+    const statusPageUrl = process.env.STATUS_PAGE_URL;
 
     if (!statusPageUrl) {
       return {
@@ -341,4 +347,99 @@ export const trustCenterRouter = {
       };
     }
   }),
+
+  // ==================== Admin Mutations ====================
+
+  /**
+   * Approves a document access request (placeholder - requires admin auth)
+   * TODO: Send approval notification email to user
+   */
+  approveDocumentRequest: protectedProcedure
+    .input(
+      z.object({
+        requestId: z.string(),
+        documentId: z.string(),
+        userEmail: z.string(),
+        userName: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      console.log("[Trust Center] Document request approved:", {
+        requestId: input.requestId,
+        documentId: input.documentId,
+        userEmail: input.userEmail,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Send approval notification email to user
+      if (emailService) {
+        try {
+          await emailService.sendDocumentAccessApproval({
+            email: input.userEmail,
+            name: input.userName,
+            documentId: input.documentId,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send document approval notification:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
+      }
+
+      return {
+        success: true,
+        message: "Document access request approved.",
+      };
+    }),
+
+  /**
+   * Denies a document access request (placeholder - requires admin auth)
+   * TODO: Send denial notification email to user
+   */
+  denyDocumentRequest: protectedProcedure
+    .input(
+      z.object({
+        requestId: z.string(),
+        documentId: z.string(),
+        userEmail: z.string(),
+        userName: z.string(),
+        reason: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      console.log("[Trust Center] Document request denied:", {
+        requestId: input.requestId,
+        documentId: input.documentId,
+        userEmail: input.userEmail,
+        reason: input.reason,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Send denial notification email to user
+      if (emailService) {
+        try {
+          await emailService.sendDocumentAccessDenial({
+            email: input.userEmail,
+            name: input.userName,
+            documentId: input.documentId,
+            reason: input.reason,
+          });
+        } catch (error) {
+          console.error(
+            "[Trust Center] Failed to send document denial notification:",
+            error,
+          );
+          // Continue with success response even if email fails
+          // TODO: Consider implementing retry mechanism or alerting
+        }
+      }
+
+      return {
+        success: true,
+        message: "Document access request denied.",
+      };
+    }),
 } satisfies TRPCRouterRecord;

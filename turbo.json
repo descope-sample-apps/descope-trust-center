@@ -59,7 +59,10 @@
     "SENTRY_ORG",
     "SENTRY_PROJECT",
     "SENTRY_AUTH_TOKEN",
-    "RESEND_API_KEY"
+    "RESEND_API_KEY",
+    "TRUST_CENTER_FROM_EMAIL",
+    "TRUST_CENTER_NOTIFICATION_EMAIL",
+    "STATUS_PAGE_URL"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",

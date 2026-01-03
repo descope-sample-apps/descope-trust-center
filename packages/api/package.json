@@ -23,7 +23,8 @@
     "@descope-trust-center/validators": "workspace:*",
     "@t3-oss/env-core": "^0.11.1",
     "@trpc/server": "catalog:",
-    "resend": "^6.6.0",
+    "react": "catalog:react19",
+    "resend": "^4.0.0",
     "superjson": "2.2.3",
     "zod": "catalog:"
   },
@@ -33,6 +34,7 @@
     "@descope-trust-center/tsconfig": "workspace:*",
     "@testcontainers/postgresql": "^11.11.0",
     "@types/pg": "^8.16.0",
+    "@types/react": "^18.3.12",
     "drizzle-orm": "^0.44.7",
     "eslint": "catalog:",
     "pg": "^8.16.3",

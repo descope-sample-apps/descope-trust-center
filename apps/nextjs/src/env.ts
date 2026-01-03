@@ -17,6 +17,14 @@ export const env = createEnv({
     SENTRY_AUTH_TOKEN: z.string().optional(),
     RESEND_API_KEY: z.string().min(1),
     AUDIT_LOG_RETENTION_DAYS: z.coerce.number().default(90),
+    TRUST_CENTER_FROM_EMAIL: z
+      .string()
+      .email()
+      .default("Trust Center <noreply@descope.com>"),
+    TRUST_CENTER_NOTIFICATION_EMAIL: z
+      .string()
+      .email()
+      .default("security@descope.com"),
   },
 
   client: {
@@ -35,5 +43,6 @@ export const env = createEnv({
   skipValidation:
     !!process.env.CI ||
     process.env.npm_lifecycle_event === "lint" ||
-    !process.env.DATABASE_URL,
+    !process.env.DATABASE_URL ||
+    !!process.env.VERCEL,
 });
