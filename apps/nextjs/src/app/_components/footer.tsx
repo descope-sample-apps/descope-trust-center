@@ -1,86 +1,86 @@
 import Image from "next/image";
 import Link from "next/link";
-
-/**
- * Footer link structure.
- */
-interface FooterLink {
-  href: string;
-  label: string;
-  external?: boolean;
-}
+import { useTranslations } from "next-intl";
 
 /**
  * Footer links organized by category.
  */
-const FOOTER_LINKS: {
-  security: FooterLink[];
-  company: FooterLink[];
-  legal: FooterLink[];
-} = {
-  security: [
-    { href: "#certifications", label: "Certifications" },
-    { href: "#documents", label: "Security Documents" },
-    { href: "#subprocessors", label: "Subprocessors" },
-    { href: "#faq", label: "FAQ" },
-  ],
-  company: [
-    { href: "https://www.descope.com", label: "About Descope", external: true },
-    {
-      href: "https://www.descope.com/blog",
-      label: "Engineering Blog",
-      external: true,
-    },
-    {
-      href: "https://docs.descope.com",
-      label: "Documentation",
-      external: true,
-    },
-    {
-      href: "https://www.descope.com/contact",
-      label: "Contact",
-      external: true,
-    },
-  ],
-  legal: [
-    {
-      href: "https://www.descope.com/privacy",
-      label: "Privacy Policy",
-      external: true,
-    },
-    {
-      href: "https://www.descope.com/terms",
-      label: "Terms of Service",
-      external: true,
-    },
-    {
-      href: "https://www.descope.com/security-compliance",
-      label: "Security & Compliance",
-      external: true,
-    },
-  ],
-};
+function getFooterLinks(t: (key: string) => string): {
+  security: { href: string; label: string; external?: boolean }[];
+  company: { href: string; label: string; external?: boolean }[];
+  legal: { href: string; label: string; external?: boolean }[];
+} {
+  return {
+    security: [
+      { href: "#certifications", label: t("certifications") },
+      { href: "#documents", label: t("documents") },
+      { href: "#subprocessors", label: t("subprocessors") },
+      { href: "#faq", label: t("faq") },
+    ],
+    company: [
+      {
+        href: "https://www.descope.com",
+        label: t("aboutDescope"),
+        external: true,
+      },
+      {
+        href: "https://www.descope.com/blog",
+        label: t("engineeringBlog"),
+        external: true,
+      },
+      {
+        href: "https://docs.descope.com",
+        label: t("documentation"),
+        external: true,
+      },
+      {
+        href: "https://www.descope.com/contact",
+        label: t("contact"),
+        external: true,
+      },
+    ],
+    legal: [
+      {
+        href: "https://www.descope.com/privacy",
+        label: t("privacyPolicy"),
+        external: true,
+      },
+      {
+        href: "https://www.descope.com/terms",
+        label: t("termsOfService"),
+        external: true,
+      },
+      {
+        href: "https://www.descope.com/security-compliance",
+        label: t("securityCompliance"),
+        external: true,
+      },
+    ],
+  };
+}
 
 /**
  * Social media links.
  */
-const SOCIAL_LINKS = [
-  {
-    href: "https://github.com/descope",
-    label: "GitHub",
-    icon: GitHubIcon,
-  },
-  {
-    href: "https://twitter.com/descopeinc",
-    label: "Twitter",
-    icon: TwitterIcon,
-  },
-  {
-    href: "https://www.linkedin.com/company/descope",
-    label: "LinkedIn",
-    icon: LinkedInIcon,
-  },
-] as const;
+function getSocialLinks(t: (key: string) => string) {
+  return [
+    {
+      href: "https://github.com/descope",
+      label: t("github"),
+      icon: GitHubIcon,
+    },
+    {
+      href: "https://twitter.com/descopeinc",
+      label: t("twitter"),
+      icon: TwitterIcon,
+    },
+    {
+      href: "https://www.linkedin.com/company/descope",
+      label: t("linkedin"),
+      icon: LinkedInIcon,
+    },
+  ] as const;
+}
 
 /**
  * Trust Center footer with company info, links, and social media.
@@ -89,7 +89,10 @@ const SOCIAL_LINKS = [
  * Responsive footer with multi-column layout on desktop.
  */
 export function Footer() {
+  const t = useTranslations("footer");
   const currentYear = new Date().getFullYear();
+  const socialLinks = getSocialLinks(t);
+  const footerLinks = getFooterLinks(t);
 
   return (
     <footer className="border-t bg-slate-50 dark:bg-slate-950">
@@ -107,12 +110,11 @@ export function Footer() {
               />
             </Link>
             <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
-              Enterprise-grade authentication and user management for modern
-              applications. SOC 2 Type II certified.
+              {t("description")}
             </p>
             {/* Social Links */}
             <div className="mt-6 flex gap-4">
-              {SOCIAL_LINKS.map((link) => (
+              {socialLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -130,10 +132,10 @@ export function Footer() {
           {/* Security Links */}
           <div>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Trust Center
+              {t("trustCenter")}
             </h3>
             <ul className="mt-4 space-y-3">
-              {FOOTER_LINKS.security.map((link) => (
+              {footerLinks.security.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -149,10 +151,10 @@ export function Footer() {
           {/* Company Links */}
           <div>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Company
+              {t("company")}
             </h3>
             <ul className="mt-4 space-y-3">
-              {FOOTER_LINKS.company.map((link) => (
+              {footerLinks.company.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -173,10 +175,10 @@ export function Footer() {
           {/* Legal Links */}
           <div>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Legal
+              {t("legal")}
             </h3>
             <ul className="mt-4 space-y-3">
-              {FOOTER_LINKS.legal.map((link) => (
+              {footerLinks.legal.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -198,7 +200,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
           <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-            © {currentYear} Descope, Inc. All rights reserved.
+            {t("copyright", { year: currentYear })}
           </p>
         </div>
       </div>

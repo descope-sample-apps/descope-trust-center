@@ -1,0 +1,192 @@
+{
+  "hero": {
+    "badge": "SOC 2 Typ II Zertifiziert",
+    "headline": "Sicherheit und Compliance bei Descope",
+    "subheadline": "Ihr Vertrauen ist unsere Basis. Wir halten strenge Sicherheitsstandards und Compliance-Zertifizierungen ein, um sicherzustellen, dass Ihre Daten immer geschützt sind.",
+    "cta1": "Unsere Zertifizierungen ansehen",
+    "cta2": "Sicherheitsdokumente durchsuchen",
+    "trustedCertifications": "Vertrauenswürdige Zertifizierungen",
+    "stats": {
+      "uptime": "Betriebszeit-SLA",
+      "breaches": "Datenlecks",
+      "monitoring": "Sicherheitsüberwachung"
+    }
+  },
+  "header": {
+    "certifications": "Zertifizierungen",
+    "documents": "Dokumente",
+    "subprocessors": "Subunternehmer",
+    "faq": "FAQ",
+    "contact": "Kontakt",
+    "signIn": "Anmelden",
+    "signOut": "Abmelden",
+    "visitDescope": "Descope besuchen"
+  },
+  "footer": {
+    "trustCenter": "Trust Center",
+    "company": "Unternehmen",
+    "legal": "Rechtliches",
+    "description": "Unternehmensweite Authentifizierung und Benutzerverwaltung für moderne Anwendungen. SOC 2 Typ II zertifiziert.",
+    "github": "GitHub",
+    "twitter": "Twitter",
+    "linkedin": "LinkedIn",
+    "aboutDescope": "Über Descope",
+    "engineeringBlog": "Engineering Blog",
+    "documentation": "Dokumentation",
+    "contact": "Kontakt",
+    "privacyPolicy": "Datenschutzrichtlinie",
+    "termsOfService": "Nutzungsbedingungen",
+    "securityCompliance": "Sicherheit und Compliance",
+    "copyright": "© {year} Descope, Inc. Alle Rechte vorbehalten.",
+    "certifications": "Zertifizierungen",
+    "documents": "Dokumente",
+    "subprocessors": "Subunternehmer",
+    "faq": "FAQ"
+  },
+  "page": {
+    "loading": {
+      "certifications": "Zertifizierungen werden geladen...",
+      "documents": "Dokumente werden geladen...",
+      "subprocessors": "Subunternehmer werden geladen...",
+      "faq": "FAQ wird geladen...",
+      "contact": "Kontaktformular wird geladen..."
+    },
+    "subscription": {
+      "title": "Bleiben Sie auf dem Laufenden",
+      "description": "Erhalten Sie Benachrichtigungen, wenn neue Subunternehmer hinzugefügt oder aktualisiert werden."
+    }
+  },
+  "compliance": {
+    "filters": {
+      "all": "Alle",
+      "active": "Aktiv",
+      "inProgress": "In Bearbeitung",
+      "expired": "Abgelaufen"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inProgress": "In Bearbeitung",
+      "expired": "Abgelaufen",
+      "pendingRenewal": "Erneuerung ausstehend"
+    },
+    "actions": {
+      "showDetails": "Details anzeigen",
+      "showLess": "Weniger anzeigen"
+    }
+  },
+  "contact": {
+    "title": "Kontaktieren Sie unser Sicherheitsteam",
+    "subtitle": "Haben Sie eine Sicherheitsfrage oder benötigen Sie Zugang zu Dokumentation? Wir sind da, um zu helfen.",
+    "requestTypes": {
+      "general": "Allgemeine Anfrage",
+      "compliance": "Compliance-Frage",
+      "securityReport": "Sicherheitsbericht",
+      "partnership": "Partnerschaft",
+      "other": "Sonstiges"
+    },
+    "fields": {
+      "name": "Name",
+      "email": "E-Mail",
+      "company": "Unternehmen",
+      "requestType": "Anfragetyp",
+      "message": "Nachricht"
+    },
+    "placeholders": {
+      "name": "Jane Doe",
+      "company": "Acme Corp",
+      "message": "Bitte beschreiben Sie Ihre Sicherheitsfrage oder Anfrage..."
+    },
+    "validation": {
+      "nameRequired": "Name muss mindestens 2 Zeichen lang sein",
+      "nameTooLong": "Name darf höchstens 100 Zeichen lang sein",
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "companyRequired": "Unternehmen ist erforderlich",
+      "companyTooLong": "Unternehmen darf höchstens 100 Zeichen lang sein",
+      "requestTypeRequired": "Bitte wählen Sie einen Anfragetyp aus",
+      "messageTooShort": "Bitte geben Sie mehr Details an (mindestens 10 Zeichen)",
+      "messageTooLong": "Nachricht darf höchstens 5000 Zeichen lang sein"
+    },
+    "messages": {
+      "success": "Vielen Dank für Ihre Anfrage!",
+      "successDescription": "Wir haben Ihre Anfrage erhalten und werden innerhalb von 1 Werktag antworten.",
+      "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder senden Sie uns eine E-Mail an security@descope.com",
+      "sendAnother": "Eine weitere Nachricht senden"
+    },
+    "buttons": {
+      "submit": "Anfrage senden",
+      "submitting": "Wird gesendet..."
+    },
+    "urgent": "Für dringende Sicherheitsangelegenheiten senden Sie uns bitte direkt eine E-Mail an"
+  },
+  "faq": {
+    "categories": {
+      "all": "Alle",
+      "security": "Sicherheit",
+      "compliance": "Compliance",
+      "privacy": "Datenschutz",
+      "dataHandling": "Datenverarbeitung",
+      "authentication": "Authentifizierung",
+      "general": "Allgemein"
+    }
+  },
+  "documents": {
+    "filters": {
+      "all": "Alle Dokumente",
+      "securityPolicy": "Sicherheitsrichtlinien",
+      "compliance": "Compliance",
+      "legal": "Rechtliches",
+      "questionnaire": "Fragebögen",
+      "auditReport": "Audit-Berichte",
+      "technical": "Technisch"
+    },
+    "access": {
+      "public": "Öffentlich",
+      "loginRequired": "Anmeldung erforderlich",
+      "ndaRequired": "NDA erforderlich"
+    },
+    "search": "Dokumente durchsuchen",
+    "clearSearch": "Suche löschen",
+    "noResults": "Keine Dokumente gefunden"
+  },
+  "subprocessors": {
+    "filters": {
+      "all": "Alle",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "underReview": "In Prüfung"
+    }
+  },
+  "subscription": {
+    "emailPlaceholder": "Geben Sie Ihre E-Mail-Adresse ein",
+    "button": "Abonnieren",
+    "submitting": "Wird abonniert...",
+    "validation": {
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein"
+    }
+  },
+  "security": {
+    "features": [
+      "Verschlüsselte Backups mit separaten Schlüsseln",
+      "Prinzip der geringsten Rechte durchgesetzt",
+      "Umfassende Audit-Protokollierung",
+      "Sofortige Kundenbenachrichtigung",
+      "DSGVO-konform",
+      "CCPA-konform",
+      "Datenaufbewahrungskontrollen",
+      "Unterstützung für Löschrecht",
+      "Bug-Bounty-Programm",
+      "Kontinuierliche Sicherheitsüberprüfung"
+    ],
+    "sections": {
+      "accessControls": "Zugangskontrollen",
+      "infrastructureSecurity": "Infrastruktursicherheit",
+      "incidentResponse": "Vorfallreaktion",
+      "dataPrivacy": "Datenschutz",
+      "vulnerabilityManagement": "Schwachstellenmanagement"
+    }
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Seite nicht gefunden"
+  }
+}

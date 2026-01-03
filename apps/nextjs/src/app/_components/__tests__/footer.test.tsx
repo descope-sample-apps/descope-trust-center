@@ -1,7 +1,43 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { Footer } from "../footer";
+
+vi.mock("next-intl", () => ({
+  useTranslations: vi.fn(
+    () => (key: string, params?: Record<string, string | number>) => {
+      const translations: Record<string, string> = {
+        trustCenter: "Trust Center",
+        company: "Company",
+        legal: "Legal",
+        description:
+          "Enterprise-grade authentication and user management for modern applications. SOC 2 Type II certified.",
+        github: "GitHub",
+        twitter: "Twitter",
+        linkedin: "LinkedIn",
+        aboutDescope: "About Descope",
+        engineeringBlog: "Engineering Blog",
+        documentation: "Documentation",
+        contact: "Contact",
+        privacyPolicy: "Privacy Policy",
+        termsOfService: "Terms of Service",
+        securityCompliance: "Security & Compliance",
+        copyright: "© {year} Descope, Inc. All rights reserved.",
+        certifications: "Certifications",
+        documents: "Security Documents",
+        subprocessors: "Subprocessors",
+        faq: "FAQ",
+      };
+      let result = translations[key] ?? key;
+      if (params) {
+        Object.keys(params).forEach((p) => {
+          result = result.replace(`{${p}}`, String(params[p]));
+        });
+      }
+      return result;
+    },
+  ),
+}));
 
 describe("Footer", () => {
   it("renders without crashing", () => {

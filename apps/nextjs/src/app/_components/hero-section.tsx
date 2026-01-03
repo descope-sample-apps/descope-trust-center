@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import type { Certification } from "@descope-trust-center/validators";
 import { cn } from "@descope-trust-center/ui";
@@ -9,27 +12,27 @@ import certificationsData from "~/app/data/certifications.json";
 /** Key trust badges to display (filter for active/featured certifications) */
 const FEATURED_CERTIFICATION_IDS = ["soc2-type2", "iso27001", "gdpr", "hipaa"];
 
-/** Stats displayed in the hero section */
-const TRUST_STATS = [
-  { value: "99.99%", label: "Uptime SLA" },
-  { value: "Zero", label: "Data Breaches" },
-  { value: "24/7", label: "Security Monitoring" },
-] as const;
-
 /**
  * Hero Section for the Trust Center landing page.
  * Displays headline, trust badges, key stats, and CTA.
  *
  * @remarks
- * This is a Server Component - no client-side JavaScript required.
+ * This is a Client Component using next-intl for translations.
  * Certifications are loaded from static JSON at build time.
  */
 export function HeroSection() {
+  const t = useTranslations("hero");
   const certifications = certificationsData as Certification[];
 
   const featuredCertifications = certifications.filter((cert) =>
     FEATURED_CERTIFICATION_IDS.includes(cert.id),
   );
+
+  const TRUST_STATS = [
+    { value: "99.99%", label: t("stats.uptime") },
+    { value: "Zero", label: t("stats.breaches") },
+    { value: "24/7", label: t("stats.monitoring") },
+  ] as const;
 
   return (
     <section
@@ -46,7 +49,7 @@ export function HeroSection() {
         {/* Trust badge */}
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-4 py-2 text-sm font-medium text-violet-700 shadow-sm backdrop-blur-sm dark:border-violet-800 dark:bg-slate-900/80 dark:text-violet-300">
           <span className="flex h-2 w-2 rounded-full bg-green-500" />
-          SOC 2 Type II Certified
+          {t("badge")}
         </div>
 
         {/* Headline */}
@@ -54,13 +57,12 @@ export function HeroSection() {
           id="hero-heading"
           className="bg-gradient-to-r from-slate-900 via-violet-800 to-slate-900 bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl md:text-6xl dark:from-white dark:via-violet-300 dark:to-white"
         >
-          Security & Compliance at Descope
+          {t("headline")}
         </h1>
 
         {/* Subheadline */}
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl dark:text-slate-300">
-          Your trust is our foundation. We maintain rigorous security standards
-          and compliance certifications to ensure your data is always protected.
+          {t("subheadline")}
         </p>
 
         {/* CTA Buttons */}
@@ -72,7 +74,7 @@ export function HeroSection() {
               "bg-primary hover:bg-primary/90 text-base shadow-lg shadow-violet-500/25",
             )}
           >
-            View Our Certifications
+            {t("cta1")}
           </Link>
           <Link
             href="#documents"
@@ -81,14 +83,14 @@ export function HeroSection() {
               "text-base",
             )}
           >
-            Browse Security Docs
+            {t("cta2")}
           </Link>
         </div>
 
         {/* Trust Badges */}
         <div className="mt-12">
           <p className="mb-4 text-sm font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400">
-            Trusted Certifications
+            {t("trustedCertifications")}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
             {featuredCertifications.map((cert) => (

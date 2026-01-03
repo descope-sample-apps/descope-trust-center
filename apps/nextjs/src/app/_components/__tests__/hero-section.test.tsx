@@ -1,7 +1,25 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { HeroSection } from "../hero-section";
+
+vi.mock("next-intl", () => ({
+  useTranslations: vi.fn(() => (key: string) => {
+    const translations: Record<string, string> = {
+      badge: "SOC 2 Type II Certified",
+      headline: "Security & Compliance at Descope",
+      subheadline:
+        "Your trust is our foundation. We maintain rigorous security standards and compliance certifications to ensure your data is always protected.",
+      cta1: "View Our Certifications",
+      cta2: "Browse Security Docs",
+      trustedCertifications: "Trusted Certifications",
+      "stats.uptime": "Uptime SLA",
+      "stats.breaches": "Data Breaches",
+      "stats.monitoring": "Security Monitoring",
+    };
+    return translations[key] ?? key;
+  }),
+}));
 
 describe("HeroSection", () => {
   it("renders without crashing", () => {
