@@ -11,7 +11,7 @@ export const env = createEnv({
       .enum(["development", "production", "test"])
       .default("development"),
     STATUS_PAGE_URL: z.string().url().optional(),
-    RESEND_API_KEY: isTest ? z.string().optional() : z.string().min(1),
+    RESEND_API_KEY: z.string().optional(),
     TRUST_CENTER_FROM_EMAIL: z
       .string()
       .email()
