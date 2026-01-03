@@ -1,13 +1,18 @@
 import * as fs from "fs";
 import * as path from "path";
 import type { TRPCRouterRecord } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 
 import {
   CreateAuditLogSchema as _CreateAuditLogSchema,
   AuditLog,
+  Certification,
+  Document,
   DocumentAccessRequest,
+  Faq,
   FormSubmission,
+  Subprocessor,
 } from "@descope-trust-center/db";
 import {
   CertificationsSchema,
@@ -25,6 +30,7 @@ import { publicProcedure } from "../trpc";
 
 /**
  * Reads and parses a JSON data file from the Next.js app data directory
+ * Used as fallback during migration
  */
 function readDataFile<T>(filename: string): T {
   const dataPath = path.resolve(
@@ -68,15 +74,30 @@ export const trustCenterRouter = {
   // ==================== Query Endpoints ====================
 
   /**
-   * Returns all certifications
+   * Returns all published certifications
    */
-  getCertifications: publicProcedure.query(() => {
-    const data = readDataFile<unknown[]>("certifications.json");
-    return CertificationsSchema.parse(data);
+  getCertifications: publicProcedure.query(async ({ ctx }) => {
+    const certifications = await ctx.db
+      .select()
+      .from(Certification)
+      .where(eq(Certification.publishStatus, "published"));
+
+    // Transform to match existing schema
+    return certifications.map((cert) => ({
+      id: cert.id,
+      name: cert.name,
+      logo: cert.logo,
+      status: cert.status,
+      lastAuditDate: cert.lastAuditDate,
+      expiryDate: cert.expiryDate,
+      certificateUrl: cert.certificateUrl,
+      description: cert.description,
+      standards: cert.standards,
+    }));
   }),
 
   /**
-   * Returns all documents, optionally filtered by category
+   * Returns all published documents, optionally filtered by category
    */
   getDocuments: publicProcedure
     .input(
@@ -86,27 +107,56 @@ export const trustCenterRouter = {
         })
         .optional(),
     )
-    .query(({ input }) => {
-      const data = readDataFile<unknown[]>("documents.json");
-      const documents = DocumentsSchema.parse(data);
+    .query(async ({ ctx, input }) => {
+      const documents = await ctx.db
+        .select()
+        .from(Document)
+        .where(
+          input?.category
+            ? and(
+                eq(Document.publishStatus, "published"),
+                eq(Document.category, input.category),
+              )
+            : eq(Document.publishStatus, "published"),
+        );
 
-      if (input?.category) {
-        return documents.filter((doc) => doc.category === input.category);
-      }
-
-      return documents;
+      // Transform to match existing schema
+      return documents.map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        category: doc.category,
+        description: doc.description,
+        accessLevel: doc.accessLevel,
+        fileUrl: doc.fileUrl,
+        fileSize: doc.fileSize,
+        updatedAt: doc.updatedAt?.toISOString(),
+        tags: doc.tags,
+      }));
     }),
 
   /**
-   * Returns all subprocessors
+   * Returns all published subprocessors
    */
-  getSubprocessors: publicProcedure.query(() => {
-    const data = readDataFile<unknown[]>("subprocessors.json");
-    return SubprocessorsSchema.parse(data);
+  getSubprocessors: publicProcedure.query(async ({ ctx }) => {
+    const subprocessors = await ctx.db
+      .select()
+      .from(Subprocessor)
+      .where(eq(Subprocessor.publishStatus, "published"));
+
+    // Transform to match existing schema
+    return subprocessors.map((sub) => ({
+      id: sub.id,
+      name: sub.name,
+      purpose: sub.purpose,
+      dataProcessed: sub.dataProcessed,
+      location: sub.location,
+      contractUrl: sub.contractUrl,
+      status: sub.status,
+    }));
   }),
 
   /**
-   * Returns all FAQs, optionally filtered by category
+   * Returns all published FAQs, optionally filtered by category
    */
   getFAQs: publicProcedure
     .input(
@@ -116,15 +166,26 @@ export const trustCenterRouter = {
         })
         .optional(),
     )
-    .query(({ input }) => {
-      const data = readDataFile<unknown[]>("faqs.json");
-      const faqs = FAQsSchema.parse(data);
+    .query(async ({ ctx, input }) => {
+      const faqs = await ctx.db
+        .select()
+        .from(Faq)
+        .where(
+          input?.category
+            ? and(
+                eq(Faq.publishStatus, "published"),
+                eq(Faq.category, input.category),
+              )
+            : eq(Faq.publishStatus, "published"),
+        );
 
-      if (input?.category) {
-        return faqs.filter((faq) => faq.category === input.category);
-      }
-
-      return faqs;
+      // Transform to match existing schema
+      return faqs.map((faq) => ({
+        id: faq.id,
+        question: faq.question,
+        answer: faq.answer,
+        category: faq.category,
+      }));
     }),
 
   // ==================== Mutation Endpoints ====================
@@ -217,9 +278,16 @@ export const trustCenterRouter = {
       });
 
       // Also save to document_access_request table for admin review
+      // Fetch document title from database
+      const [document] = await ctx.db
+        .select({ title: Document.title })
+        .from(Document)
+        .where(eq(Document.id, input.documentId))
+        .limit(1);
+
       await ctx.db.insert(DocumentAccessRequest).values({
         documentId: input.documentId,
-        documentTitle: "", // TODO: fetch from document table
+        documentTitle: document?.title || input.documentId,
         email: input.email,
         name: input.name,
         company: input.company,

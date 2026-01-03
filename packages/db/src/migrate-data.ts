@@ -9,17 +9,21 @@ async function migrateData() {
   console.log("Starting data migration...");
 
   // Migrate certifications
+  console.log("Migrating certifications...");
   for (const cert of certificationsData) {
     await db.insert(Certification).values({
       id: cert.id,
       name: cert.name,
       logo: cert.logo,
       status: cert.status,
+      publishStatus: "published", // All existing data should be published
       lastAuditDate: cert.lastAuditDate,
       expiryDate: cert.expiryDate,
       certificateUrl: cert.certificateUrl,
       description: cert.description,
       standards: cert.standards,
+      publishedAt: new Date(), // Mark as published now
+      publishedBy: "system", // Migration user
     });
   }
 
@@ -34,8 +38,10 @@ async function migrateData() {
       accessLevel: doc.accessLevel,
       fileUrl: doc.fileUrl,
       fileSize: doc.fileSize,
-      updatedAt: new Date(doc.updatedAt),
+      publishStatus: "published", // All existing data should be published
       tags: doc.tags,
+      publishedAt: new Date(), // Mark as published now
+      publishedBy: "system", // Migration user
     });
   }
 
@@ -50,6 +56,9 @@ async function migrateData() {
       location: sub.location,
       contractUrl: sub.contractUrl,
       status: sub.status,
+      publishStatus: "published", // All existing data should be published
+      publishedAt: new Date(), // Mark as published now
+      publishedBy: "system", // Migration user
     });
   }
 
