@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { AuditLogTable } from "./_components/audit-log-table";
 import { AuditStats } from "./_components/audit-stats";
+import { CleanButton } from "./_components/clean-button";
 import { ExportButton } from "./_components/export-button";
 
 export default function AuditLogPage() {
@@ -20,9 +21,14 @@ export default function AuditLogPage() {
               Track all system events for compliance and security monitoring.
             </p>
           </div>
-          <Suspense fallback={<ExportButtonSkeleton />}>
-            <ExportButton />
-          </Suspense>
+          <div className="flex items-center gap-2">
+            <Suspense fallback={<CleanButtonSkeleton />}>
+              <CleanButton />
+            </Suspense>
+            <Suspense fallback={<ExportButtonSkeleton />}>
+              <ExportButton />
+            </Suspense>
+          </div>
         </div>
 
         <Suspense fallback={<StatsSkeleton />}>
@@ -71,4 +77,8 @@ function TableSkeleton() {
 
 function ExportButtonSkeleton() {
   return <div className="bg-muted h-10 w-24 animate-pulse rounded" />;
+}
+
+function CleanButtonSkeleton() {
+  return <div className="bg-muted h-10 w-32 animate-pulse rounded" />;
 }
