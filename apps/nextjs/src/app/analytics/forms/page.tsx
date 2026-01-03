@@ -1,9 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "~/trpc/react";
+
+type FormSubmission = {
+  id: string;
+  type: string;
+  email: string;
+  name: string | null;
+  company: string | null;
+  status: string;
+  metadata: any;
+  respondedAt: Date | null;
+  respondedBy: string | null;
+  responseNotes: string | null;
+  ipAddress: string | null;
+  createdAt: Date;
+  updatedAt: Date | null;
+};
 
 type Status = "new" | "responded" | "closed";
 
@@ -15,10 +31,15 @@ export default function FormSubmissionsPage() {
   const [typeFilter, setTypeFilter] = useState<string | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<FormSubmission | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data } = useSuspenseQuery(
+  const { data, refetch } = useSuspenseQuery(
     trpc.analytics.getFormStats.queryOptions({
       type:
         typeFilter === "all"
@@ -28,39 +49,37 @@ export default function FormSubmissionsPage() {
               | "document_request"
               | "subprocessor_subscription"),
       status: statusFilter === "all" ? undefined : statusFilter,
+      searchTerm: searchTerm || undefined,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
     }),
   );
 
-  const filteredSubmissions = data.submissions
-    .filter((submission) => {
-      const matchesSearch =
-        submission.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (submission.company?.toLowerCase().includes(searchTerm.toLowerCase()) ??
-          false) ||
-        (submission.name?.toLowerCase().includes(searchTerm.toLowerCase()) ??
-          false);
+  const updateMutation = useMutation(
+    trpc.analytics.updateFormSubmissionStatus.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
 
-      return matchesSearch;
-    })
-    .sort((a, b) => {
-      let aValue: any = a[sortField];
-      let bValue: any = b[sortField];
+  const filteredSubmissions = data.submissions.sort((a, b) => {
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
 
-      if (sortField === "respondedAt") {
-        aValue = a.respondedAt ? new Date(a.respondedAt).getTime() : 0;
-        bValue = b.respondedAt ? new Date(b.respondedAt).getTime() : 0;
-      } else if (sortField === "createdAt") {
-        aValue = new Date(a.createdAt).getTime();
-        bValue = new Date(b.createdAt).getTime();
-      } else if (typeof aValue === "string") {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
+    if (sortField === "respondedAt") {
+      aValue = a.respondedAt ? new Date(a.respondedAt).getTime() : 0;
+      bValue = b.respondedAt ? new Date(b.respondedAt).getTime() : 0;
+    } else if (sortField === "createdAt") {
+      aValue = new Date(a.createdAt).getTime();
+      bValue = new Date(b.createdAt).getTime();
+    } else if (typeof aValue === "string") {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
 
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
 
   const getStatusBadge = (status: string) => {
     const baseClasses =
@@ -136,13 +155,26 @@ export default function FormSubmissionsPage() {
 
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Form Submissions</h2>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="text"
             placeholder="Search by email, name, or company..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-80 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+          <span className="text-sm text-gray-500">to</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
           />
           <select
             value={typeFilter}
@@ -188,6 +220,9 @@ export default function FormSubmissionsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                 Response Date
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -195,6 +230,10 @@ export default function FormSubmissionsPage() {
               <tr
                 key={submission.id}
                 className="cursor-pointer hover:bg-gray-50"
+                onClick={() => {
+                  setSelectedSubmission(submission as FormSubmission);
+                  setIsModalOpen(true);
+                }}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
@@ -227,6 +266,29 @@ export default function FormSubmissionsPage() {
                     ? new Date(submission.respondedAt).toLocaleDateString()
                     : "-"}
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <select
+                    value={submission.status}
+                    onChange={(e) => {
+                      const newStatus = e.target.value as Status;
+                      if (
+                        newStatus !== submission.status &&
+                        (newStatus === "responded" || newStatus === "closed")
+                      ) {
+                        updateMutation.mutate({
+                          id: submission.id,
+                          status: newStatus,
+                        });
+                      }
+                    }}
+                    disabled={updateMutation.isPending}
+                    className="rounded border border-gray-300 px-2 py-1 text-sm"
+                  >
+                    <option value="new">New</option>
+                    <option value="responded">Responded</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -236,6 +298,109 @@ export default function FormSubmissionsPage() {
       {filteredSubmissions.length === 0 && (
         <div className="py-8 text-center text-gray-500">
           No form submissions found.
+        </div>
+      )}
+
+      {/* Modal for viewing submission details */}
+      {isModalOpen && selectedSubmission && (
+        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+          <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between border-b pb-4">
+              <h3 className="text-lg font-semibold">Form Submission Details</h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="text-2xl">&times;</span>
+              </button>
+            </div>
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Type
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {getTypeLabel(selectedSubmission.type)}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Status
+                  </label>
+                  <span className={getStatusBadge(selectedSubmission.status)}>
+                    {selectedSubmission.status}
+                  </span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Name
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedSubmission.name || "Anonymous"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedSubmission.email}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Company
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedSubmission.company || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Submitted
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {new Date(selectedSubmission.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              {selectedSubmission.respondedAt && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Responded
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {new Date(selectedSubmission.respondedAt).toLocaleString()}{" "}
+                    by {selectedSubmission.respondedBy}
+                  </p>
+                  {selectedSubmission.responseNotes && (
+                    <p className="mt-1 text-sm text-gray-600">
+                      {selectedSubmission.responseNotes}
+                    </p>
+                  )}
+                </div>
+              )}
+              {selectedSubmission.metadata?.message && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Message
+                  </label>
+                  <div className="mt-1 max-h-40 overflow-y-auto rounded border p-3 text-sm text-gray-900">
+                    {selectedSubmission.metadata.message}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
