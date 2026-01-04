@@ -12,6 +12,8 @@ import { z, ZodError } from "zod/v4";
 
 import { db } from "@descope-trust-center/db/client";
 
+import { isAdmin } from "./utils/admin";
+
 export interface DescopeUser {
   id: string;
   email?: string;
@@ -165,7 +167,7 @@ export const protectedProcedure = t.procedure
 /**
  * Admin (authenticated + admin role) procedure
  *
- * Accessible only to users with admin role or @descope.com email domain.
+ * Accessible only to users with admin role, @descope.com email domain, or configured admin emails.
  */
 export const adminProcedure = t.procedure
   .use(timingMiddleware)
@@ -175,10 +177,7 @@ export const adminProcedure = t.procedure
     }
 
     const user = ctx.session.user;
-    const isAdmin =
-      user.roles.includes("admin") || user.email?.endsWith("@descope.com");
-
-    if (!isAdmin) {
+    if (!isAdmin(user.email, user.roles)) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Admin access required",
