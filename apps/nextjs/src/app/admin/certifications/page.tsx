@@ -31,10 +31,10 @@ export default function CertificationsPage() {
     data: certifications,
     isLoading,
     refetch,
-  } = useQuery((trpc as any).admin.certifications.getAll.queryOptions());
+  } = useQuery(trpc.admin.certifications.getAll.queryOptions());
 
   const createMutation = useMutation(
-    (trpc as any).admin.certifications.create.mutationOptions({
+    trpc.admin.certifications.create.mutationOptions({
       onSuccess: () => {
         refetch();
         setIsModalOpen(false);
@@ -43,29 +43,33 @@ export default function CertificationsPage() {
     }),
   );
 
-  const updateMutation = (trpc as any).admin.certifications.update.useMutation({
-    onSuccess: () => {
-      refetch();
-      setIsModalOpen(false);
-      setEditingCert(null);
-    },
-  });
+  const updateMutation = useMutation(
+    trpc.admin.certifications.update.mutationOptions({
+      onSuccess: () => {
+        refetch();
+        setIsModalOpen(false);
+        setEditingCert(null);
+      },
+    }),
+  );
 
-  const publishMutation = (
-    trpc as any
-  ).admin.certifications.publish.useMutation({
-    onSuccess: refetch,
-  });
+  const publishMutation = useMutation(
+    trpc.admin.certifications.publish.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
 
-  const unpublishMutation = (
-    trpc as any
-  ).admin.certifications.unpublish.useMutation({
-    onSuccess: refetch,
-  });
+  const unpublishMutation = useMutation(
+    trpc.admin.certifications.unpublish.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
 
-  const deleteMutation = (trpc as any).admin.certifications.delete.useMutation({
-    onSuccess: refetch,
-  });
+  const deleteMutation = useMutation(
+    trpc.admin.certifications.delete.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
 
   const handleAdd = () => {
     setEditingCert(null);
@@ -99,9 +103,9 @@ export default function CertificationsPage() {
       status: formData.get("status") as "draft" | "published",
       description: formData.get("description") as string,
       standards: JSON.parse(formData.get("standards") as string),
-      lastAuditDate: formData.get("lastAuditDate") ?? undefined,
-      expiryDate: formData.get("expiryDate") ?? undefined,
-      certificateUrl: formData.get("certificateUrl") ?? undefined,
+      lastAuditDate: (formData.get("lastAuditDate") as string) || undefined,
+      expiryDate: (formData.get("expiryDate") as string) || undefined,
+      certificateUrl: (formData.get("certificateUrl") as string) || undefined,
     };
 
     if (editingCert) {
@@ -191,7 +195,7 @@ export default function CertificationsPage() {
           certification={editingCert}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
-          isLoading={createMutation.isLoading ?? updateMutation.isLoading}
+          isLoading={createMutation.isPending || updateMutation.isPending}
         />
       )}
     </div>
