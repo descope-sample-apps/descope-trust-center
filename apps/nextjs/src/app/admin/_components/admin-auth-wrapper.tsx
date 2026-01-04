@@ -13,10 +13,7 @@ export default async function AdminAuthWrapper({
     redirect("/auth/signin");
   }
 
-  const email =
-    typeof session?.token?.email === "string"
-      ? session?.token?.email
-      : undefined;
+  const email = (session?.token?.claims as { email?: string })?.email;
   const isAdmin = email?.endsWith("@descope.com");
   if (!isAdmin) {
     return (

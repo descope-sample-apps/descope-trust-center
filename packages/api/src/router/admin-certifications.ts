@@ -213,4 +213,4 @@ export const adminCertificationRouter: TRPCRouterRecord = {
 
       return result[0];
     }),
-};
+} satisfies TRPCRouterRecord;

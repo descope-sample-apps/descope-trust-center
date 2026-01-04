@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 import { useTRPC } from "~/trpc/react";
 
@@ -93,9 +94,9 @@ export default function CertificationsPage() {
       status: formData.get("status") as "draft" | "published",
       description: formData.get("description") as string,
       standards: JSON.parse(formData.get("standards") as string),
-      lastAuditDate: (formData.get("lastAuditDate") as string) || undefined,
-      expiryDate: (formData.get("expiryDate") as string) || undefined,
-      certificateUrl: (formData.get("certificateUrl") as string) || undefined,
+      lastAuditDate: formData.get("lastAuditDate") ?? undefined,
+      expiryDate: formData.get("expiryDate") ?? undefined,
+      certificateUrl: formData.get("certificateUrl") ?? undefined,
     };
 
     if (editingCert) {
@@ -123,16 +124,18 @@ export default function CertificationsPage() {
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {(certifications as CertificationType[])?.map((cert) => (
+          {(certifications as CertificationType[]).map((cert) => (
             <li key={cert.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0">
-                      <img
+                      <Image
                         className="h-10 w-10 rounded-full"
                         src={cert.logo}
                         alt=""
+                        width={40}
+                        height={40}
                       />
                     </div>
                     <div className="ml-4">
@@ -183,7 +186,7 @@ export default function CertificationsPage() {
           certification={editingCert}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
-          isLoading={createMutation.isLoading || updateMutation.isLoading}
+          isLoading={createMutation.isLoading ?? updateMutation.isLoading}
         />
       )}
     </div>
@@ -256,7 +259,7 @@ function CertificationModal({
             </label>
             <select
               name="status"
-              defaultValue={certification?.status || "draft"}
+              defaultValue={certification?.status ?? "draft"}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="draft">Draft</option>
@@ -269,7 +272,7 @@ function CertificationModal({
             </label>
             <textarea
               name="description"
-              defaultValue={certification?.description || ""}
+              defaultValue={certification?.description ?? ""}
               required
               rows={3}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
@@ -282,7 +285,7 @@ function CertificationModal({
             <input
               name="standards"
               type="text"
-              defaultValue={JSON.stringify(certification?.standards || [])}
+              defaultValue={JSON.stringify(certification?.standards ?? [])}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -294,7 +297,7 @@ function CertificationModal({
             <input
               name="lastAuditDate"
               type="date"
-              defaultValue={certification?.lastAuditDate || ""}
+              defaultValue={certification?.lastAuditDate ?? ""}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
@@ -305,7 +308,7 @@ function CertificationModal({
             <input
               name="expiryDate"
               type="date"
-              defaultValue={certification?.expiryDate || ""}
+              defaultValue={certification?.expiryDate ?? ""}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
@@ -316,7 +319,7 @@ function CertificationModal({
             <input
               name="certificateUrl"
               type="url"
-              defaultValue={certification?.certificateUrl || ""}
+              defaultValue={certification?.certificateUrl ?? ""}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
