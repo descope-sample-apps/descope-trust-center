@@ -116,11 +116,14 @@ export interface MockUser {
   id: string;
   email: string;
   name?: string;
+  roles?: string[];
 }
 
 export interface TestContext {
   db: TestDB;
-  session: { user: { id: string; email: string; name: string } } | null;
+  session: {
+    user: { id: string; email: string; name: string; roles: string[] };
+  } | null;
   authApi: never;
 }
 
@@ -139,6 +142,7 @@ export function createTestContext(options?: {
             id: user.id,
             email: user.email,
             name: user.name ?? "Test User",
+            roles: user.roles ?? [],
           },
         }
       : null,
@@ -152,6 +156,7 @@ export function createAdminContext(db?: TestDB): TestContext {
       id: "admin-123",
       email: "admin@descope.com",
       name: "Admin User",
+      roles: ["admin"],
     },
     db,
   });
@@ -163,6 +168,7 @@ export function createUserContext(db?: TestDB): TestContext {
       id: "user-456",
       email: "user@example.com",
       name: "Regular User",
+      roles: [],
     },
     db,
   });

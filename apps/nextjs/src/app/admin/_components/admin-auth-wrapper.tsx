@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { getSession } from "~/auth/server";
+import { mapDescopeSession } from "~/auth/session";
 
 export default async function AdminAuthWrapper({
   children,
@@ -13,10 +14,8 @@ export default async function AdminAuthWrapper({
     redirect("/auth/signin");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  const claims = session?.token?.claims as { email?: string } | undefined;
-  const email = claims?.email;
-  const isAdmin = email?.endsWith("@descope.com");
+  const mappedSession = mapDescopeSession(session);
+  const isAdmin = mappedSession?.user.roles.includes("admin");
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
