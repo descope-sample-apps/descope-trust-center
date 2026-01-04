@@ -157,6 +157,7 @@ export default function SubprocessorsPage() {
       dataProcessed,
       location: locationValue,
       contractUrl: contractUrlValue,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       status: statusValue as "draft" | "published",
     };
 

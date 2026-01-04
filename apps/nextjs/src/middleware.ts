@@ -56,7 +56,7 @@ export default async function middleware(request: NextRequest) {
   // Check if path matches public routes
   const isPublicRoute = publicRoutes.some((route) => {
     if (route.includes("*")) {
-      const regex = new RegExp(`^${route.replace("*", ".*")}$`);
+      const regex = new RegExp(`^${route.replace(/\*/g, ".*")}$`);
       return regex.test(pathname);
     }
     return pathname === route;

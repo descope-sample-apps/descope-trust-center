@@ -111,6 +111,7 @@ export default function DocumentsPage() {
           alert("Tags must be an array of strings");
           return;
         }
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         tags = parsed as string[];
       } catch {
         alert("Invalid JSON for tags");
@@ -190,6 +191,7 @@ export default function DocumentsPage() {
         | "nda-required",
       fileUrl,
       fileSize,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       status: statusValue as "draft" | "published",
       tags,
     };

@@ -168,6 +168,7 @@ export default function CertificationsPage() {
       id: idValue,
       name: nameValue,
       logo: logoValue,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       status: statusValue as "draft" | "published",
       description: descriptionValue,
       standards,
