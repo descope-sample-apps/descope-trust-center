@@ -94,13 +94,29 @@ export default function SubprocessorsPage() {
   };
 
   const handleSubmit = (formData: FormData) => {
+    const dataProcessedValue = formData.get("dataProcessed") as string;
+    let dataProcessed: string[] = [];
+    if (dataProcessedValue) {
+      try {
+        const parsed = JSON.parse(dataProcessedValue);
+        if (
+          !Array.isArray(parsed) ||
+          !parsed.every((item) => typeof item === "string")
+        ) {
+          alert("Data processed must be an array of strings");
+          return;
+        }
+        dataProcessed = parsed;
+      } catch {
+        alert("Invalid JSON for data processed");
+        return;
+      }
+    }
     const data = {
       id: formData.get("id") as string,
       name: formData.get("name") as string,
       purpose: formData.get("purpose") as string,
-      dataProcessed: JSON.parse(
-        formData.get("dataProcessed") as string,
-      ) as string[],
+      dataProcessed,
       location: formData.get("location") as string,
       contractUrl: formData.get("contractUrl") as string,
       status: formData.get("status") as "draft" | "published",

@@ -95,6 +95,24 @@ export default function DocumentsPage() {
   };
 
   const handleSubmit = (formData: FormData) => {
+    const tagsValue = formData.get("tags") as string;
+    let tags: string[] = [];
+    if (tagsValue) {
+      try {
+        const parsed = JSON.parse(tagsValue);
+        if (
+          !Array.isArray(parsed) ||
+          !parsed.every((item) => typeof item === "string")
+        ) {
+          alert("Tags must be an array of strings");
+          return;
+        }
+        tags = parsed;
+      } catch {
+        alert("Invalid JSON for tags");
+        return;
+      }
+    }
     const data = {
       id: formData.get("id") as string,
       title: formData.get("title") as string,
@@ -111,7 +129,7 @@ export default function DocumentsPage() {
       fileUrl: (formData.get("fileUrl") as string) || undefined,
       fileSize: (formData.get("fileSize") as string) || undefined,
       status: formData.get("status") as "draft" | "published",
-      tags: JSON.parse(formData.get("tags") as string) as string[],
+      tags,
     };
 
     if (editingDoc) {

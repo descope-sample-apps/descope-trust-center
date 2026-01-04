@@ -99,13 +99,30 @@ export default function CertificationsPage() {
 
   const handleSubmit = (formData: FormData) => {
     const standardsValue = formData.get("standards") as string;
+    let standards: string[] = [];
+    if (standardsValue) {
+      try {
+        const parsed = JSON.parse(standardsValue);
+        if (
+          !Array.isArray(parsed) ||
+          !parsed.every((item) => typeof item === "string")
+        ) {
+          alert("Standards must be an array of strings");
+          return;
+        }
+        standards = parsed;
+      } catch {
+        alert("Invalid JSON for standards");
+        return;
+      }
+    }
     const data = {
       id: formData.get("id") as string,
       name: formData.get("name") as string,
       logo: formData.get("logo") as string,
       status: formData.get("status") as "draft" | "published",
       description: formData.get("description") as string,
-      standards: standardsValue ? (JSON.parse(standardsValue) as string[]) : [],
+      standards,
       lastAuditDate: (formData.get("lastAuditDate") as string) || undefined,
       expiryDate: (formData.get("expiryDate") as string) || undefined,
       certificateUrl: (formData.get("certificateUrl") as string) || undefined,
