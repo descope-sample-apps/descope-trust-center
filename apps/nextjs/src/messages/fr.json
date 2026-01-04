@@ -164,6 +164,28 @@
       "emailInvalid": "Veuillez saisir une adresse e-mail valide"
     }
   },
+  "certifications": {
+    "soc2-type2": {
+      "name": "SOC 2 Type II",
+      "description": "La certification SOC 2 Type II démontre notre engagement envers les contrôles de sécurité, de disponibilité et de confidentialité sur une période prolongée."
+    },
+    "gdpr": {
+      "name": "Conformité RGPD",
+      "description": "Conformité complète au Règlement général sur la protection des données de l'UE, y compris les droits des personnes concernées, le traitement licite et les mécanismes de transfert transfrontalier."
+    },
+    "iso27001": {
+      "name": "ISO 27001",
+      "description": "Certification du système de management de la sécurité de l'information en cours. Achèvement prévu T2 2025."
+    },
+    "hipaa": {
+      "name": "Prêt pour HIPAA",
+      "description": "Descope peut être configuré pour prendre en charge les charges de travail conformes à HIPAA avec les accords d'associé commercial appropriés."
+    },
+    "ccpa": {
+      "name": "Conformité CCPA",
+      "description": "Conformité à la California Consumer Privacy Act, y compris les droits des consommateurs d'accéder, de supprimer et de se désinscrire de la vente de données."
+    }
+  },
   "security": {
     "features": [
       "Sauvegardes chiffrées avec clés séparées",
