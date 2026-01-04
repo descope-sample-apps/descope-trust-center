@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "~/trpc/react";
 
@@ -21,7 +22,7 @@ export default function FAQsPage() {
     data: faqs,
     isLoading,
     refetch,
-  } = (trpc as any).admin.faqs.getAll.useQuery();
+  } = useQuery((trpc as any).admin.faqs.getAll.queryOptions());
 
   const createMutation = (trpc as any).admin.faqs.create.useMutation({
     onSuccess: () => {
@@ -164,7 +165,7 @@ export default function FAQsPage() {
           faq={editingFaq}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
-          isLoading={createMutation.isLoading || updateMutation.isLoading}
+          isLoading={createMutation.isLoading ?? updateMutation.isLoading}
         />
       )}
     </div>
@@ -177,7 +178,7 @@ function FAQModal({
   onSubmit,
   isLoading,
 }: {
-  faq: any;
+  faq: FaqType | null;
   onClose: () => void;
   onSubmit: (formData: FormData) => void;
   isLoading: boolean;
@@ -202,7 +203,7 @@ function FAQModal({
             <input
               name="id"
               type="text"
-              defaultValue={faq?.id || ""}
+              defaultValue={faq?.id ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -214,7 +215,7 @@ function FAQModal({
             <input
               name="question"
               type="text"
-              defaultValue={faq?.question || ""}
+              defaultValue={faq?.question ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -225,7 +226,7 @@ function FAQModal({
             </label>
             <textarea
               name="answer"
-              defaultValue={faq?.answer || ""}
+              defaultValue={faq?.answer ?? ""}
               required
               rows={4}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
@@ -237,7 +238,7 @@ function FAQModal({
             </label>
             <select
               name="category"
-              defaultValue={faq?.category || "security"}
+              defaultValue={faq?.category ?? "security"}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="security">Security</option>

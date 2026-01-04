@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "~/trpc/react";
 
@@ -26,7 +26,7 @@ export default function DocumentsPage() {
     data: documents,
     isLoading,
     refetch,
-  } = (trpc as any).admin.documents.getAll.useQuery();
+  } = useQuery((trpc as any).admin.documents.getAll.queryOptions());
 
   const createMutation = (trpc as any).admin.documents.create.useMutation({
     onSuccess: () => {
@@ -175,7 +175,7 @@ export default function DocumentsPage() {
           document={editingDoc}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
-          isLoading={createMutation.isLoading || updateMutation.isLoading}
+          isLoading={createMutation.isLoading ?? updateMutation.isLoading}
         />
       )}
     </div>
@@ -213,7 +213,7 @@ function DocumentModal({
             <input
               name="id"
               type="text"
-              defaultValue={document?.id || ""}
+              defaultValue={document?.id ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -225,7 +225,7 @@ function DocumentModal({
             <input
               name="title"
               type="text"
-              defaultValue={document?.title || ""}
+              defaultValue={document?.title ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -236,7 +236,7 @@ function DocumentModal({
             </label>
             <select
               name="category"
-              defaultValue={document?.category || "security-policy"}
+              defaultValue={document?.category ?? "security-policy"}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="security-policy">Security Policy</option>
@@ -251,7 +251,7 @@ function DocumentModal({
             </label>
             <textarea
               name="description"
-              defaultValue={document?.description || ""}
+              defaultValue={document?.description ?? ""}
               required
               rows={3}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
@@ -263,7 +263,7 @@ function DocumentModal({
             </label>
             <select
               name="accessLevel"
-              defaultValue={document?.accessLevel || "public"}
+              defaultValue={document?.accessLevel ?? "public"}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="public">Public</option>
@@ -278,7 +278,7 @@ function DocumentModal({
             <input
               name="fileUrl"
               type="url"
-              defaultValue={document?.fileUrl || ""}
+              defaultValue={document?.fileUrl ?? ""}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
@@ -289,7 +289,7 @@ function DocumentModal({
             <input
               name="fileSize"
               type="text"
-              defaultValue={document?.fileSize || ""}
+              defaultValue={document?.fileSize ?? ""}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
@@ -299,7 +299,7 @@ function DocumentModal({
             </label>
             <select
               name="status"
-              defaultValue={document?.status || "draft"}
+              defaultValue={document?.status ?? "draft"}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="draft">Draft</option>
@@ -313,7 +313,7 @@ function DocumentModal({
             <input
               name="tags"
               type="text"
-              defaultValue={JSON.stringify(document?.tags || [])}
+              defaultValue={JSON.stringify(document?.tags ?? [])}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />

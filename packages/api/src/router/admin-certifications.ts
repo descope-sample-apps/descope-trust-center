@@ -1,4 +1,3 @@
-import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -9,9 +8,20 @@ import {
   CreateCertificationSchema,
 } from "@descope-trust-center/db";
 
-import { adminProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { isAdmin } from "../utils/admin";
 
-export const adminCertificationRouter: TRPCRouterRecord = {
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!isAdmin(ctx.session.user.email, ctx.session.user.roles)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
+  }
+  return next({ ctx });
+});
+
+export const adminCertificationRouter = createTRPCRouter({
   getAll: adminProcedure.query(async ({ ctx }) => {
     return ctx.db.select().from(Certification);
   }),
@@ -213,4 +223,4 @@ export const adminCertificationRouter: TRPCRouterRecord = {
 
       return result[0];
     }),
-} satisfies TRPCRouterRecord;
+});

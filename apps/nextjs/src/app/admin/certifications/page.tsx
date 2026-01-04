@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useMutation, useQuery } from "@tanstack/react-query";
+
+import type { AppRouter } from "@descope-trust-center/api";
 
 import { useTRPC } from "~/trpc/react";
 
@@ -28,15 +31,17 @@ export default function CertificationsPage() {
     data: certifications,
     isLoading,
     refetch,
-  } = (trpc as any).admin.certifications.getAll.useQuery();
+  } = useQuery((trpc as any).admin.certifications.getAll.queryOptions());
 
-  const createMutation = (trpc as any).admin.certifications.create.useMutation({
-    onSuccess: () => {
-      refetch();
-      setIsModalOpen(false);
-      setEditingCert(null);
-    },
-  });
+  const createMutation = useMutation(
+    (trpc as any).admin.certifications.create.mutationOptions({
+      onSuccess: () => {
+        refetch();
+        setIsModalOpen(false);
+        setEditingCert(null);
+      },
+    }),
+  );
 
   const updateMutation = (trpc as any).admin.certifications.update.useMutation({
     onSuccess: () => {
