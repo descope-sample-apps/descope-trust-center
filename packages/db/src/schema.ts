@@ -189,12 +189,14 @@ export const Certification = pgTable("certification", (t) => ({
   id: t.varchar({ length: 256 }).notNull().primaryKey(),
   name: t.varchar({ length: 256 }).notNull(),
   logo: t.varchar({ length: 512 }).notNull(),
-  status: t.varchar({ length: 50 }).notNull().default("active"),
+  status: t.varchar({ length: 50 }).notNull().default("draft"),
   lastAuditDate: t.date(),
   expiryDate: t.date(),
   certificateUrl: t.varchar({ length: 512 }),
   description: t.text().notNull(),
   standards: t.jsonb().notNull(),
+  createdBy: t.varchar({ length: 256 }),
+  updatedBy: t.varchar({ length: 256 }),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp({ withTimezone: true }),
 }));
@@ -203,12 +205,14 @@ export const CreateCertificationSchema = createInsertSchema(Certification, {
   id: z.string().min(1),
   name: z.string().min(1),
   logo: z.string().url(),
-  status: z.enum(["active", "in-progress", "expired"]).default("active"),
+  status: z.enum(["draft", "published"]).default("draft"),
   lastAuditDate: z.string().optional(),
   expiryDate: z.string().optional(),
   certificateUrl: z.string().url().optional(),
   description: z.string().min(1),
   standards: z.array(z.string()).min(1),
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
 }).omit({ createdAt: true, updatedAt: true });
 
 export const Document = pgTable("document", (t) => ({
@@ -219,9 +223,12 @@ export const Document = pgTable("document", (t) => ({
   accessLevel: t.varchar({ length: 50 }).notNull().default("public"),
   fileUrl: t.varchar({ length: 512 }),
   fileSize: t.varchar({ length: 50 }),
-  updatedAt: t.timestamp().defaultNow().notNull(),
+  status: t.varchar({ length: 50 }).notNull().default("draft"),
   tags: t.jsonb().notNull(),
+  createdBy: t.varchar({ length: 256 }),
+  updatedBy: t.varchar({ length: 256 }),
   createdAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t.timestamp({ withTimezone: true }),
 }));
 
 export const CreateDocumentSchema = createInsertSchema(Document, {
@@ -239,9 +246,11 @@ export const CreateDocumentSchema = createInsertSchema(Document, {
     .default("public"),
   fileUrl: z.string().url().optional(),
   fileSize: z.string().optional(),
-  updatedAt: z.string().datetime().optional(),
+  status: z.enum(["draft", "published"]).default("draft"),
   tags: z.array(z.string()).default([]),
-}).omit({ createdAt: true });
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
+}).omit({ createdAt: true, updatedAt: true });
 
 export const Subprocessor = pgTable("subprocessor", (t) => ({
   id: t.varchar({ length: 256 }).notNull().primaryKey(),
@@ -250,7 +259,9 @@ export const Subprocessor = pgTable("subprocessor", (t) => ({
   dataProcessed: t.jsonb().notNull(),
   location: t.varchar({ length: 256 }).notNull(),
   contractUrl: t.varchar({ length: 512 }).notNull(),
-  status: t.varchar({ length: 50 }).notNull().default("active"),
+  status: t.varchar({ length: 50 }).notNull().default("draft"),
+  createdBy: t.varchar({ length: 256 }),
+  updatedBy: t.varchar({ length: 256 }),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp({ withTimezone: true }),
 }));
@@ -262,7 +273,9 @@ export const CreateSubprocessorSchema = createInsertSchema(Subprocessor, {
   dataProcessed: z.array(z.string()).min(1),
   location: z.string().min(1),
   contractUrl: z.string().url(),
-  status: z.enum(["active", "inactive"]).default("active"),
+  status: z.enum(["draft", "published"]).default("draft"),
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
 }).omit({ createdAt: true, updatedAt: true });
 
 export const Faq = pgTable("faq", (t) => ({
@@ -270,6 +283,9 @@ export const Faq = pgTable("faq", (t) => ({
   question: t.varchar({ length: 512 }).notNull(),
   answer: t.text().notNull(),
   category: t.varchar({ length: 100 }).notNull(),
+  status: t.varchar({ length: 50 }).notNull().default("draft"),
+  createdBy: t.varchar({ length: 256 }),
+  updatedBy: t.varchar({ length: 256 }),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t.timestamp({ withTimezone: true }),
 }));
@@ -285,4 +301,7 @@ export const CreateFaqSchema = createInsertSchema(Faq, {
     "data-handling",
     "authentication",
   ]),
+  status: z.enum(["draft", "published"]).default("draft"),
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
 }).omit({ createdAt: true, updatedAt: true });

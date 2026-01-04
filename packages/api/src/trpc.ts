@@ -163,6 +163,37 @@ export const protectedProcedure = t.procedure
   });
 
 /**
+ * Admin (authenticated + admin role) procedure
+ *
+ * Accessible only to users with admin role or @descope.com email domain.
+ */
+export const adminProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (!ctx.session?.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+
+    const user = ctx.session.user;
+    const isAdmin =
+      user.roles.includes("admin") || user.email?.endsWith("@descope.com");
+
+    if (!isAdmin) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Admin access required",
+      });
+    }
+
+    return next({
+      ctx: {
+        // infers the `session` as non-nullable
+        session: { ...ctx.session, user: ctx.session.user },
+      },
+    });
+  });
+
+/**
  * Create a server-side caller for testing
  * @see https://trpc.io/docs/server/server-side-calls
  */
