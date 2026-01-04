@@ -95,11 +95,15 @@ export default function DocumentsPage() {
   };
 
   const handleSubmit = (formData: FormData) => {
-    const tagsValue = formData.get("tags") as string;
+    const tagsValue = formData.get("tags");
+    if (typeof tagsValue !== "string") {
+      alert("Invalid tags value");
+      return;
+    }
     let tags: string[] = [];
     if (tagsValue) {
       try {
-        const parsed = JSON.parse(tagsValue);
+        const parsed = JSON.parse(tagsValue) as unknown;
         if (
           !Array.isArray(parsed) ||
           !parsed.every((item) => typeof item === "string")
@@ -107,28 +111,86 @@ export default function DocumentsPage() {
           alert("Tags must be an array of strings");
           return;
         }
-        tags = parsed;
+        tags = parsed as string[];
       } catch {
         alert("Invalid JSON for tags");
         return;
       }
     }
+    const idValue = formData.get("id");
+    if (!idValue || typeof idValue !== "string") {
+      alert("Invalid id");
+      return;
+    }
+    const titleValue = formData.get("title");
+    if (!titleValue || typeof titleValue !== "string") {
+      alert("Invalid title");
+      return;
+    }
+    const categoryValue = formData.get("category");
+    if (!categoryValue || typeof categoryValue !== "string") {
+      alert("Invalid category");
+      return;
+    }
+    if (
+      !["security-policy", "audit-report", "legal", "questionnaire"].includes(
+        categoryValue,
+      )
+    ) {
+      alert("Invalid category");
+      return;
+    }
+    const descriptionValue = formData.get("description");
+    if (!descriptionValue || typeof descriptionValue !== "string") {
+      alert("Invalid description");
+      return;
+    }
+    const accessLevelValue = formData.get("accessLevel");
+    if (!accessLevelValue || typeof accessLevelValue !== "string") {
+      alert("Invalid accessLevel");
+      return;
+    }
+    if (
+      !["public", "login-required", "nda-required"].includes(accessLevelValue)
+    ) {
+      alert("Invalid accessLevel");
+      return;
+    }
+    const fileUrlValue = formData.get("fileUrl");
+    const fileUrl =
+      fileUrlValue && typeof fileUrlValue === "string"
+        ? fileUrlValue
+        : undefined;
+    const fileSizeValue = formData.get("fileSize");
+    const fileSize =
+      fileSizeValue && typeof fileSizeValue === "string"
+        ? fileSizeValue
+        : undefined;
+    const statusValue = formData.get("status");
+    if (!statusValue || typeof statusValue !== "string") {
+      alert("Invalid status");
+      return;
+    }
+    if (statusValue !== "draft" && statusValue !== "published") {
+      alert("Invalid status");
+      return;
+    }
     const data = {
-      id: formData.get("id") as string,
-      title: formData.get("title") as string,
-      category: formData.get("category") as
+      id: idValue,
+      title: titleValue,
+      category: categoryValue as
         | "security-policy"
         | "audit-report"
         | "legal"
         | "questionnaire",
-      description: formData.get("description") as string,
-      accessLevel: formData.get("accessLevel") as
+      description: descriptionValue,
+      accessLevel: accessLevelValue as
         | "public"
         | "login-required"
         | "nda-required",
-      fileUrl: (formData.get("fileUrl") as string) || undefined,
-      fileSize: (formData.get("fileSize") as string) || undefined,
-      status: formData.get("status") as "draft" | "published",
+      fileUrl,
+      fileSize,
+      status: statusValue as "draft" | "published",
       tags,
     };
 

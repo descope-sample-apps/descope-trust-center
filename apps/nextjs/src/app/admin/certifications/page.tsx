@@ -98,11 +98,15 @@ export default function CertificationsPage() {
   };
 
   const handleSubmit = (formData: FormData) => {
-    const standardsValue = formData.get("standards") as string;
+    const standardsValue = formData.get("standards");
+    if (typeof standardsValue !== "string") {
+      alert("Invalid standards value");
+      return;
+    }
     let standards: string[] = [];
     if (standardsValue) {
       try {
-        const parsed = JSON.parse(standardsValue);
+        const parsed = JSON.parse(standardsValue) as unknown;
         if (
           !Array.isArray(parsed) ||
           !parsed.every((item) => typeof item === "string")
@@ -110,22 +114,66 @@ export default function CertificationsPage() {
           alert("Standards must be an array of strings");
           return;
         }
-        standards = parsed;
+        standards = parsed as string[];
       } catch {
         alert("Invalid JSON for standards");
         return;
       }
     }
+    const idValue = formData.get("id");
+    if (!idValue || typeof idValue !== "string") {
+      alert("Invalid id");
+      return;
+    }
+    const nameValue = formData.get("name");
+    if (!nameValue || typeof nameValue !== "string") {
+      alert("Invalid name");
+      return;
+    }
+    const logoValue = formData.get("logo");
+    if (!logoValue || typeof logoValue !== "string") {
+      alert("Invalid logo");
+      return;
+    }
+    const statusValue = formData.get("status");
+    if (!statusValue || typeof statusValue !== "string") {
+      alert("Invalid status");
+      return;
+    }
+    if (statusValue !== "draft" && statusValue !== "published") {
+      alert("Invalid status");
+      return;
+    }
+    const descriptionValue = formData.get("description");
+    if (!descriptionValue || typeof descriptionValue !== "string") {
+      alert("Invalid description");
+      return;
+    }
+    const lastAuditDateValue = formData.get("lastAuditDate");
+    const lastAuditDate =
+      lastAuditDateValue && typeof lastAuditDateValue === "string"
+        ? lastAuditDateValue
+        : undefined;
+    const expiryDateValue = formData.get("expiryDate");
+    const expiryDate =
+      expiryDateValue && typeof expiryDateValue === "string"
+        ? expiryDateValue
+        : undefined;
+    const certificateUrlValue = formData.get("certificateUrl");
+    const certificateUrl =
+      certificateUrlValue && typeof certificateUrlValue === "string"
+        ? certificateUrlValue
+        : undefined;
     const data = {
-      id: formData.get("id") as string,
-      name: formData.get("name") as string,
-      logo: formData.get("logo") as string,
-      status: formData.get("status") as "draft" | "published",
-      description: formData.get("description") as string,
+      id: idValue,
+      name: nameValue,
+      logo: logoValue,
+      status: statusValue as "draft" | "published",
+      description: descriptionValue,
       standards,
-      lastAuditDate: (formData.get("lastAuditDate") as string) || undefined,
-      expiryDate: (formData.get("expiryDate") as string) || undefined,
-      certificateUrl: (formData.get("certificateUrl") as string) || undefined,
+      lastAuditDate,
+      expiryDate,
+      certificateUrl,
     };
 
     if (editingCert) {

@@ -94,7 +94,11 @@ export default function SubprocessorsPage() {
   };
 
   const handleSubmit = (formData: FormData) => {
-    const dataProcessedValue = formData.get("dataProcessed") as string;
+    const dataProcessedValue = formData.get("dataProcessed");
+    if (typeof dataProcessedValue !== "string") {
+      alert("Invalid dataProcessed value");
+      return;
+    }
     let dataProcessed: string[] = [];
     if (dataProcessedValue) {
       try {
@@ -112,14 +116,48 @@ export default function SubprocessorsPage() {
         return;
       }
     }
+    const idValue = formData.get("id");
+    if (!idValue || typeof idValue !== "string") {
+      alert("Invalid id");
+      return;
+    }
+    const nameValue = formData.get("name");
+    if (!nameValue || typeof nameValue !== "string") {
+      alert("Invalid name");
+      return;
+    }
+    const purposeValue = formData.get("purpose");
+    if (!purposeValue || typeof purposeValue !== "string") {
+      alert("Invalid purpose");
+      return;
+    }
+    const locationValue = formData.get("location");
+    if (!locationValue || typeof locationValue !== "string") {
+      alert("Invalid location");
+      return;
+    }
+    const contractUrlValue = formData.get("contractUrl");
+    if (!contractUrlValue || typeof contractUrlValue !== "string") {
+      alert("Invalid contractUrl");
+      return;
+    }
+    const statusValue = formData.get("status");
+    if (!statusValue || typeof statusValue !== "string") {
+      alert("Invalid status");
+      return;
+    }
+    if (statusValue !== "draft" && statusValue !== "published") {
+      alert("Invalid status");
+      return;
+    }
     const data = {
-      id: formData.get("id") as string,
-      name: formData.get("name") as string,
-      purpose: formData.get("purpose") as string,
+      id: idValue,
+      name: nameValue,
+      purpose: purposeValue,
       dataProcessed,
-      location: formData.get("location") as string,
-      contractUrl: formData.get("contractUrl") as string,
-      status: formData.get("status") as "draft" | "published",
+      location: locationValue,
+      contractUrl: contractUrlValue,
+      status: statusValue as "draft" | "published",
     };
 
     if (editingSubprocessor) {
