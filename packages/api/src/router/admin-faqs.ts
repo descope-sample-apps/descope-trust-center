@@ -1,13 +1,23 @@
-import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 
 import { AuditLog, CreateFaqSchema, Faq } from "@descope-trust-center/db";
 
-import { adminProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { isAdmin } from "../utils/admin";
 
-export const adminFaqRouter: TRPCRouterRecord = {
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!isAdmin(ctx.session.user.email, ctx.session.user.roles)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
+  }
+  return next({ ctx });
+});
+
+export const adminFaqRouter = createTRPCRouter({
   getAll: adminProcedure.query(async ({ ctx }) => {
     return ctx.db.select().from(Faq);
   }),
@@ -49,7 +59,7 @@ export const adminFaqRouter: TRPCRouterRecord = {
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "create",
-        entityType: "faq",
+        entityType: "certification",
         entityId: result[0].id,
         userId,
         userEmail: ctx.session.user.email,
@@ -98,7 +108,7 @@ export const adminFaqRouter: TRPCRouterRecord = {
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "update",
-        entityType: "faq",
+        entityType: "certification",
         entityId: id,
         userId,
         userEmail: ctx.session.user.email,
@@ -138,7 +148,7 @@ export const adminFaqRouter: TRPCRouterRecord = {
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "delete",
-        entityType: "faq",
+        entityType: "certification",
         entityId: input.id,
         userId,
         userEmail: ctx.session.user.email,
@@ -170,7 +180,7 @@ export const adminFaqRouter: TRPCRouterRecord = {
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "publish",
-        entityType: "faq",
+        entityType: "certification",
         entityId: input.id,
         userId,
         userEmail: ctx.session.user.email,
@@ -201,7 +211,7 @@ export const adminFaqRouter: TRPCRouterRecord = {
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "unpublish",
-        entityType: "faq",
+        entityType: "certification",
         entityId: input.id,
         userId,
         userEmail: ctx.session.user.email,
@@ -209,4 +219,4 @@ export const adminFaqRouter: TRPCRouterRecord = {
 
       return result[0];
     }),
-};
+});

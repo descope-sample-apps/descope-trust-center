@@ -22,35 +22,45 @@ export default function FAQsPage() {
     data: faqs,
     isLoading,
     refetch,
-  } = useQuery((trpc as any).admin.faqs.getAll.queryOptions());
+  } = useQuery(trpc.admin.faqs.getAll.queryOptions());
 
-  const createMutation = (trpc as any).admin.faqs.create.useMutation({
-    onSuccess: () => {
-      refetch();
-      setIsModalOpen(false);
-      setEditingFaq(null);
-    },
-  });
+  const createMutation = useMutation(
+    trpc.admin.faqs.create.mutationOptions({
+      onSuccess: () => {
+        void refetch();
+        setIsModalOpen(false);
+        setEditingFaq(null);
+      },
+    }),
+  );
 
-  const updateMutation = (trpc as any).admin.faqs.update.useMutation({
-    onSuccess: () => {
-      refetch();
-      setIsModalOpen(false);
-      setEditingFaq(null);
-    },
-  });
+  const updateMutation = useMutation(
+    trpc.admin.faqs.update.mutationOptions({
+      onSuccess: () => {
+        void refetch();
+        setIsModalOpen(false);
+        setEditingFaq(null);
+      },
+    }),
+  );
 
-  const publishMutation = (trpc as any).admin.faqs.publish.useMutation({
-    onSuccess: refetch,
-  });
+  const publishMutation = useMutation(
+    trpc.admin.faqs.publish.mutationOptions({
+      onSuccess: () => void refetch(),
+    }),
+  );
 
-  const unpublishMutation = (trpc as any).admin.faqs.unpublish.useMutation({
-    onSuccess: refetch,
-  });
+  const unpublishMutation = useMutation(
+    trpc.admin.faqs.unpublish.mutationOptions({
+      onSuccess: () => void refetch(),
+    }),
+  );
 
-  const deleteMutation = (trpc as any).admin.faqs.delete.useMutation({
-    onSuccess: refetch,
-  });
+  const deleteMutation = useMutation(
+    trpc.admin.faqs.delete.mutationOptions({
+      onSuccess: () => void refetch(),
+    }),
+  );
 
   const handleAdd = () => {
     setEditingFaq(null);
@@ -81,7 +91,12 @@ export default function FAQsPage() {
       id: formData.get("id") as string,
       question: formData.get("question") as string,
       answer: formData.get("answer") as string,
-      category: formData.get("category") as string,
+      category: formData.get("category") as
+        | "security"
+        | "compliance"
+        | "privacy"
+        | "data-handling"
+        | "authentication",
       status: formData.get("status") as "draft" | "published",
     };
 
@@ -165,7 +180,7 @@ export default function FAQsPage() {
           faq={editingFaq}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
-          isLoading={createMutation.isLoading ?? updateMutation.isLoading}
+          isLoading={createMutation.isPending ?? updateMutation.isPending}
         />
       )}
     </div>

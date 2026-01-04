@@ -26,37 +26,45 @@ export default function DocumentsPage() {
     data: documents,
     isLoading,
     refetch,
-  } = useQuery((trpc as any).admin.documents.getAll.queryOptions());
+  } = useQuery(trpc.admin.documents.getAll.queryOptions());
 
-  const createMutation = (trpc as any).admin.documents.create.useMutation({
-    onSuccess: () => {
-      refetch();
-      setIsModalOpen(false);
-      setEditingDoc(null);
-    },
-  });
-
-  const updateMutation = (trpc as any).admin.documents.update.useMutation({
-    onSuccess: () => {
-      refetch();
-      setIsModalOpen(false);
-      setEditingDoc(null);
-    },
-  });
-
-  const publishMutation = (trpc as any).admin.documents.publish.useMutation({
-    onSuccess: refetch,
-  });
-
-  const unpublishMutation = (trpc as any).admin.documents.unpublish.useMutation(
-    {
-      onSuccess: refetch,
-    },
+  const createMutation = useMutation(
+    trpc.admin.documents.create.mutationOptions({
+      onSuccess: () => {
+        void refetch();
+        setIsModalOpen(false);
+        setEditingDoc(null);
+      },
+    }),
   );
 
-  const deleteMutation = (trpc as any).admin.documents.delete.useMutation({
-    onSuccess: refetch,
-  });
+  const updateMutation = useMutation(
+    trpc.admin.documents.update.mutationOptions({
+      onSuccess: () => {
+        void refetch();
+        setIsModalOpen(false);
+        setEditingDoc(null);
+      },
+    }),
+  );
+
+  const publishMutation = useMutation(
+    trpc.admin.documents.publish.mutationOptions({
+      onSuccess: () => void refetch(),
+    }),
+  );
+
+  const unpublishMutation = useMutation(
+    trpc.admin.documents.unpublish.mutationOptions({
+      onSuccess: () => void refetch(),
+    }),
+  );
+
+  const deleteMutation = useMutation(
+    trpc.admin.documents.delete.mutationOptions({
+      onSuccess: () => void refetch(),
+    }),
+  );
 
   const handleAdd = () => {
     setEditingDoc(null);
