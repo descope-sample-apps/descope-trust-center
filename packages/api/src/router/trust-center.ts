@@ -6,8 +6,12 @@ import { z } from "zod/v4";
 import {
   CreateAuditLogSchema as _CreateAuditLogSchema,
   AuditLog,
+  Certification,
+  Document,
   DocumentAccessRequest,
+  Faq,
   FormSubmission,
+  Subprocessor,
 } from "@descope-trust-center/db";
 import {
   CertificationsSchema,
