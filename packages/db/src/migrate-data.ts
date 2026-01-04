@@ -1,12 +1,29 @@
-import certificationsData from "../../../apps/nextjs/src/app/data/certifications.json";
-import documentsData from "../../../apps/nextjs/src/app/data/documents.json";
-import faqsData from "../../../apps/nextjs/src/app/data/faqs.json";
-import subprocessorsData from "../../../apps/nextjs/src/app/data/subprocessors.json";
+import * as fs from "fs";
+import * as path from "path";
+
 import { db } from "./client";
 import { Certification, Document, Faq, Subprocessor } from "./schema";
 
+/**
+ * Reads and parses a JSON data file from the Next.js app data directory
+ */
+function readDataFile<T>(filename: string): T {
+  const dataPath = path.resolve(
+    new URL(import.meta.url).pathname,
+    "../../../../apps/nextjs/src/app/data",
+    filename,
+  );
+  const content = fs.readFileSync(dataPath, "utf-8");
+  return JSON.parse(content) as T;
+}
+
 async function migrateData() {
   console.log("Starting data migration...");
+
+  const certificationsData = readDataFile<any[]>("certifications.json");
+  const documentsData = readDataFile<any[]>("documents.json");
+  const faqsData = readDataFile<any[]>("faqs.json");
+  const subprocessorsData = readDataFile<any[]>("subprocessors.json");
 
   // Migrate certifications
   for (const cert of certificationsData) {

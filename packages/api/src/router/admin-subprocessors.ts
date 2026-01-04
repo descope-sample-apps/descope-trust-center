@@ -63,7 +63,7 @@ export const adminSubprocessorRouter = createTRPCRouter({
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "create",
-        entityType: "certification",
+        entityType: "subprocessor",
         entityId: result[0].id,
         userId,
         userEmail: ctx.session.user.email,

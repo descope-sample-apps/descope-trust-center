@@ -63,7 +63,7 @@ export const adminDocumentRouter = createTRPCRouter({
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "create",
-        entityType: "certification",
+        entityType: "document",
         entityId: result[0].id,
         userId,
         userEmail: ctx.session.user.email,
@@ -112,7 +112,7 @@ export const adminDocumentRouter = createTRPCRouter({
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "update",
-        entityType: "certification",
+        entityType: "document",
         entityId: id,
         userId,
         userEmail: ctx.session.user.email,
@@ -152,7 +152,7 @@ export const adminDocumentRouter = createTRPCRouter({
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "delete",
-        entityType: "certification",
+        entityType: "document",
         entityId: input.id,
         userId,
         userEmail: ctx.session.user.email,
@@ -184,7 +184,7 @@ export const adminDocumentRouter = createTRPCRouter({
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "publish",
-        entityType: "certification",
+        entityType: "document",
         entityId: input.id,
         userId,
         userEmail: ctx.session.user.email,
@@ -215,7 +215,7 @@ export const adminDocumentRouter = createTRPCRouter({
       // Audit log
       await ctx.db.insert(AuditLog).values({
         action: "unpublish",
-        entityType: "certification",
+        entityType: "document",
         entityId: input.id,
         userId,
         userEmail: ctx.session.user.email,
