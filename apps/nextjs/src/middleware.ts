@@ -9,11 +9,19 @@ const intlMiddleware = createMiddleware({
   localePrefix: "always",
 });
 
+interface DescopeSessionInfo {
+  jwt: string;
+  token: {
+    sub?: string;
+    tenants?: Record<string, { roles?: unknown }>;
+  };
+}
+
 // Helper to extract roles from Descope session token
-function getRolesFromSession(sessionInfo: any): string[] {
+function getRolesFromSession(sessionInfo: DescopeSessionInfo): string[] {
   const roles: string[] = [];
   if (
-    sessionInfo?.token?.tenants &&
+    sessionInfo.token.tenants &&
     typeof sessionInfo.token.tenants === "object"
   ) {
     const tenants = sessionInfo.token.tenants as Record<
@@ -62,7 +70,7 @@ export default async function middleware(request: NextRequest) {
   if (pathname.startsWith("/admin")) {
     const sessionInfo = await session();
 
-    if (!sessionInfo?.token?.sub) {
+    if (!sessionInfo?.token.sub) {
       // Not authenticated - redirect to sign in
       const url = new URL("/auth/signin", request.url);
       url.searchParams.set("redirect", pathname);
@@ -82,7 +90,7 @@ export default async function middleware(request: NextRequest) {
 
   // All other routes require authentication (default behavior)
   const sessionInfo = await session();
-  if (!sessionInfo?.token?.sub) {
+  if (!sessionInfo?.token.sub) {
     const url = new URL("/auth/signin", request.url);
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
