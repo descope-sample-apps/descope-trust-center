@@ -13,7 +13,9 @@ export default async function AdminAuthWrapper({
     redirect("/auth/signin");
   }
 
-  const email = (session?.token?.claims as { email?: string })?.email;
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const claims = session?.token?.claims as { email?: string } | undefined;
+  const email = claims?.email;
   const isAdmin = email?.endsWith("@descope.com");
   if (!isAdmin) {
     return (

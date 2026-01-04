@@ -15,12 +15,9 @@ import {
   FormSubmission,
 } from "@descope-trust-center/db";
 import {
-  CertificationsSchema,
   DocumentCategorySchema,
   DocumentsSchema,
   FAQCategorySchema,
-  FAQsSchema,
-  SubprocessorsSchema,
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
 
@@ -95,7 +92,7 @@ export const trustCenterRouter = {
       logo: cert.logo || "",
       status: "active" as const,
       description: cert.description,
-      standards: cert.standards || [],
+      standards: cert.standards ?? [],
       lastAuditDate: cert.lastAuditDate
         ? new Date(cert.lastAuditDate).toISOString().split("T")[0]
         : undefined,
@@ -132,9 +129,9 @@ export const trustCenterRouter = {
         fileUrl: doc.fileUrl,
         fileSize: doc.fileSize,
         updatedAt:
-          doc.updatedAt?.toISOString().split("T")[0] ||
+          doc.updatedAt?.toISOString().split("T")[0] ??
           new Date().toISOString().split("T")[0],
-        tags: doc.tags || [],
+        tags: doc.tags ?? [],
       }));
 
       if (input?.category) {
@@ -159,7 +156,7 @@ export const trustCenterRouter = {
       id: sub.id,
       name: sub.name,
       purpose: sub.purpose,
-      dataProcessed: sub.dataProcessed || [],
+      dataProcessed: sub.dataProcessed ?? [],
       location: sub.location,
       contractUrl: sub.contractUrl,
       status: "active" as const,

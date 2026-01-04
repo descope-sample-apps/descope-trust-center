@@ -4,20 +4,22 @@ import { useState } from "react";
 import Image from "next/image";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import type { AppRouter } from "@descope-trust-center/api";
-
 import { useTRPC } from "~/trpc/react";
 
 interface CertificationType {
   id: string;
   name: string;
   logo: string;
-  status: "draft" | "published";
+  status: string;
   description: string;
-  standards: string[];
-  lastAuditDate?: string;
-  expiryDate?: string;
-  certificateUrl?: string;
+  standards: unknown;
+  lastAuditDate: string | null;
+  expiryDate: string | null;
+  certificateUrl: string | null;
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date | null;
 }
 
 export default function CertificationsPage() {
@@ -36,7 +38,7 @@ export default function CertificationsPage() {
   const createMutation = useMutation(
     trpc.admin.certifications.create.mutationOptions({
       onSuccess: () => {
-        refetch();
+        void refetch();
         setIsModalOpen(false);
         setEditingCert(null);
       },
@@ -46,7 +48,7 @@ export default function CertificationsPage() {
   const updateMutation = useMutation(
     trpc.admin.certifications.update.mutationOptions({
       onSuccess: () => {
-        refetch();
+        void refetch();
         setIsModalOpen(false);
         setEditingCert(null);
       },
@@ -55,19 +57,19 @@ export default function CertificationsPage() {
 
   const publishMutation = useMutation(
     trpc.admin.certifications.publish.mutationOptions({
-      onSuccess: () => refetch(),
+      onSuccess: () => void refetch(),
     }),
   );
 
   const unpublishMutation = useMutation(
     trpc.admin.certifications.unpublish.mutationOptions({
-      onSuccess: () => refetch(),
+      onSuccess: () => void refetch(),
     }),
   );
 
   const deleteMutation = useMutation(
     trpc.admin.certifications.delete.mutationOptions({
-      onSuccess: () => refetch(),
+      onSuccess: () => void refetch(),
     }),
   );
 
@@ -96,13 +98,14 @@ export default function CertificationsPage() {
   };
 
   const handleSubmit = (formData: FormData) => {
+    const standardsValue = formData.get("standards") as string;
     const data = {
       id: formData.get("id") as string,
       name: formData.get("name") as string,
       logo: formData.get("logo") as string,
       status: formData.get("status") as "draft" | "published",
       description: formData.get("description") as string,
-      standards: JSON.parse(formData.get("standards") as string),
+      standards: standardsValue ? (JSON.parse(standardsValue) as string[]) : [],
       lastAuditDate: (formData.get("lastAuditDate") as string) || undefined,
       expiryDate: (formData.get("expiryDate") as string) || undefined,
       certificateUrl: (formData.get("certificateUrl") as string) || undefined,
@@ -133,7 +136,7 @@ export default function CertificationsPage() {
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {(certifications as CertificationType[]).map((cert) => (
+          {certifications?.map((cert: CertificationType) => (
             <li key={cert.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
@@ -233,7 +236,7 @@ function CertificationModal({
             <input
               name="id"
               type="text"
-              defaultValue={certification?.id || ""}
+              defaultValue={certification?.id ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -245,7 +248,7 @@ function CertificationModal({
             <input
               name="name"
               type="text"
-              defaultValue={certification?.name || ""}
+              defaultValue={certification?.name ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -257,7 +260,7 @@ function CertificationModal({
             <input
               name="logo"
               type="url"
-              defaultValue={certification?.logo || ""}
+              defaultValue={certification?.logo ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
