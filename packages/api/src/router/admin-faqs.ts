@@ -5,7 +5,18 @@ import { z } from "zod/v4";
 
 import { AuditLog, CreateFaqSchema, Faq } from "@descope-trust-center/db";
 
-import { adminProcedure } from "../trpc";
+import { protectedProcedure } from "../trpc";
+import { isAdmin } from "../utils/admin";
+
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!isAdmin(ctx.session.user.email)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
+  }
+  return next({ ctx });
+});
 
 export const adminFaqRouter: TRPCRouterRecord = {
   getAll: adminProcedure.query(async ({ ctx }) => {
