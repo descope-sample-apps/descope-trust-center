@@ -129,6 +129,7 @@ function CertificationBadge({
 }: {
   certification: Certification;
 }) {
+  const t = useTranslations();
   const isActive = certification.status === "active";
   const isInProgress = certification.status === "in-progress";
 
@@ -151,7 +152,7 @@ function CertificationBadge({
         )}
         aria-hidden="true"
       />
-      <span>{certification.name}</span>
+      <span>{t(certification.nameKey!)}</span>
       {isInProgress && (
         <span className="text-xs opacity-75">(In Progress)</span>
       )}
