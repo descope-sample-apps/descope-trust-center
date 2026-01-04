@@ -4,56 +4,54 @@ import { useState } from "react";
 
 import { useTRPC } from "~/trpc/react";
 
-export default function CertificationsPage() {
+export default function DocumentsPage() {
   const trpc = useTRPC();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCert, setEditingCert] = useState<any>(null);
+  const [editingDoc, setEditingDoc] = useState<any>(null);
 
   const {
-    data: certifications,
+    data: documents,
     isLoading,
     refetch,
-  } = (trpc as any).admin.certifications.getAll.useQuery();
+  } = (trpc as any).admin.documents.getAll.useQuery();
 
-  const createMutation = (trpc as any).admin.certifications.create.useMutation({
+  const createMutation = (trpc as any).admin.documents.create.useMutation({
     onSuccess: () => {
       refetch();
       setIsModalOpen(false);
-      setEditingCert(null);
+      setEditingDoc(null);
     },
   });
 
-  const updateMutation = (trpc as any).admin.certifications.update.useMutation({
+  const updateMutation = (trpc as any).admin.documents.update.useMutation({
     onSuccess: () => {
       refetch();
       setIsModalOpen(false);
-      setEditingCert(null);
+      setEditingDoc(null);
     },
   });
 
-  const publishMutation = (
-    trpc as any
-  ).admin.certifications.publish.useMutation({
+  const publishMutation = (trpc as any).admin.documents.publish.useMutation({
     onSuccess: refetch,
   });
 
-  const unpublishMutation = (
-    trpc as any
-  ).admin.certifications.unpublish.useMutation({
-    onSuccess: refetch,
-  });
+  const unpublishMutation = (trpc as any).admin.documents.unpublish.useMutation(
+    {
+      onSuccess: refetch,
+    },
+  );
 
-  const deleteMutation = (trpc as any).admin.certifications.delete.useMutation({
+  const deleteMutation = (trpc as any).admin.documents.delete.useMutation({
     onSuccess: refetch,
   });
 
   const handleAdd = () => {
-    setEditingCert(null);
+    setEditingDoc(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (cert: any) => {
-    setEditingCert(cert);
+  const handleEdit = (doc: any) => {
+    setEditingDoc(doc);
     setIsModalOpen(true);
   };
 
@@ -66,7 +64,7 @@ export default function CertificationsPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this certification?")) {
+    if (confirm("Are you sure you want to delete this document?")) {
       deleteMutation.mutate({ id });
     }
   };
@@ -74,17 +72,17 @@ export default function CertificationsPage() {
   const handleSubmit = (formData: FormData) => {
     const data = {
       id: formData.get("id") as string,
-      name: formData.get("name") as string,
-      logo: formData.get("logo") as string,
-      status: formData.get("status") as "draft" | "published",
+      title: formData.get("title") as string,
+      category: formData.get("category") as string,
       description: formData.get("description") as string,
-      standards: JSON.parse(formData.get("standards") as string),
-      lastAuditDate: (formData.get("lastAuditDate") as string) || undefined,
-      expiryDate: (formData.get("expiryDate") as string) || undefined,
-      certificateUrl: (formData.get("certificateUrl") as string) || undefined,
+      accessLevel: formData.get("accessLevel") as string,
+      fileUrl: (formData.get("fileUrl") as string) || undefined,
+      fileSize: (formData.get("fileSize") as string) || undefined,
+      status: formData.get("status") as "draft" | "published",
+      tags: JSON.parse(formData.get("tags") as string),
     };
 
-    if (editingCert) {
+    if (editingDoc) {
       updateMutation.mutate(data);
     } else {
       createMutation.mutate(data);
@@ -98,60 +96,55 @@ export default function CertificationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Certifications</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Documents</h2>
         <button
           onClick={handleAdd}
           className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          Add Certification
+          Add Document
         </button>
       </div>
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {certifications?.map((cert: any) => (
-            <li key={cert.id}>
+          {documents?.map((doc: any) => (
+            <li key={doc.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="h-10 w-10 flex-shrink-0">
-                      <img
-                        className="h-10 w-10 rounded-full"
-                        src={cert.logo}
-                        alt=""
-                      />
-                    </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {cert.name}
+                        {doc.title}
                       </div>
-                      <div className="text-sm text-gray-500">{cert.status}</div>
+                      <div className="text-sm text-gray-500">
+                        {doc.category} • {doc.accessLevel} • {doc.status}
+                      </div>
                     </div>
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handleEdit(cert)}
+                      onClick={() => handleEdit(doc)}
                       className="text-blue-600 hover:text-blue-900"
                     >
                       Edit
                     </button>
-                    {cert.status === "draft" ? (
+                    {doc.status === "draft" ? (
                       <button
-                        onClick={() => handlePublish(cert.id)}
+                        onClick={() => handlePublish(doc.id)}
                         className="text-green-600 hover:text-green-900"
                       >
                         Publish
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleUnpublish(cert.id)}
+                        onClick={() => handleUnpublish(doc.id)}
                         className="text-yellow-600 hover:text-yellow-900"
                       >
                         Unpublish
                       </button>
                     )}
                     <button
-                      onClick={() => handleDelete(cert.id)}
+                      onClick={() => handleDelete(doc.id)}
                       className="text-red-600 hover:text-red-900"
                     >
                       Delete
@@ -165,8 +158,8 @@ export default function CertificationsPage() {
       </div>
 
       {isModalOpen && (
-        <CertificationModal
-          certification={editingCert}
+        <DocumentModal
+          document={editingDoc}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
           isLoading={createMutation.isLoading || updateMutation.isLoading}
@@ -176,13 +169,13 @@ export default function CertificationsPage() {
   );
 }
 
-function CertificationModal({
-  certification,
+function DocumentModal({
+  document,
   onClose,
   onSubmit,
   isLoading,
 }: {
-  certification: any;
+  document: any;
   onClose: () => void;
   onSubmit: (formData: FormData) => void;
   isLoading: boolean;
@@ -197,7 +190,7 @@ function CertificationModal({
     <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
       <div className="w-full max-w-md rounded-lg bg-white p-6">
         <h3 className="text-lg font-medium text-gray-900">
-          {certification ? "Edit Certification" : "Add Certification"}
+          {document ? "Edit Document" : "Add Document"}
         </h3>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
@@ -207,32 +200,83 @@ function CertificationModal({
             <input
               name="id"
               type="text"
-              defaultValue={certification?.id || ""}
+              defaultValue={document?.id || ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Name
+              Title
             </label>
             <input
-              name="name"
+              name="title"
               type="text"
-              defaultValue={certification?.name || ""}
+              defaultValue={document?.title || ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Logo URL
+              Category
+            </label>
+            <select
+              name="category"
+              defaultValue={document?.category || "security-policy"}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            >
+              <option value="security-policy">Security Policy</option>
+              <option value="audit-report">Audit Report</option>
+              <option value="legal">Legal</option>
+              <option value="questionnaire">Questionnaire</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea
+              name="description"
+              defaultValue={document?.description || ""}
+              required
+              rows={3}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Access Level
+            </label>
+            <select
+              name="accessLevel"
+              defaultValue={document?.accessLevel || "public"}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            >
+              <option value="public">Public</option>
+              <option value="login-required">Login Required</option>
+              <option value="nda-required">NDA Required</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              File URL
             </label>
             <input
-              name="logo"
+              name="fileUrl"
               type="url"
-              defaultValue={certification?.logo || ""}
-              required
+              defaultValue={document?.fileUrl || ""}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              File Size
+            </label>
+            <input
+              name="fileSize"
+              type="text"
+              defaultValue={document?.fileSize || ""}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
@@ -242,7 +286,7 @@ function CertificationModal({
             </label>
             <select
               name="status"
-              defaultValue={certification?.status || "draft"}
+              defaultValue={document?.status || "draft"}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="draft">Draft</option>
@@ -251,58 +295,13 @@ function CertificationModal({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              name="description"
-              defaultValue={certification?.description || ""}
-              required
-              rows={3}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Standards (JSON array)
+              Tags (JSON array)
             </label>
             <input
-              name="standards"
+              name="tags"
               type="text"
-              defaultValue={JSON.stringify(certification?.standards || [])}
+              defaultValue={JSON.stringify(document?.tags || [])}
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Last Audit Date
-            </label>
-            <input
-              name="lastAuditDate"
-              type="date"
-              defaultValue={certification?.lastAuditDate || ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Expiry Date
-            </label>
-            <input
-              name="expiryDate"
-              type="date"
-              defaultValue={certification?.expiryDate || ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Certificate URL
-            </label>
-            <input
-              name="certificateUrl"
-              type="url"
-              defaultValue={certification?.certificateUrl || ""}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>

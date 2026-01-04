@@ -4,56 +4,52 @@ import { useState } from "react";
 
 import { useTRPC } from "~/trpc/react";
 
-export default function CertificationsPage() {
+export default function FAQsPage() {
   const trpc = useTRPC();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCert, setEditingCert] = useState<any>(null);
+  const [editingFaq, setEditingFaq] = useState<any>(null);
 
   const {
-    data: certifications,
+    data: faqs,
     isLoading,
     refetch,
-  } = (trpc as any).admin.certifications.getAll.useQuery();
+  } = (trpc as any).admin.faqs.getAll.useQuery();
 
-  const createMutation = (trpc as any).admin.certifications.create.useMutation({
+  const createMutation = (trpc as any).admin.faqs.create.useMutation({
     onSuccess: () => {
       refetch();
       setIsModalOpen(false);
-      setEditingCert(null);
+      setEditingFaq(null);
     },
   });
 
-  const updateMutation = (trpc as any).admin.certifications.update.useMutation({
+  const updateMutation = (trpc as any).admin.faqs.update.useMutation({
     onSuccess: () => {
       refetch();
       setIsModalOpen(false);
-      setEditingCert(null);
+      setEditingFaq(null);
     },
   });
 
-  const publishMutation = (
-    trpc as any
-  ).admin.certifications.publish.useMutation({
+  const publishMutation = (trpc as any).admin.faqs.publish.useMutation({
     onSuccess: refetch,
   });
 
-  const unpublishMutation = (
-    trpc as any
-  ).admin.certifications.unpublish.useMutation({
+  const unpublishMutation = (trpc as any).admin.faqs.unpublish.useMutation({
     onSuccess: refetch,
   });
 
-  const deleteMutation = (trpc as any).admin.certifications.delete.useMutation({
+  const deleteMutation = (trpc as any).admin.faqs.delete.useMutation({
     onSuccess: refetch,
   });
 
   const handleAdd = () => {
-    setEditingCert(null);
+    setEditingFaq(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (cert: any) => {
-    setEditingCert(cert);
+  const handleEdit = (faq: any) => {
+    setEditingFaq(faq);
     setIsModalOpen(true);
   };
 
@@ -66,7 +62,7 @@ export default function CertificationsPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this certification?")) {
+    if (confirm("Are you sure you want to delete this FAQ?")) {
       deleteMutation.mutate({ id });
     }
   };
@@ -74,17 +70,13 @@ export default function CertificationsPage() {
   const handleSubmit = (formData: FormData) => {
     const data = {
       id: formData.get("id") as string,
-      name: formData.get("name") as string,
-      logo: formData.get("logo") as string,
+      question: formData.get("question") as string,
+      answer: formData.get("answer") as string,
+      category: formData.get("category") as string,
       status: formData.get("status") as "draft" | "published",
-      description: formData.get("description") as string,
-      standards: JSON.parse(formData.get("standards") as string),
-      lastAuditDate: (formData.get("lastAuditDate") as string) || undefined,
-      expiryDate: (formData.get("expiryDate") as string) || undefined,
-      certificateUrl: (formData.get("certificateUrl") as string) || undefined,
     };
 
-    if (editingCert) {
+    if (editingFaq) {
       updateMutation.mutate(data);
     } else {
       createMutation.mutate(data);
@@ -98,60 +90,55 @@ export default function CertificationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Certifications</h2>
+        <h2 className="text-2xl font-bold text-gray-900">FAQs</h2>
         <button
           onClick={handleAdd}
           className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          Add Certification
+          Add FAQ
         </button>
       </div>
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {certifications?.map((cert: any) => (
-            <li key={cert.id}>
+          {faqs?.map((faq: any) => (
+            <li key={faq.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="h-10 w-10 flex-shrink-0">
-                      <img
-                        className="h-10 w-10 rounded-full"
-                        src={cert.logo}
-                        alt=""
-                      />
-                    </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {cert.name}
+                        {faq.question}
                       </div>
-                      <div className="text-sm text-gray-500">{cert.status}</div>
+                      <div className="text-sm text-gray-500">
+                        {faq.category} • {faq.status}
+                      </div>
                     </div>
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handleEdit(cert)}
+                      onClick={() => handleEdit(faq)}
                       className="text-blue-600 hover:text-blue-900"
                     >
                       Edit
                     </button>
-                    {cert.status === "draft" ? (
+                    {faq.status === "draft" ? (
                       <button
-                        onClick={() => handlePublish(cert.id)}
+                        onClick={() => handlePublish(faq.id)}
                         className="text-green-600 hover:text-green-900"
                       >
                         Publish
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleUnpublish(cert.id)}
+                        onClick={() => handleUnpublish(faq.id)}
                         className="text-yellow-600 hover:text-yellow-900"
                       >
                         Unpublish
                       </button>
                     )}
                     <button
-                      onClick={() => handleDelete(cert.id)}
+                      onClick={() => handleDelete(faq.id)}
                       className="text-red-600 hover:text-red-900"
                     >
                       Delete
@@ -165,8 +152,8 @@ export default function CertificationsPage() {
       </div>
 
       {isModalOpen && (
-        <CertificationModal
-          certification={editingCert}
+        <FAQModal
+          faq={editingFaq}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
           isLoading={createMutation.isLoading || updateMutation.isLoading}
@@ -176,13 +163,13 @@ export default function CertificationsPage() {
   );
 }
 
-function CertificationModal({
-  certification,
+function FAQModal({
+  faq,
   onClose,
   onSubmit,
   isLoading,
 }: {
-  certification: any;
+  faq: any;
   onClose: () => void;
   onSubmit: (formData: FormData) => void;
   isLoading: boolean;
@@ -197,7 +184,7 @@ function CertificationModal({
     <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
       <div className="w-full max-w-md rounded-lg bg-white p-6">
         <h3 className="text-lg font-medium text-gray-900">
-          {certification ? "Edit Certification" : "Add Certification"}
+          {faq ? "Edit FAQ" : "Add FAQ"}
         </h3>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
@@ -207,34 +194,50 @@ function CertificationModal({
             <input
               name="id"
               type="text"
-              defaultValue={certification?.id || ""}
+              defaultValue={faq?.id || ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Name
+              Question
             </label>
             <input
-              name="name"
+              name="question"
               type="text"
-              defaultValue={certification?.name || ""}
+              defaultValue={faq?.question || ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Logo URL
+              Answer
             </label>
-            <input
-              name="logo"
-              type="url"
-              defaultValue={certification?.logo || ""}
+            <textarea
+              name="answer"
+              defaultValue={faq?.answer || ""}
               required
+              rows={4}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Category
+            </label>
+            <select
+              name="category"
+              defaultValue={faq?.category || "security"}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            >
+              <option value="security">Security</option>
+              <option value="compliance">Compliance</option>
+              <option value="privacy">Privacy</option>
+              <option value="data-handling">Data Handling</option>
+              <option value="authentication">Authentication</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -242,69 +245,12 @@ function CertificationModal({
             </label>
             <select
               name="status"
-              defaultValue={certification?.status || "draft"}
+              defaultValue={faq?.status || "draft"}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              name="description"
-              defaultValue={certification?.description || ""}
-              required
-              rows={3}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Standards (JSON array)
-            </label>
-            <input
-              name="standards"
-              type="text"
-              defaultValue={JSON.stringify(certification?.standards || [])}
-              required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Last Audit Date
-            </label>
-            <input
-              name="lastAuditDate"
-              type="date"
-              defaultValue={certification?.lastAuditDate || ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Expiry Date
-            </label>
-            <input
-              name="expiryDate"
-              type="date"
-              defaultValue={certification?.expiryDate || ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Certificate URL
-            </label>
-            <input
-              name="certificateUrl"
-              type="url"
-              defaultValue={certification?.certificateUrl || ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
           </div>
           <div className="flex justify-end space-x-2">
             <button
