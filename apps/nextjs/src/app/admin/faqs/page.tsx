@@ -10,7 +10,11 @@ interface FaqType {
   question: string;
   answer: string;
   category: string;
-  status: "draft" | "published";
+  status: string;
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date | null;
 }
 
 export default function FAQsPage() {
@@ -125,7 +129,7 @@ export default function FAQsPage() {
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {(faqs as FaqType[])?.map((faq) => (
+          {faqs?.map((faq) => (
             <li key={faq.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
@@ -180,7 +184,7 @@ export default function FAQsPage() {
           faq={editingFaq}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
-          isLoading={createMutation.isPending ?? updateMutation.isPending}
+          isLoading={createMutation.isPending || updateMutation.isPending}
         />
       )}
     </div>
@@ -269,7 +273,7 @@ function FAQModal({
             </label>
             <select
               name="status"
-              defaultValue={faq?.status || "draft"}
+              defaultValue={faq?.status ?? "draft"}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="draft">Draft</option>

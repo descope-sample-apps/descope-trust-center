@@ -1,58 +1,80 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "~/trpc/react";
+
+interface SubprocessorType {
+  id: string;
+  name: string;
+  purpose: string;
+  dataProcessed: unknown;
+  location: string;
+  contractUrl: string;
+  status: string;
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date | null;
+}
 
 export default function SubprocessorsPage() {
   const trpc = useTRPC();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSubprocessor, setEditingSubprocessor] = useState<any>(null);
+  const [editingSubprocessor, setEditingSubprocessor] =
+    useState<SubprocessorType | null>(null);
 
   const {
     data: subprocessors,
     isLoading,
     refetch,
-  } = (trpc as any).admin.subprocessors.getAll.useQuery();
+  } = useQuery(trpc.admin.subprocessors.getAll.queryOptions());
 
-  const createMutation = (trpc as any).admin.subprocessors.create.useMutation({
-    onSuccess: () => {
-      refetch();
-      setIsModalOpen(false);
-      setEditingSubprocessor(null);
-    },
-  });
-
-  const updateMutation = (trpc as any).admin.subprocessors.update.useMutation({
-    onSuccess: () => {
-      refetch();
-      setIsModalOpen(false);
-      setEditingSubprocessor(null);
-    },
-  });
-
-  const publishMutation = (trpc as any).admin.subprocessors.publish.useMutation(
-    {
-      onSuccess: refetch,
-    },
+  const createMutation = useMutation(
+    trpc.admin.subprocessors.create.mutationOptions({
+      onSuccess: () => {
+        void refetch();
+        setIsModalOpen(false);
+        setEditingSubprocessor(null);
+      },
+    }),
   );
 
-  const unpublishMutation = (
-    trpc as any
-  ).admin.subprocessors.unpublish.useMutation({
-    onSuccess: refetch,
-  });
+  const updateMutation = useMutation(
+    trpc.admin.subprocessors.update.mutationOptions({
+      onSuccess: () => {
+        void refetch();
+        setIsModalOpen(false);
+        setEditingSubprocessor(null);
+      },
+    }),
+  );
 
-  const deleteMutation = (trpc as any).admin.subprocessors.delete.useMutation({
-    onSuccess: refetch,
-  });
+  const publishMutation = useMutation(
+    trpc.admin.subprocessors.publish.mutationOptions({
+      onSuccess: () => void refetch(),
+    }),
+  );
+
+  const unpublishMutation = useMutation(
+    trpc.admin.subprocessors.unpublish.mutationOptions({
+      onSuccess: () => void refetch(),
+    }),
+  );
+
+  const deleteMutation = useMutation(
+    trpc.admin.subprocessors.delete.mutationOptions({
+      onSuccess: () => void refetch(),
+    }),
+  );
 
   const handleAdd = () => {
     setEditingSubprocessor(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (subprocessor: any) => {
+  const handleEdit = (subprocessor: SubprocessorType) => {
     setEditingSubprocessor(subprocessor);
     setIsModalOpen(true);
   };
@@ -76,7 +98,9 @@ export default function SubprocessorsPage() {
       id: formData.get("id") as string,
       name: formData.get("name") as string,
       purpose: formData.get("purpose") as string,
-      dataProcessed: JSON.parse(formData.get("dataProcessed") as string),
+      dataProcessed: JSON.parse(
+        formData.get("dataProcessed") as string,
+      ) as string[],
       location: formData.get("location") as string,
       contractUrl: formData.get("contractUrl") as string,
       status: formData.get("status") as "draft" | "published",
@@ -107,7 +131,7 @@ export default function SubprocessorsPage() {
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {subprocessors?.map((subprocessor: any) => (
+          {subprocessors?.map((subprocessor: SubprocessorType) => (
             <li key={subprocessor.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
@@ -162,7 +186,7 @@ export default function SubprocessorsPage() {
           subprocessor={editingSubprocessor}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
-          isLoading={createMutation.isLoading || updateMutation.isLoading}
+          isLoading={createMutation.isPending || updateMutation.isPending}
         />
       )}
     </div>
@@ -175,7 +199,7 @@ function SubprocessorModal({
   onSubmit,
   isLoading,
 }: {
-  subprocessor: any;
+  subprocessor: SubprocessorType | null;
   onClose: () => void;
   onSubmit: (formData: FormData) => void;
   isLoading: boolean;
@@ -200,7 +224,7 @@ function SubprocessorModal({
             <input
               name="id"
               type="text"
-              defaultValue={subprocessor?.id || ""}
+              defaultValue={subprocessor?.id ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -212,7 +236,7 @@ function SubprocessorModal({
             <input
               name="name"
               type="text"
-              defaultValue={subprocessor?.name || ""}
+              defaultValue={subprocessor?.name ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -223,7 +247,7 @@ function SubprocessorModal({
             </label>
             <textarea
               name="purpose"
-              defaultValue={subprocessor?.purpose || ""}
+              defaultValue={subprocessor?.purpose ?? ""}
               required
               rows={3}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
@@ -236,7 +260,7 @@ function SubprocessorModal({
             <input
               name="dataProcessed"
               type="text"
-              defaultValue={JSON.stringify(subprocessor?.dataProcessed || [])}
+              defaultValue={JSON.stringify(subprocessor?.dataProcessed ?? [])}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -248,7 +272,7 @@ function SubprocessorModal({
             <input
               name="location"
               type="text"
-              defaultValue={subprocessor?.location || ""}
+              defaultValue={subprocessor?.location ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -260,7 +284,7 @@ function SubprocessorModal({
             <input
               name="contractUrl"
               type="url"
-              defaultValue={subprocessor?.contractUrl || ""}
+              defaultValue={subprocessor?.contractUrl ?? ""}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -271,7 +295,7 @@ function SubprocessorModal({
             </label>
             <select
               name="status"
-              defaultValue={subprocessor?.status || "draft"}
+              defaultValue={subprocessor?.status ?? "draft"}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="draft">Draft</option>

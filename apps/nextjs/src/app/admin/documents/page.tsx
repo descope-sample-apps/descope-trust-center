@@ -11,10 +11,14 @@ interface DocumentType {
   category: string;
   description: string;
   accessLevel: string;
-  fileUrl?: string;
-  fileSize?: string;
-  status: "draft" | "published";
-  tags: string[];
+  fileUrl: string | null;
+  fileSize: string | null;
+  status: string;
+  tags: unknown;
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date | null;
 }
 
 export default function DocumentsPage() {
@@ -94,13 +98,20 @@ export default function DocumentsPage() {
     const data = {
       id: formData.get("id") as string,
       title: formData.get("title") as string,
-      category: formData.get("category") as string,
+      category: formData.get("category") as
+        | "security-policy"
+        | "audit-report"
+        | "legal"
+        | "questionnaire",
       description: formData.get("description") as string,
-      accessLevel: formData.get("accessLevel") as string,
+      accessLevel: formData.get("accessLevel") as
+        | "public"
+        | "login-required"
+        | "nda-required",
       fileUrl: (formData.get("fileUrl") as string) || undefined,
       fileSize: (formData.get("fileSize") as string) || undefined,
       status: formData.get("status") as "draft" | "published",
-      tags: JSON.parse(formData.get("tags") as string),
+      tags: JSON.parse(formData.get("tags") as string) as string[],
     };
 
     if (editingDoc) {
@@ -128,7 +139,7 @@ export default function DocumentsPage() {
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {(documents as DocumentType[])?.map((doc) => (
+          {documents?.map((doc) => (
             <li key={doc.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
@@ -183,7 +194,7 @@ export default function DocumentsPage() {
           document={editingDoc}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
-          isLoading={createMutation.isLoading ?? updateMutation.isLoading}
+          isLoading={createMutation.isPending || updateMutation.isPending}
         />
       )}
     </div>
