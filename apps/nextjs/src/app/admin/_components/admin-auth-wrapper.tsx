@@ -9,12 +9,14 @@ export default async function AdminAuthWrapper({
 }) {
   const session = await getSession();
 
-  if (!session?.token?.sub) {
+  if (!session?.token.sub) {
     redirect("/auth/signin");
   }
 
   const email =
-    typeof session.token.email === "string" ? session.token.email : undefined;
+    typeof session?.token?.email === "string"
+      ? session?.token?.email
+      : undefined;
   const isAdmin = email?.endsWith("@descope.com");
   if (!isAdmin) {
     return (

@@ -4,10 +4,22 @@ import { useState } from "react";
 
 import { useTRPC } from "~/trpc/react";
 
+interface DocumentType {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  accessLevel: string;
+  fileUrl?: string;
+  fileSize?: string;
+  status: "draft" | "published";
+  tags: string[];
+}
+
 export default function DocumentsPage() {
   const trpc = useTRPC();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingDoc, setEditingDoc] = useState<any>(null);
+  const [editingDoc, setEditingDoc] = useState<DocumentType | null>(null);
 
   const {
     data: documents,
@@ -50,7 +62,7 @@ export default function DocumentsPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (doc: any) => {
+  const handleEdit = (doc: DocumentType) => {
     setEditingDoc(doc);
     setIsModalOpen(true);
   };
@@ -107,7 +119,7 @@ export default function DocumentsPage() {
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {documents?.map((doc: any) => (
+          {(documents as DocumentType[])?.map((doc) => (
             <li key={doc.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
@@ -175,7 +187,7 @@ function DocumentModal({
   onSubmit,
   isLoading,
 }: {
-  document: any;
+  document: DocumentType | null;
   onClose: () => void;
   onSubmit: (formData: FormData) => void;
   isLoading: boolean;

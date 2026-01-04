@@ -4,10 +4,18 @@ import { useState } from "react";
 
 import { useTRPC } from "~/trpc/react";
 
+interface FaqType {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  status: "draft" | "published";
+}
+
 export default function FAQsPage() {
   const trpc = useTRPC();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingFaq, setEditingFaq] = useState<any>(null);
+  const [editingFaq, setEditingFaq] = useState<FaqType | null>(null);
 
   const {
     data: faqs,
@@ -48,7 +56,7 @@ export default function FAQsPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (faq: any) => {
+  const handleEdit = (faq: FaqType) => {
     setEditingFaq(faq);
     setIsModalOpen(true);
   };
@@ -101,7 +109,7 @@ export default function FAQsPage() {
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {faqs?.map((faq: any) => (
+          {(faqs as FaqType[])?.map((faq) => (
             <li key={faq.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">

@@ -4,10 +4,24 @@ import { useState } from "react";
 
 import { useTRPC } from "~/trpc/react";
 
+interface CertificationType {
+  id: string;
+  name: string;
+  logo: string;
+  status: "draft" | "published";
+  description: string;
+  standards: string[];
+  lastAuditDate?: string;
+  expiryDate?: string;
+  certificateUrl?: string;
+}
+
 export default function CertificationsPage() {
   const trpc = useTRPC();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCert, setEditingCert] = useState<any>(null);
+  const [editingCert, setEditingCert] = useState<CertificationType | null>(
+    null,
+  );
 
   const {
     data: certifications,
@@ -52,7 +66,7 @@ export default function CertificationsPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (cert: any) => {
+  const handleEdit = (cert: CertificationType) => {
     setEditingCert(cert);
     setIsModalOpen(true);
   };
@@ -109,7 +123,7 @@ export default function CertificationsPage() {
 
       <div className="overflow-hidden bg-white shadow sm:rounded-md">
         <ul role="list" className="divide-y divide-gray-200">
-          {certifications?.map((cert: any) => (
+          {(certifications as CertificationType[])?.map((cert) => (
             <li key={cert.id}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
@@ -182,7 +196,7 @@ function CertificationModal({
   onSubmit,
   isLoading,
 }: {
-  certification: any;
+  certification: CertificationType | null;
   onClose: () => void;
   onSubmit: (formData: FormData) => void;
   isLoading: boolean;

@@ -4,14 +4,14 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
 import {
+  Certification as _Certification,
   CreateAuditLogSchema as _CreateAuditLogSchema,
+  Document as _Document,
+  Faq as _Faq,
+  Subprocessor as _Subprocessor,
   AuditLog,
-  Certification,
-  Document,
   DocumentAccessRequest,
-  Faq,
   FormSubmission,
-  Subprocessor,
 } from "@descope-trust-center/db";
 import {
   CertificationsSchema,
