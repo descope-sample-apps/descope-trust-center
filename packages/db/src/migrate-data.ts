@@ -4,6 +4,47 @@ import * as path from "path";
 import { db } from "./client";
 import { Certification, Document, Faq, Subprocessor } from "./schema";
 
+interface CertificationData {
+  id: string;
+  name: string;
+  logo: string;
+  status: string;
+  lastAuditDate?: string;
+  expiryDate?: string;
+  certificateUrl?: string;
+  description: string;
+  standards: string[];
+}
+
+interface DocumentData {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  accessLevel: string;
+  fileUrl?: string;
+  fileSize?: string;
+  updatedAt: string;
+  tags: string[];
+}
+
+interface SubprocessorData {
+  id: string;
+  name: string;
+  purpose: string;
+  dataProcessed: string[];
+  location: string;
+  contractUrl: string;
+  status: string;
+}
+
+interface FaqData {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+}
+
 /**
  * Reads and parses a JSON data file from the Next.js app data directory
  */
@@ -20,10 +61,13 @@ function readDataFile<T>(filename: string): T {
 async function migrateData() {
   console.log("Starting data migration...");
 
-  const certificationsData = readDataFile<any[]>("certifications.json");
-  const documentsData = readDataFile<any[]>("documents.json");
-  const faqsData = readDataFile<any[]>("faqs.json");
-  const subprocessorsData = readDataFile<any[]>("subprocessors.json");
+  const certificationsData = readDataFile<CertificationData[]>(
+    "certifications.json",
+  );
+  const documentsData = readDataFile<DocumentData[]>("documents.json");
+  const faqsData = readDataFile<FaqData[]>("faqs.json");
+  const subprocessorsData =
+    readDataFile<SubprocessorData[]>("subprocessors.json");
 
   // Migrate certifications
   for (const cert of certificationsData) {

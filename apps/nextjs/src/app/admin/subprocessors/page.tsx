@@ -102,7 +102,7 @@ export default function SubprocessorsPage() {
     let dataProcessed: string[] = [];
     if (dataProcessedValue) {
       try {
-        const parsed = JSON.parse(dataProcessedValue);
+        const parsed = JSON.parse(dataProcessedValue) as unknown;
         if (
           !Array.isArray(parsed) ||
           !parsed.every((item) => typeof item === "string")

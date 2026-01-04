@@ -114,7 +114,7 @@ export default function CertificationsPage() {
           alert("Standards must be an array of strings");
           return;
         }
-        standards = parsed as string[];
+        standards = parsed;
       } catch {
         alert("Invalid JSON for standards");
         return;
