@@ -10,17 +10,19 @@ async function migrateData() {
 
   // Migrate certifications
   for (const cert of certificationsData) {
-    await db.insert(Certification).values({
-      id: cert.id,
-      name: cert.name,
-      logo: cert.logo,
-      status: cert.status,
-      lastAuditDate: cert.lastAuditDate,
-      expiryDate: cert.expiryDate,
-      certificateUrl: cert.certificateUrl,
-      description: cert.description,
-      standards: cert.standards,
-    });
+    await db.insert(Certification).values([
+      {
+        id: cert.id,
+        name: cert.name,
+        logo: cert.logo,
+        status: cert.status,
+        lastAuditDate: cert.lastAuditDate,
+        expiryDate: cert.expiryDate,
+        certificateUrl: cert.certificateUrl,
+        description: cert.description,
+        standards: cert.standards,
+      },
+    ]);
   }
 
   // Migrate documents
