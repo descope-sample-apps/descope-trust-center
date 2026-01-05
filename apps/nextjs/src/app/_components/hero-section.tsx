@@ -129,6 +129,7 @@ function CertificationBadge({
 }: {
   certification: Certification;
 }) {
+  const t = useTranslations("compliance");
   const isActive = certification.status === "active";
   const isInProgress = certification.status === "in-progress";
 
