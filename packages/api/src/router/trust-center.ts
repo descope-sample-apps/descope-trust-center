@@ -88,10 +88,10 @@ export const trustCenterRouter = {
       .where(eq(_Certification.status, "published"));
     return certifications.map((cert) => ({
       id: cert.id,
-      name: cert.name,
+      name: cert.nameKey,
       logo: cert.logo || "",
       status: "active" as const,
-      description: cert.description,
+      description: cert.descriptionKey,
       standards: cert.standards ?? [],
       lastAuditDate: cert.lastAuditDate
         ? new Date(cert.lastAuditDate).toISOString().split("T")[0]
