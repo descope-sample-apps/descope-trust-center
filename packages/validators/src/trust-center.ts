@@ -16,7 +16,11 @@ export type CertificationStatus = z.infer<typeof CertificationStatusSchema>;
  */
 export const CertificationSchema = z.object({
   id: z.string().describe("Unique identifier for the certification"),
-  name: z.string().describe("Display name of the certification"),
+  name: z.string().optional().describe("Display name of the certification"),
+  nameKey: z
+    .string()
+    .optional()
+    .describe("Translation key for the certification name"),
   logo: z.string().optional().describe("URL or path to certification logo"),
   status: CertificationStatusSchema.describe("Current certification status"),
   lastAuditDate: z
@@ -34,7 +38,14 @@ export const CertificationSchema = z.object({
     .url()
     .optional()
     .describe("URL to view/download certificate"),
-  description: z.string().describe("Brief description of the certification"),
+  description: z
+    .string()
+    .optional()
+    .describe("Brief description of the certification"),
+  descriptionKey: z
+    .string()
+    .optional()
+    .describe("Translation key for the certification description"),
   standards: z
     .array(z.string())
     .optional()

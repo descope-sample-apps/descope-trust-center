@@ -128,7 +128,7 @@ export function ComplianceGrid() {
     const aOrder = statusOrder[a.status];
     const bOrder = statusOrder[b.status];
     if (aOrder !== bOrder) return aOrder - bOrder;
-    return a.name.localeCompare(b.name);
+    return (a.nameKey ?? "").localeCompare(b.nameKey ?? "");
   });
 
   const toggleExpand = (id: string) => {
@@ -179,7 +179,7 @@ export function ComplianceGrid() {
               <div className="relative size-8 shrink-0 overflow-hidden rounded">
                 <Image
                   src={certification.logo}
-                  alt={`${certification.name} logo`}
+                  alt={`${t(certification.nameKey!)} logo`}
                   width={32}
                   height={32}
                   className="size-full object-cover"
@@ -187,14 +187,14 @@ export function ComplianceGrid() {
               </div>
             ) : (
               <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded text-xs font-medium">
-                {certification.name.charAt(0).toUpperCase()}
+                {t(certification.nameKey!).charAt(0).toUpperCase()}
               </div>
             )}
             <h3
               id={`cert-name-${certification.id}`}
               className="text-lg leading-tight font-semibold"
             >
-              {certification.name}
+              {t(certification.nameKey!)}
             </h3>
           </div>
           <span
@@ -208,7 +208,7 @@ export function ComplianceGrid() {
 
         {/* Description */}
         <p className="text-muted-foreground mb-4 flex-1 text-sm">
-          {certification.description}
+          {t(certification.descriptionKey!)}
         </p>
 
         {/* Expandable details section */}
@@ -277,7 +277,7 @@ export function ComplianceGrid() {
                 href={certification.certificateUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`View ${certification.name} certificate`}
+                aria-label={`View ${t(certification.nameKey!)} certificate`}
               >
                 View Certificate
               </a>

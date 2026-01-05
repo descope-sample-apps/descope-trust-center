@@ -22,7 +22,7 @@ const FEATURED_CERTIFICATION_IDS = ["soc2-type2", "iso27001", "gdpr", "hipaa"];
  */
 export function HeroSection() {
   const t = useTranslations("hero");
-  const certifications = certificationsData as Certification[];
+  const certifications = certificationsData;
 
   const featuredCertifications = certifications.filter((cert) =>
     FEATURED_CERTIFICATION_IDS.includes(cert.id),
@@ -124,11 +124,7 @@ export function HeroSection() {
  * Individual certification badge component.
  * Shows certification name with status indicator.
  */
-function CertificationBadge({
-  certification,
-}: {
-  certification: Certification;
-}) {
+function CertificationBadge({ certification }: { certification: any }) {
   const t = useTranslations("compliance");
   const isActive = certification.status === "active";
   const isInProgress = certification.status === "in-progress";
@@ -152,7 +148,7 @@ function CertificationBadge({
         )}
         aria-hidden="true"
       />
-      <span>{certification.name}</span>
+      <span>{t(certification.nameKey!)}</span>
       {isInProgress && (
         <span className="text-xs opacity-75">(In Progress)</span>
       )}
