@@ -6,13 +6,13 @@ import { Certification, Document, Faq, Subprocessor } from "./schema";
 
 interface CertificationData {
   id: string;
-  name: string;
+  nameKey: string;
   logo: string;
   status: string;
   lastAuditDate?: string;
   expiryDate?: string;
   certificateUrl?: string;
-  description: string;
+  descriptionKey: string;
   standards: string[];
 }
 
@@ -74,13 +74,13 @@ async function migrateData() {
     await db.insert(Certification).values([
       {
         id: cert.id,
-        name: cert.name,
+        nameKey: cert.nameKey,
         logo: cert.logo,
         status: cert.status,
         lastAuditDate: cert.lastAuditDate,
         expiryDate: cert.expiryDate,
         certificateUrl: cert.certificateUrl,
-        description: cert.description,
+        descriptionKey: cert.descriptionKey,
         standards: cert.standards,
       },
     ]);

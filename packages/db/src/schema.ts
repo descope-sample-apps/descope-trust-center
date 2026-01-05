@@ -187,13 +187,13 @@ export const CreateDocumentAccessRequestSchema = createInsertSchema(
 
 export const Certification = pgTable("certification", (t) => ({
   id: t.varchar({ length: 256 }).notNull().primaryKey(),
-  name: t.varchar({ length: 256 }).notNull(),
+  nameKey: t.varchar({ length: 256 }).notNull(),
   logo: t.varchar({ length: 512 }).notNull(),
   status: t.varchar({ length: 50 }).notNull().default("draft"),
   lastAuditDate: t.date(),
   expiryDate: t.date(),
   certificateUrl: t.varchar({ length: 512 }),
-  description: t.text().notNull(),
+  descriptionKey: t.text().notNull(),
   standards: t.jsonb().notNull(),
   createdBy: t.varchar({ length: 256 }),
   updatedBy: t.varchar({ length: 256 }),
@@ -203,13 +203,13 @@ export const Certification = pgTable("certification", (t) => ({
 
 export const CreateCertificationSchema = createInsertSchema(Certification, {
   id: z.string().min(1),
-  name: z.string().min(1),
+  nameKey: z.string().min(1),
   logo: z.string().url(),
   status: z.enum(["draft", "published"]).default("draft"),
   lastAuditDate: z.string().optional(),
   expiryDate: z.string().optional(),
   certificateUrl: z.string().url().optional(),
-  description: z.string().min(1),
+  descriptionKey: z.string().min(1),
   standards: z.array(z.string()).min(1),
   createdBy: z.string().optional(),
   updatedBy: z.string().optional(),
