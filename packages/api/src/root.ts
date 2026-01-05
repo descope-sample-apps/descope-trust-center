@@ -1,3 +1,4 @@
+import { adminRouter } from "./router/admin";
 import { analyticsRouter } from "./router/analytics";
 import { auditRouter } from "./router/audit";
 import { authRouter } from "./router/auth";
@@ -6,6 +7,7 @@ import { trustCenterRouter } from "./router/trust-center";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
+  admin: adminRouter,
   analytics: analyticsRouter,
   audit: auditRouter,
   auth: authRouter,

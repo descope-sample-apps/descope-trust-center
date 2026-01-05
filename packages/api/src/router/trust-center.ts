@@ -1,21 +1,23 @@
 import * as fs from "fs";
 import * as path from "path";
 import type { TRPCRouterRecord } from "@trpc/server";
+import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 
 import {
+  Certification as _Certification,
   CreateAuditLogSchema as _CreateAuditLogSchema,
+  Document as _Document,
+  Faq as _Faq,
+  Subprocessor as _Subprocessor,
   AuditLog,
   DocumentAccessRequest,
   FormSubmission,
 } from "@descope-trust-center/db";
 import {
-  CertificationsSchema,
   DocumentCategorySchema,
   DocumentsSchema,
   FAQCategorySchema,
-  FAQsSchema,
-  SubprocessorsSchema,
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
 
@@ -79,9 +81,26 @@ export const trustCenterRouter = {
   /**
    * Returns all certifications
    */
-  getCertifications: publicProcedure.query(() => {
-    const data = readDataFile<unknown[]>("certifications.json");
-    return CertificationsSchema.parse(data);
+  getCertifications: publicProcedure.query(async ({ ctx }) => {
+    const certifications = await ctx.db
+      .select()
+      .from(_Certification)
+      .where(eq(_Certification.status, "published"));
+    return certifications.map((cert) => ({
+      id: cert.id,
+      name: cert.nameKey,
+      logo: cert.logo || "",
+      status: "active" as const,
+      description: cert.descriptionKey,
+      standards: cert.standards ?? [],
+      lastAuditDate: cert.lastAuditDate
+        ? new Date(cert.lastAuditDate).toISOString().split("T")[0]
+        : undefined,
+      expiryDate: cert.expiryDate
+        ? new Date(cert.expiryDate).toISOString().split("T")[0]
+        : undefined,
+      certificateUrl: cert.certificateUrl,
+    }));
   }),
 
   /**
@@ -95,23 +114,53 @@ export const trustCenterRouter = {
         })
         .optional(),
     )
-    .query(({ input }) => {
-      const data = readDataFile<unknown[]>("documents.json");
-      const documents = DocumentsSchema.parse(data);
+    .query(async ({ ctx, input }) => {
+      const documents = await ctx.db
+        .select()
+        .from(_Document)
+        .where(eq(_Document.status, "published"));
+
+      let filteredDocs = documents.map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        category: doc.category,
+        description: doc.description,
+        accessLevel: doc.accessLevel,
+        fileUrl: doc.fileUrl,
+        fileSize: doc.fileSize,
+        updatedAt:
+          doc.updatedAt?.toISOString().split("T")[0] ??
+          new Date().toISOString().split("T")[0],
+        tags: doc.tags ?? [],
+      }));
 
       if (input?.category) {
-        return documents.filter((doc) => doc.category === input.category);
+        filteredDocs = filteredDocs.filter(
+          (doc) => doc.category === input.category,
+        );
       }
 
-      return documents;
+      return filteredDocs;
     }),
 
   /**
    * Returns all subprocessors
    */
-  getSubprocessors: publicProcedure.query(() => {
-    const data = readDataFile<unknown[]>("subprocessors.json");
-    return SubprocessorsSchema.parse(data);
+  getSubprocessors: publicProcedure.query(async ({ ctx }) => {
+    const subprocessors = await ctx.db
+      .select()
+      .from(_Subprocessor)
+      .where(eq(_Subprocessor.status, "published"));
+
+    return subprocessors.map((sub) => ({
+      id: sub.id,
+      name: sub.name,
+      purpose: sub.purpose,
+      dataProcessed: sub.dataProcessed ?? [],
+      location: sub.location,
+      contractUrl: sub.contractUrl,
+      status: "active" as const,
+    }));
   }),
 
   /**
@@ -125,15 +174,26 @@ export const trustCenterRouter = {
         })
         .optional(),
     )
-    .query(({ input }) => {
-      const data = readDataFile<unknown[]>("faqs.json");
-      const faqs = FAQsSchema.parse(data);
+    .query(async ({ ctx, input }) => {
+      const faqs = await ctx.db
+        .select()
+        .from(_Faq)
+        .where(eq(_Faq.status, "published"));
+
+      let filteredFaqs = faqs.map((faq) => ({
+        id: faq.id,
+        question: faq.question,
+        answer: faq.answer,
+        category: faq.category,
+      }));
 
       if (input?.category) {
-        return faqs.filter((faq) => faq.category === input.category);
+        filteredFaqs = filteredFaqs.filter(
+          (faq) => faq.category === input.category,
+        );
       }
 
-      return faqs;
+      return filteredFaqs;
     }),
 
   // ==================== Mutation Endpoints ====================

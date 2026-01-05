@@ -12,6 +12,8 @@ import { z, ZodError } from "zod/v4";
 
 import { db } from "@descope-trust-center/db/client";
 
+import { isAdmin } from "./utils/admin";
+
 export interface DescopeUser {
   id: string;
   email?: string;
@@ -154,6 +156,34 @@ export const protectedProcedure = t.procedure
     if (!ctx.session?.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
+    return next({
+      ctx: {
+        // infers the `session` as non-nullable
+        session: { ...ctx.session, user: ctx.session.user },
+      },
+    });
+  });
+
+/**
+ * Admin (authenticated + admin role) procedure
+ *
+ * Accessible only to users with admin role, @descope.com email domain, or configured admin emails.
+ */
+export const adminProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (!ctx.session?.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+
+    const user = ctx.session.user;
+    if (!isAdmin(user.email, user.roles)) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Admin access required",
+      });
+    }
+
     return next({
       ctx: {
         // infers the `session` as non-nullable

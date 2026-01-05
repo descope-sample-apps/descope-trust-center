@@ -1,25 +1,86 @@
-import certificationsData from "../../../apps/nextjs/src/app/data/certifications.json";
-import documentsData from "../../../apps/nextjs/src/app/data/documents.json";
-import faqsData from "../../../apps/nextjs/src/app/data/faqs.json";
-import subprocessorsData from "../../../apps/nextjs/src/app/data/subprocessors.json";
+import * as fs from "fs";
+import * as path from "path";
+
 import { db } from "./client";
 import { Certification, Document, Faq, Subprocessor } from "./schema";
 
+interface CertificationData {
+  id: string;
+  nameKey: string;
+  logo: string;
+  status: string;
+  lastAuditDate?: string;
+  expiryDate?: string;
+  certificateUrl?: string;
+  descriptionKey: string;
+  standards: string[];
+}
+
+interface DocumentData {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  accessLevel: string;
+  fileUrl?: string;
+  fileSize?: string;
+  updatedAt: string;
+  tags: string[];
+}
+
+interface SubprocessorData {
+  id: string;
+  name: string;
+  purpose: string;
+  dataProcessed: string[];
+  location: string;
+  contractUrl: string;
+  status: string;
+}
+
+interface FaqData {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+}
+
+/**
+ * Reads and parses a JSON data file from the Next.js app data directory
+ */
+function readDataFile<T>(filename: string): T {
+  const dataPath = path.resolve(
+    new URL(import.meta.url).pathname,
+    "../../../../apps/nextjs/src/app/data",
+    filename,
+  );
+  const content = fs.readFileSync(dataPath, "utf-8");
+  return JSON.parse(content) as T;
+}
+
 async function migrateData() {
   console.log("Starting data migration...");
+
+  const certificationsData = readDataFile<CertificationData[]>(
+    "certifications.json",
+  );
+  const documentsData = readDataFile<DocumentData[]>("documents.json");
+  const faqsData = readDataFile<FaqData[]>("faqs.json");
+  const subprocessorsData =
+    readDataFile<SubprocessorData[]>("subprocessors.json");
 
   // Migrate certifications
   for (const cert of certificationsData) {
     await db.insert(Certification).values([
       {
         id: cert.id,
-        name: cert.name,
+        nameKey: cert.nameKey,
         logo: cert.logo,
         status: cert.status,
         lastAuditDate: cert.lastAuditDate,
         expiryDate: cert.expiryDate,
         certificateUrl: cert.certificateUrl,
-        description: cert.description,
+        descriptionKey: cert.descriptionKey,
         standards: cert.standards,
       },
     ]);
