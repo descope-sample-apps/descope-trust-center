@@ -37,9 +37,9 @@ describe.skipIf(!runIntegrationTests)(
         // Create a test certification first
         await caller.admin.certifications.create({
           id: "test-cert-1",
-          nameKey: "Test Certification",
+          name: "Test Certification",
           logo: "https://example.com/logo.png",
-          descriptionKey: "Test description",
+          description: "Test description",
           standards: ["ISO 27001"],
         });
 
@@ -48,9 +48,9 @@ describe.skipIf(!runIntegrationTests)(
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
           id: "test-cert-1",
-          nameKey: "Test Certification",
+          name: "Test Certification",
           logo: "https://example.com/logo.png",
-          descriptionKey: "Test description",
+          description: "Test description",
           standards: ["ISO 27001"],
           status: "draft",
         });
@@ -72,9 +72,9 @@ describe.skipIf(!runIntegrationTests)(
         // Create a test certification first
         await caller.admin.certifications.create({
           id: "test-cert-2",
-          nameKey: "Test Certification 2",
+          name: "Test Certification 2",
           logo: "https://example.com/logo2.png",
-          descriptionKey: "Test description 2",
+          description: "Test description 2",
           standards: ["SOC 2"],
         });
 
@@ -84,9 +84,9 @@ describe.skipIf(!runIntegrationTests)(
 
         expect(result).toMatchObject({
           id: "test-cert-2",
-          nameKey: "Test Certification 2",
+          name: "Test Certification 2",
           logo: "https://example.com/logo2.png",
-          descriptionKey: "Test description 2",
+          description: "Test description 2",
           standards: ["SOC 2"],
           status: "draft",
         });
@@ -115,17 +115,17 @@ describe.skipIf(!runIntegrationTests)(
 
         const result = await caller.admin.certifications.create({
           id: "new-cert",
-          nameKey: "New Certification",
+          name: "New Certification",
           logo: "https://example.com/new-logo.png",
-          descriptionKey: "New certification description",
+          description: "New certification description",
           standards: ["GDPR", "CCPA"],
         });
 
         expect(result).toMatchObject({
           id: "new-cert",
-          nameKey: "New Certification",
+          name: "New Certification",
           logo: "https://example.com/new-logo.png",
-          descriptionKey: "New certification description",
+          description: "New certification description",
           standards: ["GDPR", "CCPA"],
           status: "draft",
         });
@@ -139,9 +139,9 @@ describe.skipIf(!runIntegrationTests)(
         await expect(
           caller.admin.certifications.create({
             id: "new-cert",
-            nameKey: "New Certification",
+            name: "New Certification",
             logo: "https://example.com/new-logo.png",
-            descriptionKey: "New certification description",
+            description: "New certification description",
             standards: ["GDPR"],
           }),
         ).rejects.toThrow("Admin access required");
@@ -155,25 +155,25 @@ describe.skipIf(!runIntegrationTests)(
         // Create first
         await caller.admin.certifications.create({
           id: "update-cert",
-          nameKey: "Update Certification",
+          name: "Update Certification",
           logo: "https://example.com/update-logo.png",
-          descriptionKey: "Update description",
+          description: "Update description",
           standards: ["ISO 27001"],
         });
 
         // Update
         const result = await caller.admin.certifications.update({
           id: "update-cert",
-          nameKey: "Updated Certification",
-          descriptionKey: "Updated description",
+          name: "Updated Certification",
+          description: "Updated description",
           standards: ["ISO 27001", "SOC 2"],
         });
 
         expect(result).toMatchObject({
           id: "update-cert",
-          nameKey: "Updated Certification",
+          name: "Updated Certification",
           logo: "https://example.com/update-logo.png",
-          descriptionKey: "Updated description",
+          description: "Updated description",
           standards: ["ISO 27001", "SOC 2"],
           status: "draft",
         });
@@ -186,7 +186,7 @@ describe.skipIf(!runIntegrationTests)(
         await expect(
           caller.admin.certifications.update({
             id: "nonexistent",
-            nameKey: "Updated",
+            name: "Updated",
           }),
         ).rejects.toThrow("NOT_FOUND");
       });
@@ -197,7 +197,7 @@ describe.skipIf(!runIntegrationTests)(
         await expect(
           caller.admin.certifications.update({
             id: "update-cert",
-            nameKey: "Updated",
+            name: "Updated",
           }),
         ).rejects.toThrow("Admin access required");
       });
@@ -210,9 +210,9 @@ describe.skipIf(!runIntegrationTests)(
         // Create first
         await caller.admin.certifications.create({
           id: "delete-cert",
-          nameKey: "Delete Certification",
+          name: "Delete Certification",
           logo: "https://example.com/delete-logo.png",
-          descriptionKey: "Delete description",
+          description: "Delete description",
           standards: ["GDPR"],
         });
 
@@ -253,9 +253,9 @@ describe.skipIf(!runIntegrationTests)(
         // Create first
         await caller.admin.certifications.create({
           id: "publish-cert",
-          nameKey: "Publish Certification",
+          name: "Publish Certification",
           logo: "https://example.com/publish-logo.png",
-          descriptionKey: "Publish description",
+          description: "Publish description",
           standards: ["ISO 27001"],
         });
 
@@ -274,9 +274,9 @@ describe.skipIf(!runIntegrationTests)(
         // Create and publish first
         await caller.admin.certifications.create({
           id: "unpublish-cert",
-          nameKey: "Unpublish Certification",
+          name: "Unpublish Certification",
           logo: "https://example.com/unpublish-logo.png",
-          descriptionKey: "Unpublish description",
+          description: "Unpublish description",
           standards: ["SOC 2"],
         });
         await caller.admin.certifications.publish({ id: "unpublish-cert" });

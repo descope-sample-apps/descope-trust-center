@@ -3,22 +3,21 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-import type { Certification } from "@descope-trust-center/validators";
 import { cn } from "@descope-trust-center/ui";
 import { buttonVariants } from "@descope-trust-center/ui/button";
 
 import certificationsData from "~/app/data/certifications.json";
 
-/** Key trust badges to display (filter for active/featured certifications) */
-const FEATURED_CERTIFICATION_IDS = ["soc2-type2", "iso27001", "gdpr", "hipaa"];
+interface CertificationType {
+  id: string;
+  nameKey: string;
+  status: string;
+}
+
+const FEATURED_CERTIFICATION_IDS = ["soc2-type2", "gdpr"];
 
 /**
- * Hero Section for the Trust Center landing page.
- * Displays headline, trust badges, key stats, and CTA.
- *
- * @remarks
- * This is a Client Component using next-intl for translations.
- * Certifications are loaded from static JSON at build time.
+ * Hero section component with certification badges and CTA.
  */
 export function HeroSection() {
   const t = useTranslations("hero");
@@ -124,10 +123,14 @@ export function HeroSection() {
  * Individual certification badge component.
  * Shows certification name with status indicator.
  */
-function CertificationBadge({ certification }: { certification: any }) {
+function CertificationBadge({
+  certification,
+}: {
+  certification: CertificationType;
+}) {
   const t = useTranslations("compliance");
-  const isActive = certification.status === "active";
-  const isInProgress = certification.status === "in-progress";
+  const isActive = certification.status === "published";
+  const isInProgress = certification.status === "draft";
 
   return (
     <div
@@ -148,7 +151,7 @@ function CertificationBadge({ certification }: { certification: any }) {
         )}
         aria-hidden="true"
       />
-      <span>{t(certification.nameKey!)}</span>
+      <span>{t(certification.nameKey)}</span>
       {isInProgress && (
         <span className="text-xs opacity-75">(In Progress)</span>
       )}
