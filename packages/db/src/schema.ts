@@ -215,6 +215,21 @@ export const CreateCertificationSchema = createInsertSchema(Certification, {
   updatedBy: z.string().optional(),
 }).omit({ createdAt: true, updatedAt: true });
 
+// For admin API, use name and description
+export const AdminCreateCertificationSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    logo: z.string().url(),
+    status: z.enum(["draft", "published"]).default("draft"),
+    lastAuditDate: z.string().optional(),
+    expiryDate: z.string().optional(),
+    certificateUrl: z.string().url().optional(),
+    description: z.string().min(1),
+    standards: z.array(z.string()).min(1),
+  })
+  .omit({});
+
 export const Document = pgTable("document", (t) => ({
   id: t.varchar({ length: 256 }).notNull().primaryKey(),
   title: t.varchar({ length: 512 }).notNull(),

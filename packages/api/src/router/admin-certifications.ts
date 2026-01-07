@@ -3,9 +3,9 @@ import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 
 import {
+  AdminCreateCertificationSchema,
   AuditLog,
   Certification,
-  CreateCertificationSchema,
 } from "@descope-trust-center/db";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -23,7 +23,12 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 
 export const adminCertificationRouter = createTRPCRouter({
   getAll: adminProcedure.query(async ({ ctx }) => {
-    return ctx.db.select().from(Certification);
+    const certifications = await ctx.db.select().from(Certification);
+    return certifications.map((cert) => ({
+      ...cert,
+      name: cert.nameKey,
+      description: cert.descriptionKey,
+    }));
   }),
 
   getById: adminProcedure
@@ -39,11 +44,16 @@ export const adminCertificationRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      return result[0];
+      const cert = result[0];
+      return {
+        ...cert,
+        name: cert.nameKey,
+        description: cert.descriptionKey,
+      };
     }),
 
   create: adminProcedure
-    .input(CreateCertificationSchema)
+    .input(AdminCreateCertificationSchema)
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
@@ -51,6 +61,8 @@ export const adminCertificationRouter = createTRPCRouter({
         .insert(Certification)
         .values({
           ...input,
+          nameKey: input.name,
+          descriptionKey: input.description,
           createdBy: userId,
           updatedBy: userId,
         })
@@ -70,18 +82,26 @@ export const adminCertificationRouter = createTRPCRouter({
         details: { newValues: input },
       });
 
-      return result[0];
+      return {
+        ...result[0],
+        name: result[0].nameKey,
+        description: result[0].descriptionKey,
+      };
     }),
 
   update: adminProcedure
     .input(
-      CreateCertificationSchema.partial().extend({
+      AdminCreateCertificationSchema.partial().extend({
         id: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...updateData } = input;
+      const { id, name, description, ...updateData } = input;
       const userId = ctx.session.user.id;
+
+      const dbUpdateData: Record<string, unknown> = { ...updateData };
+      if (name !== undefined) dbUpdateData.nameKey = name;
+      if (description !== undefined) dbUpdateData.descriptionKey = description;
 
       const oldRecord = await ctx.db
         .select()
@@ -98,7 +118,7 @@ export const adminCertificationRouter = createTRPCRouter({
       const result = await ctx.db
         .update(Certification)
         .set({
-          ...updateData,
+          ...(dbUpdateData as Partial<typeof Certification.$inferInsert>),
           updatedBy: userId,
           updatedAt: new Date(),
         })
@@ -118,11 +138,15 @@ export const adminCertificationRouter = createTRPCRouter({
         userEmail: ctx.session.user.email,
         details: {
           oldValues: existingRecord,
-          newValues: updateData,
+          newValues: dbUpdateData,
         },
       });
 
-      return result[0];
+      return {
+        ...result[0],
+        name: result[0].nameKey,
+        description: result[0].descriptionKey,
+      };
     }),
 
   delete: adminProcedure
