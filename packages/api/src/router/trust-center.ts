@@ -1,5 +1,3 @@
-import * as fs from "fs";
-import * as path from "path";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -16,7 +14,6 @@ import {
 } from "@descope-trust-center/db";
 import {
   DocumentCategorySchema,
-  DocumentsSchema,
   FAQCategorySchema,
   SubprocessorSubscriptionSchema,
 } from "@descope-trust-center/validators";
@@ -33,19 +30,6 @@ const emailService = createEmailService({
   notificationEmail:
     env.TRUST_CENTER_NOTIFICATION_EMAIL ?? "security@descope.com",
 });
-
-/**
- * Reads and parses a JSON data file from the Next.js app data directory
- */
-function readDataFile<T>(filename: string): T {
-  const dataPath = path.resolve(
-    process.cwd(),
-    "apps/nextjs/src/app/data",
-    filename,
-  );
-  const content = fs.readFileSync(dataPath, "utf-8");
-  return JSON.parse(content) as T;
-}
 
 /**
  * Contact form submission schema
@@ -280,10 +264,12 @@ export const trustCenterRouter = {
       });
 
       // Fetch document title for the request
-      const documents = DocumentsSchema.parse(
-        readDataFile<unknown[]>("documents.json"),
-      );
-      const document = documents.find((doc) => doc.id === input.documentId);
+      const documentResult = await ctx.db
+        .select({ title: _Document.title })
+        .from(_Document)
+        .where(eq(_Document.id, input.documentId))
+        .limit(1);
+      const document = documentResult[0];
 
       // Also save to document_access_request table for admin review
       await ctx.db.insert(DocumentAccessRequest).values({
