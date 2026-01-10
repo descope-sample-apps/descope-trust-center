@@ -179,7 +179,7 @@ export function ComplianceGrid() {
               <div className="relative size-8 shrink-0 overflow-hidden rounded">
                 <Image
                   src={certification.logo}
-                  alt={`${t(certification.nameKey!)} logo`}
+                  alt={`${t(certification.nameKey ?? certification.id)} logo`}
                   width={32}
                   height={32}
                   className="size-full object-cover"
@@ -187,14 +187,16 @@ export function ComplianceGrid() {
               </div>
             ) : (
               <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded text-xs font-medium">
-                {t(certification.nameKey!).charAt(0).toUpperCase()}
+                {t(certification.nameKey ?? certification.id)
+                  .charAt(0)
+                  .toUpperCase()}
               </div>
             )}
             <h3
               id={`cert-name-${certification.id}`}
               className="text-lg leading-tight font-semibold"
             >
-              {t(certification.nameKey!)}
+              {t(certification.nameKey ?? certification.id)}
             </h3>
           </div>
           <span
@@ -208,7 +210,10 @@ export function ComplianceGrid() {
 
         {/* Description */}
         <p className="text-muted-foreground mb-4 flex-1 text-sm">
-          {t(certification.descriptionKey!)}
+          {t(
+            certification.descriptionKey ??
+              "certifications.default.description",
+          )}
         </p>
 
         {/* Expandable details section */}
@@ -277,7 +282,7 @@ export function ComplianceGrid() {
                 href={certification.certificateUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`View ${t(certification.nameKey!)} certificate`}
+                aria-label={`View ${t(certification.nameKey ?? certification.id)} certificate`}
               >
                 View Certificate
               </a>
