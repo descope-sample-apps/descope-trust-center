@@ -45,6 +45,10 @@ export class EmailService {
     params: SendEmailParams,
     maxRetries = 3,
   ): Promise<SendEmailResult> {
+    if (!params.html && !params.text) {
+      throw new Error("At least one of html or text must be provided");
+    }
+
     let lastError: Error | null = null;
     const toAddresses = Array.isArray(params.to) ? params.to : [params.to];
 
