@@ -1,21 +1,15 @@
-import type { CreateEmailOptions, CreateEmailResponse } from "resend";
-import { Resend } from "resend";
+import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 
 interface EmailServiceOptions {
-  apiKey: string;
+  region?: string;
   fromEmail: string;
   notificationEmail: string;
 }
 
-interface CreateEmailServiceOptions {
-  apiKey?: string;
-  fromEmail: string;
-  notificationEmail: string;
+interface SendEmailResult {
+  messageId: string;
 }
 
-/**
- * Escape HTML entities to prevent XSS in email templates
- */
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -36,62 +30,61 @@ interface SendEmailParams {
   replyTo?: string;
 }
 
-/**
- * Email service for sending transactional emails
- */
 export class EmailService {
-  private resend: Resend;
+  private ses: SESClient;
   private fromEmail: string;
   private notificationEmail: string;
 
   constructor(options: EmailServiceOptions) {
-    this.resend = new Resend(options.apiKey);
+    this.ses = new SESClient({ region: options.region ?? "us-east-1" });
     this.fromEmail = options.fromEmail;
     this.notificationEmail = options.notificationEmail;
   }
 
-  /**
-   * Send an email using Resend with retry logic
-   */
   async sendEmail(
     params: SendEmailParams,
     maxRetries = 3,
-  ): Promise<CreateEmailResponse> {
+  ): Promise<SendEmailResult> {
+    if (!params.html && !params.text) {
+      throw new Error("At least one of html or text must be provided");
+    }
+
     let lastError: Error | null = null;
+    const toAddresses = Array.isArray(params.to) ? params.to : [params.to];
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        // Build the email data object for Resend API
-        const emailData: Record<string, unknown> = {
-          from: params.from,
-          to: params.to,
-          subject: params.subject,
-        };
+        const command = new SendEmailCommand({
+          Source: params.from,
+          Destination: {
+            ToAddresses: toAddresses,
+          },
+          Message: {
+            Subject: { Data: params.subject, Charset: "UTF-8" },
+            Body: {
+              ...(params.html && {
+                Html: { Data: params.html, Charset: "UTF-8" },
+              }),
+              ...(params.text && {
+                Text: { Data: params.text, Charset: "UTF-8" },
+              }),
+            },
+          },
+          ...(params.replyTo && { ReplyToAddresses: [params.replyTo] }),
+        });
 
-        if (params.html) {
-          emailData.html = params.html;
-        }
-        if (params.text) {
-          emailData.text = params.text;
-        }
-        if (params.replyTo) {
-          emailData.replyTo = params.replyTo;
-        }
-
-        const result = await this.resend.emails.send(
-          emailData as unknown as CreateEmailOptions,
-        );
+        const result = await this.ses.send(command);
 
         console.log(
           `[Email Service] Email sent successfully on attempt ${attempt}:`,
           {
             to: params.to,
             subject: params.subject,
-            id: result.data?.id,
+            messageId: result.MessageId,
           },
         );
 
-        return result;
+        return { messageId: result.MessageId ?? "" };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
@@ -104,22 +97,19 @@ export class EmailService {
           },
         );
 
-        // If this isn't the last attempt, wait before retrying
         if (attempt < maxRetries) {
-          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff, max 10s
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
           console.log(`[Email Service] Retrying in ${delay}ms...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
     }
 
-    // If we get here, all retries failed
     console.error(
       `[Email Service] All ${maxRetries} attempts failed. Final error:`,
       lastError?.message,
     );
 
-    // Send alert email to admin about the failure
     try {
       await this.sendFailureAlert(params, lastError);
     } catch (alertError) {
@@ -134,9 +124,6 @@ export class EmailService {
     );
   }
 
-  /**
-   * Send an alert email to admins when email delivery fails
-   */
   private async sendFailureAlert(
     originalParams: SendEmailParams,
     error: Error | null,
@@ -174,16 +161,20 @@ export class EmailService {
       </html>
     `;
 
-    // Send alert to the notification email (admin)
-    const alertData = {
-      from: this.fromEmail,
-      to: this.notificationEmail,
-      subject: "Email Delivery Failure Alert - Trust Center",
-      html: alertHtml,
-    };
+    const command = new SendEmailCommand({
+      Source: this.fromEmail,
+      Destination: { ToAddresses: [this.notificationEmail] },
+      Message: {
+        Subject: {
+          Data: "Email Delivery Failure Alert - Trust Center",
+          Charset: "UTF-8",
+        },
+        Body: { Html: { Data: alertHtml, Charset: "UTF-8" } },
+      },
+    });
 
     try {
-      await this.resend.emails.send(alertData as unknown as CreateEmailOptions);
+      await this.ses.send(command);
       console.log(
         `[Email Service] Failure alert sent to admin: ${this.notificationEmail}`,
       );
@@ -195,9 +186,6 @@ export class EmailService {
     }
   }
 
-  /**
-   * Send contact form notification to internal team
-   */
   async sendContactFormNotification({
     name,
     email,
@@ -208,7 +196,7 @@ export class EmailService {
     email: string;
     company: string;
     message: string;
-  }): Promise<CreateEmailResponse> {
+  }): Promise<SendEmailResult> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -250,9 +238,6 @@ export class EmailService {
     });
   }
 
-  /**
-   * Send document request confirmation to user
-   */
   async sendDocumentRequestConfirmation({
     name,
     email,
@@ -265,7 +250,7 @@ export class EmailService {
     company: string;
     documentId: string;
     reason: string;
-  }): Promise<CreateEmailResponse> {
+  }): Promise<SendEmailResult> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -310,14 +295,11 @@ export class EmailService {
     });
   }
 
-  /**
-   * Send subprocessor subscription confirmation
-   */
   async sendSubprocessorSubscriptionConfirmation({
     email,
   }: {
     email: string;
-  }): Promise<CreateEmailResponse> {
+  }): Promise<SendEmailResult> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -362,9 +344,6 @@ export class EmailService {
     });
   }
 
-  /**
-   * Send document access approval notification to user
-   */
   async sendDocumentAccessApproval({
     email,
     name,
@@ -373,7 +352,7 @@ export class EmailService {
     email: string;
     name: string;
     documentId: string;
-  }): Promise<CreateEmailResponse> {
+  }): Promise<SendEmailResult> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -416,9 +395,6 @@ export class EmailService {
     });
   }
 
-  /**
-   * Send document access denial notification to user
-   */
   async sendDocumentAccessDenial({
     email,
     name,
@@ -429,7 +405,7 @@ export class EmailService {
     name: string;
     documentId: string;
     reason?: string;
-  }): Promise<CreateEmailResponse> {
+  }): Promise<SendEmailResult> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -474,12 +450,11 @@ export class EmailService {
   }
 }
 
-// Export factory function
 export const createEmailService = (
-  options: CreateEmailServiceOptions,
+  options: EmailServiceOptions,
 ): EmailService | null => {
-  if (!options.apiKey || !options.fromEmail || !options.notificationEmail) {
+  if (!options.fromEmail || !options.notificationEmail) {
     return null;
   }
-  return new EmailService(options as EmailServiceOptions);
+  return new EmailService(options);
 };

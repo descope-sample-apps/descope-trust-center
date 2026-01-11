@@ -2,14 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EmailService } from "../email";
 
-// Mock Resend
 const mockSend = vi.fn();
-vi.mock("resend", () => ({
-  Resend: vi.fn().mockImplementation(() => ({
-    emails: {
-      send: mockSend,
-    },
+vi.mock("@aws-sdk/client-ses", () => ({
+  SESClient: vi.fn().mockImplementation(() => ({
+    send: mockSend,
   })),
+  SendEmailCommand: vi.fn().mockImplementation((params) => params),
 }));
 
 describe("EmailService", () => {
@@ -18,7 +16,7 @@ describe("EmailService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     emailService = new EmailService({
-      apiKey: "test-key",
+      region: "us-east-1",
       fromEmail: "test@descope.com",
       notificationEmail: "admin@descope.com",
     });
@@ -26,7 +24,7 @@ describe("EmailService", () => {
 
   describe("sendEmail", () => {
     it("should send email successfully on first attempt", async () => {
-      const mockResult = { data: { id: "test-id" }, error: null };
+      const mockResult = { MessageId: "test-id" };
       mockSend.mockResolvedValueOnce(mockResult);
 
       const result = await emailService.sendEmail({
@@ -36,19 +34,22 @@ describe("EmailService", () => {
         html: "<p>Test content</p>",
       });
 
-      expect(result).toBe(mockResult);
+      expect(result).toEqual({ messageId: "test-id" });
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockSend).toHaveBeenCalledWith({
-        from: "test@descope.com",
-        to: "user@example.com",
-        subject: "Test Subject",
-        html: "<p>Test content</p>",
-      });
+      expect(mockSend).toHaveBeenCalledWith(
+        expect.objectContaining({
+          Source: "test@descope.com",
+          Destination: { ToAddresses: ["user@example.com"] },
+          Message: expect.objectContaining({
+            Subject: { Data: "Test Subject", Charset: "UTF-8" },
+          }),
+        }),
+      );
     });
 
     it("should retry on failure and succeed on second attempt", async () => {
       const mockError = new Error("Network error");
-      const mockResult = { data: { id: "test-id" }, error: null };
+      const mockResult = { MessageId: "test-id" };
 
       mockSend
         .mockRejectedValueOnce(mockError)
@@ -61,7 +62,7 @@ describe("EmailService", () => {
         html: "<p>Test content</p>",
       });
 
-      expect(result).toBe(mockResult);
+      expect(result).toEqual({ messageId: "test-id" });
       expect(mockSend).toHaveBeenCalledTimes(2);
     });
 
@@ -85,13 +86,13 @@ describe("EmailService", () => {
 
     it("should send failure alert when all retries fail", async () => {
       const mockError = new Error("Network error");
-      const mockAlertResult = { data: { id: "alert-id" }, error: null };
+      const mockAlertResult = { MessageId: "alert-id" };
 
       mockSend
         .mockRejectedValueOnce(mockError)
         .mockRejectedValueOnce(mockError)
         .mockRejectedValueOnce(mockError)
-        .mockResolvedValueOnce(mockAlertResult); // Alert email succeeds
+        .mockResolvedValueOnce(mockAlertResult);
 
       await expect(
         emailService.sendEmail({
@@ -102,14 +103,13 @@ describe("EmailService", () => {
         }),
       ).rejects.toThrow();
 
-      // Should have attempted original send 3 times + 1 alert
       expect(mockSend).toHaveBeenCalledTimes(4);
     });
   });
 
   describe("sendContactFormNotification", () => {
     it("should send contact form notification with escaped HTML", async () => {
-      const mockResult = { data: { id: "test-id" }, error: null };
+      const mockResult = { MessageId: "test-id" };
       mockSend.mockResolvedValueOnce(mockResult);
 
       await emailService.sendContactFormNotification({
@@ -121,13 +121,20 @@ describe("EmailService", () => {
 
       expect(mockSend).toHaveBeenCalledWith(
         expect.objectContaining({
-          from: "test@descope.com",
-          to: "admin@descope.com",
-          subject:
-            "Trust Center Inquiry: John <script>alert('xss')</script> Doe from Test & Co",
-          html: expect.stringContaining(
-            "John &lt;script&gt;alert(&#x27;xss&#x27;)&lt;&#x2F;script&gt; Doe",
-          ),
+          Source: "test@descope.com",
+          Destination: { ToAddresses: ["admin@descope.com"] },
+          Message: expect.objectContaining({
+            Subject: expect.objectContaining({
+              Data: "Trust Center Inquiry: John <script>alert('xss')</script> Doe from Test & Co",
+            }),
+            Body: expect.objectContaining({
+              Html: expect.objectContaining({
+                Data: expect.stringContaining(
+                  "John &lt;script&gt;alert(&#x27;xss&#x27;)&lt;&#x2F;script&gt; Doe",
+                ),
+              }),
+            }),
+          }),
         }),
       );
     });
@@ -135,7 +142,7 @@ describe("EmailService", () => {
 
   describe("sendDocumentRequestConfirmation", () => {
     it("should send document request confirmation with escaped content", async () => {
-      const mockResult = { data: { id: "test-id" }, error: null };
+      const mockResult = { MessageId: "test-id" };
       mockSend.mockResolvedValueOnce(mockResult);
 
       await emailService.sendDocumentRequestConfirmation({
@@ -148,10 +155,20 @@ describe("EmailService", () => {
 
       expect(mockSend).toHaveBeenCalledWith(
         expect.objectContaining({
-          from: "test@descope.com",
-          to: "jane@example.com",
-          subject: "Document Access Request Received - Descope Trust Center",
-          html: expect.stringContaining("Jane &lt;b&gt;Doe&lt;&#x2F;b&gt;"),
+          Source: "test@descope.com",
+          Destination: { ToAddresses: ["jane@example.com"] },
+          Message: expect.objectContaining({
+            Subject: expect.objectContaining({
+              Data: "Document Access Request Received - Descope Trust Center",
+            }),
+            Body: expect.objectContaining({
+              Html: expect.objectContaining({
+                Data: expect.stringContaining(
+                  "Jane &lt;b&gt;Doe&lt;&#x2F;b&gt;",
+                ),
+              }),
+            }),
+          }),
         }),
       );
     });
@@ -159,7 +176,7 @@ describe("EmailService", () => {
 
   describe("sendDocumentAccessApproval", () => {
     it("should send approval notification", async () => {
-      const mockResult = { data: { id: "test-id" }, error: null };
+      const mockResult = { MessageId: "test-id" };
       mockSend.mockResolvedValueOnce(mockResult);
 
       await emailService.sendDocumentAccessApproval({
@@ -170,11 +187,18 @@ describe("EmailService", () => {
 
       expect(mockSend).toHaveBeenCalledWith(
         expect.objectContaining({
-          from: "test@descope.com",
-          to: "user@example.com",
-          subject:
-            "Document Access Approved: soc2-report - Descope Trust Center",
-          html: expect.stringContaining("Document Access Approved"),
+          Source: "test@descope.com",
+          Destination: { ToAddresses: ["user@example.com"] },
+          Message: expect.objectContaining({
+            Subject: expect.objectContaining({
+              Data: "Document Access Approved: soc2-report - Descope Trust Center",
+            }),
+            Body: expect.objectContaining({
+              Html: expect.objectContaining({
+                Data: expect.stringContaining("Document Access Approved"),
+              }),
+            }),
+          }),
         }),
       );
     });
@@ -182,7 +206,7 @@ describe("EmailService", () => {
 
   describe("sendDocumentAccessDenial", () => {
     it("should send denial notification with reason", async () => {
-      const mockResult = { data: { id: "test-id" }, error: null };
+      const mockResult = { MessageId: "test-id" };
       mockSend.mockResolvedValueOnce(mockResult);
 
       await emailService.sendDocumentAccessDenial({
@@ -194,17 +218,24 @@ describe("EmailService", () => {
 
       expect(mockSend).toHaveBeenCalledWith(
         expect.objectContaining({
-          from: "test@descope.com",
-          to: "user@example.com",
-          subject:
-            "Document Access Request Update: soc2-report - Descope Trust Center",
-          html: expect.stringContaining("Not Approved"),
+          Source: "test@descope.com",
+          Destination: { ToAddresses: ["user@example.com"] },
+          Message: expect.objectContaining({
+            Subject: expect.objectContaining({
+              Data: "Document Access Request Update: soc2-report - Descope Trust Center",
+            }),
+            Body: expect.objectContaining({
+              Html: expect.objectContaining({
+                Data: expect.stringContaining("Not Approved"),
+              }),
+            }),
+          }),
         }),
       );
     });
 
     it("should send denial notification without reason", async () => {
-      const mockResult = { data: { id: "test-id" }, error: null };
+      const mockResult = { MessageId: "test-id" };
       mockSend.mockResolvedValueOnce(mockResult);
 
       await emailService.sendDocumentAccessDenial({
@@ -215,7 +246,13 @@ describe("EmailService", () => {
 
       expect(mockSend).toHaveBeenCalledWith(
         expect.objectContaining({
-          html: expect.not.stringContaining("<strong>Reason:</strong>"),
+          Message: expect.objectContaining({
+            Body: expect.objectContaining({
+              Html: expect.objectContaining({
+                Data: expect.not.stringContaining("<strong>Reason:</strong>"),
+              }),
+            }),
+          }),
         }),
       );
     });

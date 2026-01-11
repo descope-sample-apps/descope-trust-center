@@ -19,12 +19,12 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.966.0",
     "@descope-trust-center/db": "workspace:*",
     "@descope-trust-center/validators": "workspace:*",
     "@t3-oss/env-core": "^0.11.1",
     "@trpc/server": "catalog:",
     "react": "catalog:react19",
-    "resend": "^4.0.0",
     "superjson": "2.2.3",
     "zod": "catalog:"
   },
