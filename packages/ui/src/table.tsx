@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/consistent-type-imports -- React namespace import used for both types and JSX */
 import * as React from "react";
 
 import { cn } from "./lib/utils";

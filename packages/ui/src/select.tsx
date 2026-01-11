@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/consistent-type-imports -- Radix UI requires both type and value imports */
+import type { ComponentPropsWithoutRef } from "react";
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -29,7 +31,7 @@ function SelectTrigger({
   size = "default",
   children,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
+}: ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default";
 }) {
   return (

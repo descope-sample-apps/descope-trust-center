@@ -1,4 +1,4 @@
-import type { CreateEmailOptions } from "resend";
+import type { CreateEmailOptions, CreateEmailResponse } from "resend";
 import { Resend } from "resend";
 
 interface EmailServiceOptions {
@@ -53,7 +53,10 @@ export class EmailService {
   /**
    * Send an email using Resend with retry logic
    */
-  async sendEmail(params: SendEmailParams, maxRetries = 3) {
+  async sendEmail(
+    params: SendEmailParams,
+    maxRetries = 3,
+  ): Promise<CreateEmailResponse> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -205,7 +208,7 @@ export class EmailService {
     email: string;
     company: string;
     message: string;
-  }) {
+  }): Promise<CreateEmailResponse> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -262,7 +265,7 @@ export class EmailService {
     company: string;
     documentId: string;
     reason: string;
-  }) {
+  }): Promise<CreateEmailResponse> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -310,7 +313,11 @@ export class EmailService {
   /**
    * Send subprocessor subscription confirmation
    */
-  async sendSubprocessorSubscriptionConfirmation({ email }: { email: string }) {
+  async sendSubprocessorSubscriptionConfirmation({
+    email,
+  }: {
+    email: string;
+  }): Promise<CreateEmailResponse> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -366,7 +373,7 @@ export class EmailService {
     email: string;
     name: string;
     documentId: string;
-  }) {
+  }): Promise<CreateEmailResponse> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -422,7 +429,7 @@ export class EmailService {
     name: string;
     documentId: string;
     reason?: string;
-  }) {
+  }): Promise<CreateEmailResponse> {
     const html = `
       <!DOCTYPE html>
       <html>
