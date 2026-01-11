@@ -37,6 +37,7 @@
     "@types/node": "catalog:",
     "dotenv-cli": "^10.0.0",
     "prettier": "catalog:",
+    "sst": "^3.17.25",
     "tsx": "^4.19.2",
     "turbo": "^2.5.8",
     "typescript": "catalog:"

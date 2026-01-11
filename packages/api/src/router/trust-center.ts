@@ -22,9 +22,8 @@ import { env } from "../env";
 import { createEmailService } from "../lib/email";
 import { protectedProcedure, publicProcedure } from "../trpc";
 
-// Create email service instance
 const emailService = createEmailService({
-  apiKey: env.RESEND_API_KEY,
+  region: env.AWS_REGION,
   fromEmail:
     env.TRUST_CENTER_FROM_EMAIL ?? "Trust Center <noreply@descope.com>",
   notificationEmail:
