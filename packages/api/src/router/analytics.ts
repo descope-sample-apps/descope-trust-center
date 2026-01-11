@@ -694,4 +694,61 @@ export const analyticsRouter = {
         .where(eq(DocumentDownload.documentId, input.documentId))
         .orderBy(desc(DocumentDownload.createdAt));
     }),
+
+  /**
+   * Check if the current user has approved access to a specific document.
+   * Used by the document download page to verify access before allowing download.
+   */
+  checkDocumentAccess: protectedProcedure
+    .input(z.object({ documentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const userEmail = ctx.session.user.email;
+      if (!userEmail) {
+        return { hasAccess: false, request: null };
+      }
+
+      const [request] = await ctx.db
+        .select()
+        .from(DocumentAccessRequest)
+        .where(
+          and(
+            eq(DocumentAccessRequest.documentId, input.documentId),
+            eq(DocumentAccessRequest.email, userEmail),
+            eq(DocumentAccessRequest.status, "approved"),
+          ),
+        )
+        .limit(1);
+
+      return {
+        hasAccess: !!request,
+        request: request ?? null,
+      };
+    }),
+
+  /**
+   * Get all documents the current user has approved access to.
+   * Used by the document library to show download buttons for approved NDA docs.
+   */
+  getMyApprovedDocuments: protectedProcedure.query(async ({ ctx }) => {
+    const userEmail = ctx.session.user.email;
+    if (!userEmail) {
+      return [];
+    }
+
+    const approvedRequests = await ctx.db
+      .select({
+        documentId: DocumentAccessRequest.documentId,
+        documentTitle: DocumentAccessRequest.documentTitle,
+        approvedAt: DocumentAccessRequest.approvedAt,
+      })
+      .from(DocumentAccessRequest)
+      .where(
+        and(
+          eq(DocumentAccessRequest.email, userEmail),
+          eq(DocumentAccessRequest.status, "approved"),
+        ),
+      );
+
+    return approvedRequests;
+  }),
 } satisfies TRPCRouterRecord;

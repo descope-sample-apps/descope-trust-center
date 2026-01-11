@@ -7,6 +7,28 @@ import { DocumentLibrary } from "../document-library";
 vi.mock("~/auth/client", () => ({
   useSession: () => ({ isAuthenticated: false, isSessionLoading: false }),
 }));
+
+vi.mock("~/trpc/react", () => ({
+  useTRPC: () => ({
+    analytics: {
+      getMyApprovedDocuments: {
+        queryOptions: () => ({
+          queryKey: ["analytics", "getMyApprovedDocuments"],
+          queryFn: () => Promise.resolve([]),
+        }),
+      },
+    },
+  }),
+}));
+
+vi.mock("@tanstack/react-query", async () => {
+  const actual = await vi.importActual("@tanstack/react-query");
+  return {
+    ...actual,
+    useQuery: () => ({ data: [], isLoading: false, isError: false }),
+  };
+});
+
 vi.mock("../document-request-form", () => ({
   DocumentRequestForm: ({ onClose }: { onClose: () => void }) => (
     <div data-testid="document-request-form">
@@ -167,26 +189,27 @@ describe("DocumentLibrary", () => {
     }
   });
 
-  it("displays request access button for NDA-required documents", () => {
+  it("displays sign in to request button for NDA-required documents when not authenticated", () => {
     render(<DocumentLibrary />);
 
-    const requestButtons = screen.queryAllByRole("button", {
-      name: /request access/i,
+    // When unauthenticated, NDA docs show "Sign in to Request" (not "Request Access")
+    const signInButtons = screen.queryAllByRole("button", {
+      name: /sign in to request/i,
     });
-    expect(requestButtons.length).toBeGreaterThan(0);
+    expect(signInButtons.length).toBeGreaterThan(0);
   });
 
-  it("opens request modal when request access is clicked", async () => {
+  it("opens login modal when sign in to request is clicked for NDA documents", async () => {
     const user = userEvent.setup();
     render(<DocumentLibrary />);
 
-    const requestButtons = screen.queryAllByRole("button", {
-      name: /request access/i,
+    const signInButtons = screen.queryAllByRole("button", {
+      name: /sign in to request/i,
     });
 
-    if (requestButtons.length > 0) {
-      await user.click(requestButtons[0]!);
-      expect(screen.getByTestId("document-request-form")).toBeInTheDocument();
+    if (signInButtons.length > 0) {
+      await user.click(signInButtons[0]!);
+      expect(screen.getByTestId("login-modal")).toBeInTheDocument();
     }
   });
 

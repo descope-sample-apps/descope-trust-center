@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 
 import type {
   Document,
@@ -13,6 +15,7 @@ import { Input } from "@descope-trust-center/ui/input";
 
 import documentsData from "~/app/data/documents.json";
 import { useSession } from "~/auth/client";
+import { useTRPC } from "~/trpc/react";
 import { DocumentRequestForm } from "./document-request-form";
 import { LoginModal } from "./login-modal";
 
@@ -75,6 +78,7 @@ const ACCESS_LEVEL_CONFIG: Record<
  */
 export function DocumentLibrary() {
   const { isAuthenticated } = useSession();
+  const trpc = useTRPC();
   const documents = documentsData as Document[];
   const [activeCategory, setActiveCategory] = useState<
     DocumentCategory | "all"
@@ -85,6 +89,16 @@ export function DocumentLibrary() {
     title: string;
   } | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const { data: approvedDocs } = useQuery({
+    ...trpc.analytics.getMyApprovedDocuments.queryOptions(),
+    enabled: isAuthenticated,
+  });
+
+  const approvedDocumentIds = useMemo(
+    () => new Set(approvedDocs?.map((d) => d.documentId) ?? []),
+    [approvedDocs],
+  );
 
   /** Filter documents by category and search query */
   const filteredDocuments = useMemo(() => {
@@ -238,6 +252,7 @@ export function DocumentLibrary() {
                   key={doc.id}
                   document={doc}
                   isAuthenticated={isAuthenticated}
+                  isApproved={approvedDocumentIds.has(doc.id)}
                   onRequestAccess={openRequestModal}
                   onLoginRequired={() => setShowLoginModal(true)}
                 />
@@ -273,11 +288,13 @@ export function DocumentLibrary() {
 function DocumentCard({
   document,
   isAuthenticated,
+  isApproved,
   onRequestAccess,
   onLoginRequired,
 }: {
   document: Document;
   isAuthenticated: boolean;
+  isApproved: boolean;
   onRequestAccess: (doc: Document) => void;
   onLoginRequired: () => void;
 }) {
@@ -361,6 +378,7 @@ function DocumentCard({
         <DocumentActionButton
           document={document}
           isAuthenticated={isAuthenticated}
+          isApproved={isApproved}
           onRequestAccess={onRequestAccess}
           onLoginRequired={onLoginRequired}
         />
@@ -379,11 +397,13 @@ function DocumentCard({
 function DocumentActionButton({
   document,
   isAuthenticated,
+  isApproved,
   onRequestAccess,
   onLoginRequired,
 }: {
   document: Document;
   isAuthenticated: boolean;
+  isApproved: boolean;
   onRequestAccess: (doc: Document) => void;
   onLoginRequired: () => void;
 }) {
@@ -446,6 +466,33 @@ function DocumentActionButton({
       );
 
     case "nda-required":
+      if (isApproved) {
+        return (
+          <Link
+            href={`/trust-center/documents/${document.id}`}
+            className={cn(
+              buttonVariants({ variant: "default", size: "sm" }),
+              "w-full",
+            )}
+          >
+            <DownloadIcon className="size-4" />
+            Download
+          </Link>
+        );
+      }
+      if (!isAuthenticated) {
+        return (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onLoginRequired}
+            className="w-full"
+          >
+            <LockIcon className="size-4" />
+            Sign in to Request
+          </Button>
+        );
+      }
       return (
         <Button
           variant="outline"
