@@ -49,7 +49,7 @@ export class EmailService {
       throw new Error("At least one of html or text must be provided");
     }
 
-    let lastError: Error | null = null;
+    let lastError: Error = new Error("");
     const toAddresses = Array.isArray(params.to) ? params.to : [params.to];
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -107,7 +107,7 @@ export class EmailService {
 
     console.error(
       `[Email Service] All ${maxRetries} attempts failed. Final error:`,
-      lastError?.message,
+      lastError.message,
     );
 
     try {
@@ -120,13 +120,13 @@ export class EmailService {
     }
 
     throw new Error(
-      `Failed to send email after ${maxRetries} attempts: ${lastError?.message}`,
+      `Failed to send email after ${maxRetries} attempts: ${lastError.message}`,
     );
   }
 
   private async sendFailureAlert(
     originalParams: SendEmailParams,
-    error: Error | null,
+    error: Error,
   ) {
     const alertHtml = `
       <!DOCTYPE html>
@@ -146,7 +146,7 @@ export class EmailService {
               <p><strong>To:</strong> ${Array.isArray(originalParams.to) ? originalParams.to.join(", ") : originalParams.to}</p>
               <p><strong>Subject:</strong> ${escapeHtml(originalParams.subject)}</p>
               <p><strong>From:</strong> ${escapeHtml(originalParams.from)}</p>
-              <p><strong>Error:</strong> ${error ? escapeHtml(error.message) : "Unknown error"}</p>
+               <p><strong>Error:</strong> ${escapeHtml(error.message)}</p>
               <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
             </div>
 

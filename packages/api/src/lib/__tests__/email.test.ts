@@ -1,3 +1,4 @@
+import type { SendEmailCommandInput } from "@aws-sdk/client-ses";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EmailService } from "../email";
@@ -7,7 +8,9 @@ vi.mock("@aws-sdk/client-ses", () => ({
   SESClient: vi.fn().mockImplementation(() => ({
     send: mockSend,
   })),
-  SendEmailCommand: vi.fn().mockImplementation((params) => params),
+  SendEmailCommand: vi
+    .fn()
+    .mockImplementation((params: SendEmailCommandInput) => params),
 }));
 
 describe("EmailService", () => {
